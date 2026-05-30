@@ -17,6 +17,9 @@ Used by `apps/api`, `pnpm db:*`, and Docker API containers.
 | `PORT` | No | `3003` | API listen port |
 | `AUTH_SESSION_SECRET` | Yes | — | HMAC secret for merchant session tokens (≥32 chars) |
 | `AUTH_SESSION_TTL_MS` | No | `604800000` (7 days) | Merchant session lifetime in milliseconds |
+| `AUTH_MAX_FAILED_ATTEMPTS` | No | `5` | Failed merchant logins before lockout (per email + IP) |
+| `AUTH_LOCKOUT_WINDOW_MS` | No | `900000` | Sliding window for counting failed logins (ms) |
+| `AUTH_LOCKOUT_DURATION_MS` | No | `900000` | Lockout duration after threshold (ms) |
 | `QR_SIGNING_SECRET` | Yes | — | HMAC secret for pickup QR tokens (≥32 chars) |
 | `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit fixed window (ms) |
 | `RATE_LIMIT_MAX_READS` | No | `120` | Max GET (read) requests per IP per window |

@@ -97,11 +97,26 @@ Returns `429` with `rate_limited` error code.
 - Audit events: `staff.created`, `staff.role_updated`, `staff.deactivated`, `staff.reactivated`, `staff.password_reset`, `staff.password_changed`.
 - No email invites, no password-reset tokens, no BullMQ — out-of-band credential sharing only.
 
-## Authentication limitations (Phase 6A / 9E)
+## Session invalidation (Phase 9F)
 
-- No MFA, no account lockout beyond rate limits, no email-based password reset.
+- Stateless HMAC session tokens include `sessionVersion` from `merchant_users.session_version` (starts at **1**).
+- On password change, password reset, or deactivation, the server increments `session_version`, invalidating all outstanding tokens for that user without a session table.
+- Middleware rejects mismatched versions with `401 SESSION_REVOKED`.
+- No refresh-token store yet; re-login issues a token with the current version.
+
+## Login lockout (Phase 9F)
+
+- Failed merchant logins are counted per **email + client IP** inside a sliding window (`AUTH_LOCKOUT_WINDOW_MS`).
+- After `AUTH_MAX_FAILED_ATTEMPTS` failures, the account is locked for `AUTH_LOCKOUT_DURATION_MS` with `{ "error": { "code": "account_locked", ... } }` (`429`).
+- Counters use **Redis** when `REDIS_URL` is set; otherwise **in-memory per API process** (same fallback pattern as rate limits).
+- Successful login clears counters for that email/IP pair.
+- Audit: `auth.login_failed`, `auth.account_locked`, `auth.password_changed`, `auth.session_revoked`.
+
+## Authentication limitations (Phase 6A / 9E / 9F)
+
+- No MFA, no email-based password reset, no refresh-token rotation yet.
 - Demo seed credentials (`owner@demo-cafe.test` / `ChangeMe123!`) are **local-only** — disable or rotate before any shared staging.
-- Session tokens are bearer-equivalent if leaked from `localStorage`.
+- Session tokens are bearer-equivalent if leaked from `localStorage` until revoked via `session_version`.
 - Fine-grained RBAC (`owner` | `manager` | `staff`) is enforced on protected merchant routes (Phase 8B).
 
 ## CORS
@@ -117,7 +132,8 @@ Returns `429` with `rate_limited` error code.
 | Temporary staff passwords leaked | Share out of band; rotate hash via DB or recreate user |
 | Shared demo password | Rotate seed; remove seed in prod |
 | IP spoofing behind proxy | Configure trusted proxy headers carefully |
-| Redis outage weakens rate limits | Monitor Redis; restore before multi-instance abuse |
+| Redis outage weakens rate limits and login lockout | Monitor Redis; restore before multi-instance abuse |
+| Stolen session token before revocation | Short TTL; increment `session_version` on credential events |
 | No encryption at rest for DB | Use managed Postgres with disk encryption |
 | Staff session theft (XSS) | CSP, HTTP-only cookie-only mode, short TTL |
 

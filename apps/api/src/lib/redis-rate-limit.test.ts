@@ -21,6 +21,15 @@ function createMockRedis(): RedisCommandClient & { store: Map<string, number> } 
     async pexpire() {
       return 1;
     },
+    async get() {
+      return null;
+    },
+    async set() {
+      return "OK";
+    },
+    async del() {
+      return 0;
+    },
     async quit() {
       return "OK";
     },

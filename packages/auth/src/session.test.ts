@@ -14,6 +14,7 @@ describe("session token", () => {
       merchantId: "merchant-1",
       role: "owner",
       email: "owner@demo-cafe.test",
+      sessionVersion: 1,
       secret: SECRET,
       issuedAt: 1_000,
       expiresAt: 9_000,
@@ -26,6 +27,7 @@ describe("session token", () => {
     });
 
     expect(payload.merchantUserId).toBe("user-1");
+    expect(payload.sessionVersion).toBe(1);
     expect(payload.merchantId).toBe("merchant-1");
     expect(payload.role).toBe("owner");
     expect(payload.email).toBe("owner@demo-cafe.test");
@@ -37,6 +39,7 @@ describe("session token", () => {
       merchantId: "merchant-1",
       role: "owner",
       email: "owner@demo-cafe.test",
+      sessionVersion: 2,
       secret: SECRET,
       issuedAt: 1_000,
       expiresAt: 2_000,
@@ -53,6 +56,7 @@ describe("session token", () => {
       merchantId: "merchant-1",
       role: "owner",
       email: "owner@demo-cafe.test",
+      sessionVersion: 1,
       secret: SECRET,
       issuedAt: 1_000,
       expiresAt: 9_000,

@@ -7,6 +7,9 @@ import type {
 } from "@airrand/contracts";
 import { getApiBaseUrl } from "./config";
 import { ApiError } from "./api";
+import { clearSession } from "./auth-session";
+import { isSessionRevokedError } from "./auth-errors";
+import { setAuthToken } from "./api";
 
 type ApiEnvelope<T> = { data: T } | { error: { code: string; message: string } };
 
@@ -33,6 +36,10 @@ async function authRequest<T>(
 
   if (!res.ok || "error" in body) {
     const err = "error" in body ? body.error : { code: "UNKNOWN", message: res.statusText };
+    if (isSessionRevokedError(err.code)) {
+      clearSession();
+      setAuthToken(null);
+    }
     throw new ApiError(err.code, err.message, res.status);
   }
 

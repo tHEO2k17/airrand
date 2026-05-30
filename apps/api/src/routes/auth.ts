@@ -2,12 +2,7 @@ import {
   changePasswordRequestSchema,
   merchantLoginSchema,
 } from "@airrand/contracts";
-import {
-  createSessionToken,
-  hashPassword,
-  SessionTokenError,
-  verifyPassword,
-} from "@airrand/auth";
+import { hashPassword, SessionTokenError, verifyPassword } from "@airrand/auth";
 import {
   AUDIT_ACTIONS,
   insertAuditLogSafe,
@@ -15,7 +10,7 @@ import {
   merchants,
 } from "@airrand/database";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { deleteCookie, setCookie } from "hono/cookie";
 import {
@@ -23,14 +18,24 @@ import {
   getAuthSessionTtlMs,
   SESSION_COOKIE_NAME,
 } from "../lib/auth-env.js";
+import {
+  checkAccountLocked,
+  clearLoginAttempts,
+  recordFailedLogin,
+} from "../lib/auth-lockout.js";
 import { db } from "../lib/db.js";
 import { handleRouteError } from "../lib/errors.js";
 import { getMerchantActor } from "../lib/merchant-auth.js";
 import { toMerchantUserResponse } from "../lib/mappers.js";
+import { createMerchantSessionToken } from "../lib/merchant-session.js";
 import { jsonError, jsonOk } from "../lib/response.js";
+import { getClientIp } from "../middleware/rate-limit.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 
 export const authRoutes = new Hono();
+
+const ACCOUNT_LOCKED_MESSAGE =
+  "Too many failed login attempts. Please try again later.";
 
 function setSessionCookie(c: Parameters<typeof setCookie>[0], token: string, ttlMs: number) {
   const maxAgeSeconds = Math.floor(ttlMs / 1000);
@@ -49,11 +54,12 @@ function issueSessionResponse(
   merchant: typeof merchants.$inferSelect,
 ) {
   const ttlMs = getAuthSessionTtlMs();
-  const { token } = createSessionToken({
+  const { token } = createMerchantSessionToken({
     merchantUserId: user.id,
     merchantId: user.merchantId,
     role: user.role,
     email: user.email,
+    sessionVersion: user.sessionVersion,
     secret: getAuthSessionSecret(),
     ttlMs,
   });
@@ -77,21 +83,78 @@ authRoutes.post(
   async (c) => {
     try {
       const body = c.req.valid("json");
+      const email = body.email.trim().toLowerCase();
+      const clientIp = getClientIp(c);
+
+      const lockCheck = await checkAccountLocked(email, clientIp);
+      if (lockCheck.locked) {
+        const [user] = await db
+          .select({ merchantId: merchantUsers.merchantId })
+          .from(merchantUsers)
+          .where(eq(merchantUsers.email, email))
+          .limit(1);
+
+        if (user) {
+          await insertAuditLogSafe(db, {
+            merchantId: user.merchantId,
+            actorType: "unknown",
+            actorLabel: email,
+            action: AUDIT_ACTIONS.AUTH_ACCOUNT_LOCKED,
+            metadata: { email, clientIp },
+          });
+        }
+
+        return jsonError(c, "account_locked", ACCOUNT_LOCKED_MESSAGE, 429);
+      }
 
       const [user] = await db
         .select()
         .from(merchantUsers)
-        .where(eq(merchantUsers.email, body.email.trim().toLowerCase()))
+        .where(eq(merchantUsers.email, email))
         .limit(1);
 
       if (!user || !user.isActive || !user.passwordHash) {
+        const failure = await recordFailedLogin(email, clientIp);
+        if (failure.locked && user) {
+          await insertAuditLogSafe(db, {
+            merchantId: user.merchantId,
+            actorType: "unknown",
+            actorLabel: email,
+            action: AUDIT_ACTIONS.AUTH_ACCOUNT_LOCKED,
+            metadata: { email, clientIp },
+          });
+          return jsonError(c, "account_locked", ACCOUNT_LOCKED_MESSAGE, 429);
+        }
+
         return jsonError(c, "INVALID_CREDENTIALS", "Invalid email or password", 401);
       }
 
       const passwordValid = await verifyPassword(body.password, user.passwordHash);
       if (!passwordValid) {
+        const failure = await recordFailedLogin(email, clientIp);
+        await insertAuditLogSafe(db, {
+          merchantId: user.merchantId,
+          actorType: "unknown",
+          actorLabel: email,
+          action: AUDIT_ACTIONS.AUTH_LOGIN_FAILED,
+          metadata: { email, clientIp },
+        });
+
+        if (failure.locked) {
+          await insertAuditLogSafe(db, {
+            merchantId: user.merchantId,
+            actorType: "unknown",
+            actorLabel: email,
+            action: AUDIT_ACTIONS.AUTH_ACCOUNT_LOCKED,
+            metadata: { email, clientIp },
+          });
+          return jsonError(c, "account_locked", ACCOUNT_LOCKED_MESSAGE, 429);
+        }
+
         return jsonError(c, "INVALID_CREDENTIALS", "Invalid email or password", 401);
       }
+
+      await clearLoginAttempts(email, clientIp);
 
       const [merchant] = await db
         .select()
@@ -212,6 +275,7 @@ authRoutes.post(
         .set({
           passwordHash,
           mustChangePassword: false,
+          sessionVersion: sql`${merchantUsers.sessionVersion} + 1`,
           updatedAt: now,
         })
         .where(eq(merchantUsers.id, user.id))
@@ -235,7 +299,7 @@ authRoutes.post(
       await insertAuditLogSafe(db, {
         merchantId: user.merchantId,
         ...actor,
-        action: AUDIT_ACTIONS.STAFF_PASSWORD_CHANGED,
+        action: AUDIT_ACTIONS.AUTH_PASSWORD_CHANGED,
         metadata: {
           merchantUserId: user.id,
           forced: user.mustChangePassword,
@@ -243,11 +307,12 @@ authRoutes.post(
       });
 
       const ttlMs = getAuthSessionTtlMs();
-      const { token } = createSessionToken({
+      const { token } = createMerchantSessionToken({
         merchantUserId: updated.id,
         merchantId: updated.merchantId,
         role: updated.role,
         email: updated.email,
+        sessionVersion: updated.sessionVersion,
         secret: getAuthSessionSecret(),
         ttlMs,
       });

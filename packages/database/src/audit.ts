@@ -12,6 +12,10 @@ export const AUDIT_ACTIONS = {
   STAFF_REACTIVATED: "staff.reactivated",
   STAFF_PASSWORD_RESET: "staff.password_reset",
   STAFF_PASSWORD_CHANGED: "staff.password_changed",
+  AUTH_LOGIN_FAILED: "auth.login_failed",
+  AUTH_ACCOUNT_LOCKED: "auth.account_locked",
+  AUTH_PASSWORD_CHANGED: "auth.password_changed",
+  AUTH_SESSION_REVOKED: "auth.session_revoked",
 } as const;
 
 export type AuditTx = Pick<Database, "insert">;

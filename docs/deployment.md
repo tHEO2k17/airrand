@@ -102,6 +102,12 @@ Readiness checks:
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
 
+### Merchant auth hardening (Phase 9F)
+
+- **Session invalidation:** Tokens carry `sessionVersion` from `merchant_users.session_version`. Password change, owner password reset, and deactivation increment the version so older tokens receive `401 SESSION_REVOKED`.
+- **Login lockout:** Failed sign-ins per email + IP are counted in Redis when `REDIS_URL` is set; otherwise each API process keeps its own in-memory counters (same fallback model as rate limits). Tune `AUTH_MAX_FAILED_ATTEMPTS`, `AUTH_LOCKOUT_WINDOW_MS`, and `AUTH_LOCKOUT_DURATION_MS`.
+- **Operations:** Run Redis in multi-instance staging/production so lockout and rate limits are shared. After Redis loss, lockout resets per process until Redis returns.
+
 ### Request IDs and logging
 
 Every API response includes `X-Request-Id`. Clients may send `X-Request-Id` to correlate logs. Structured JSON request logs include method, path, status, duration, request id, and timestamp (stdout only — no external APM in this phase).

@@ -263,6 +263,7 @@ staffRoutes.post(
         .set({
           isActive: false,
           deactivatedAt: now,
+          sessionVersion: sql`${merchantUsers.sessionVersion} + 1`,
           updatedAt: now,
         })
         .where(eq(merchantUsers.id, target.id))
@@ -281,6 +282,15 @@ staffRoutes.post(
           merchantUserId: updated.id,
           email: updated.email,
           role: updated.role,
+        },
+      });
+      await insertAuditLogSafe(db, {
+        merchantId,
+        ...actor,
+        action: AUDIT_ACTIONS.AUTH_SESSION_REVOKED,
+        metadata: {
+          merchantUserId: updated.id,
+          reason: "deactivated",
         },
       });
 
@@ -417,6 +427,7 @@ staffRoutes.post(
         .set({
           passwordHash,
           mustChangePassword: true,
+          sessionVersion: sql`${merchantUsers.sessionVersion} + 1`,
           updatedAt: now,
         })
         .where(eq(merchantUsers.id, target.id))
@@ -434,6 +445,15 @@ staffRoutes.post(
         metadata: {
           merchantUserId: updated.id,
           email: updated.email,
+        },
+      });
+      await insertAuditLogSafe(db, {
+        merchantId,
+        ...actor,
+        action: AUDIT_ACTIONS.AUTH_SESSION_REVOKED,
+        metadata: {
+          merchantUserId: updated.id,
+          reason: "password_reset",
         },
       });
 

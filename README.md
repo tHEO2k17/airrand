@@ -153,6 +153,11 @@ Staff sign in at the merchant app **/login**. Sessions use HMAC-signed tokens (A
 |----------|---------|---------|
 | `AUTH_SESSION_SECRET` | (required, ≥32 chars) | Signs session tokens |
 | `AUTH_SESSION_TTL_MS` | `604800000` (7 days) | Session lifetime |
+| `AUTH_MAX_FAILED_ATTEMPTS` | `5` | Failed logins before lockout (per email + IP) |
+| `AUTH_LOCKOUT_WINDOW_MS` | `900000` (15 min) | Window to count failures |
+| `AUTH_LOCKOUT_DURATION_MS` | `900000` (15 min) | Lockout duration after threshold |
+
+Sessions embed `sessionVersion` from the database. Password change, password reset, and deactivation increment `session_version` and invalidate older tokens (`401 SESSION_REVOKED`). Login lockout uses Redis when available, otherwise in-memory per API process.
 
 **Local demo credentials only** (from `pnpm db:seed`). All use password `ChangeMe123!`:
 
@@ -290,5 +295,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)
 - **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)
 - **Phase 9E**: Merchant account lifecycle (forced password change, reactivate, owner password reset)
+- **Phase 9F**: Session invalidation (`session_version`) and login lockout
 - **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)
 - **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)

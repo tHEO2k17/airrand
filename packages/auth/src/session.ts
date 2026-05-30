@@ -7,6 +7,7 @@ export interface SessionTokenPayload {
   merchantId: string;
   role: MerchantStaffRole;
   email: string;
+  sessionVersion: number;
   issuedAt: number;
   expiresAt: number;
 }
@@ -14,7 +15,8 @@ export interface SessionTokenPayload {
 export type SessionTokenErrorCode =
   | "MALFORMED_TOKEN"
   | "INVALID_SIGNATURE"
-  | "EXPIRED_TOKEN";
+  | "EXPIRED_TOKEN"
+  | "SESSION_REVOKED";
 
 export class SessionTokenError extends Error {
   constructor(
@@ -31,10 +33,18 @@ export interface CreateSessionTokenInput {
   merchantId: string;
   role: MerchantStaffRole;
   email: string;
+  sessionVersion: number;
   secret: string;
   issuedAt?: number;
   expiresAt?: number;
   ttlMs?: number;
+}
+
+export function sessionVersionsMatch(
+  tokenVersion: number,
+  currentVersion: number,
+): boolean {
+  return tokenVersion === currentVersion;
 }
 
 export interface VerifySessionTokenInput {
@@ -80,6 +90,7 @@ export function createSessionToken(input: CreateSessionTokenInput): {
     merchantId: input.merchantId,
     role: input.role,
     email: input.email,
+    sessionVersion: input.sessionVersion,
     issuedAt,
     expiresAt,
   };
@@ -129,9 +140,17 @@ export function verifySessionToken(
     typeof payload.merchantId !== "string" ||
     typeof payload.role !== "string" ||
     typeof payload.email !== "string" ||
+    typeof payload.sessionVersion !== "number" ||
     typeof payload.issuedAt !== "number" ||
     typeof payload.expiresAt !== "number"
   ) {
+    throw new SessionTokenError(
+      "MALFORMED_TOKEN",
+      "Session token payload is incomplete",
+    );
+  }
+
+  if (!Number.isInteger(payload.sessionVersion) || payload.sessionVersion < 1) {
     throw new SessionTokenError(
       "MALFORMED_TOKEN",
       "Session token payload is incomplete",

@@ -1,9 +1,27 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
 import { createSessionToken } from "@airrand/auth";
 import { requireMerchantAuth } from "./merchant-auth.js";
 
 const SECRET = "test-session-secret-at-least-32-characters-long";
+
+vi.mock("../lib/db.js", () => ({
+  db: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () => [
+            {
+              sessionVersion: 1,
+              mustChangePassword: false,
+              isActive: true,
+            },
+          ],
+        }),
+      }),
+    }),
+  },
+}));
 
 describe("requireMerchantAuth", () => {
   it("rejects requests when merchantId does not match session", async () => {
@@ -14,6 +32,7 @@ describe("requireMerchantAuth", () => {
       merchantId: "merchant-a",
       role: "owner",
       email: "owner@demo-cafe.test",
+      sessionVersion: 1,
       secret: SECRET,
       issuedAt: Date.now(),
       expiresAt: Date.now() + 60_000,

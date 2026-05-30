@@ -12,6 +12,8 @@ import type {
 } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
 import { getApiBaseUrl } from "./config";
+import { clearSession } from "./auth-session";
+import { isSessionRevokedError } from "./auth-errors";
 
 let authToken: string | null = null;
 
@@ -50,6 +52,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok || "error" in body) {
     const err = "error" in body ? body.error : { code: "UNKNOWN", message: res.statusText };
+    if (isSessionRevokedError(err.code)) {
+      clearSession();
+      setAuthToken(null);
+    }
     throw new ApiError(err.code, err.message, res.status);
   }
 

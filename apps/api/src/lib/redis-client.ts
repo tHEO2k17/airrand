@@ -4,6 +4,9 @@ export interface RedisCommandClient {
   ping(): Promise<string>;
   incr(key: string): Promise<number>;
   pexpire(key: string, milliseconds: number): Promise<number>;
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, mode: "PX", ttl: number): Promise<string>;
+  del(...keys: string[]): Promise<number>;
   quit(): Promise<string>;
 }
 

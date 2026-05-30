@@ -12,6 +12,8 @@ import {
 import { fetchMerchantMe, loginMerchant, logoutMerchant } from "../lib/auth-api";
 import { clearSession, getStoredSession, saveSession } from "../lib/auth-session";
 import { setAuthToken } from "../lib/api";
+import { sessionEndedMessage } from "../lib/auth-errors";
+import { ApiError } from "../lib/api";
 
 interface AuthContextValue {
   user: MerchantMeResponse["user"] | null;
@@ -72,7 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       clearSession();
       applySession(null, null);
-      setError(err instanceof Error ? err.message : "Session expired");
+      if (err instanceof ApiError) {
+        setError(sessionEndedMessage(err.code));
+      } else {
+        setError(err instanceof Error ? err.message : "Session expired");
+      }
     } finally {
       setLoading(false);
     }

@@ -18,6 +18,7 @@ describe("toStaffMemberResponse", () => {
       lastLoginAt: now,
       isActive: true,
       mustChangePassword: true,
+      sessionVersion: 1,
       invitedAt: now,
       deactivatedAt: null,
       createdByMerchantUserId: null,

@@ -68,6 +68,7 @@
 
   /* Layout */
   --pos-sidebar-width: 72px;
+  --pos-sidebar-width-expanded: 248px;
   --pos-content-max: 100%;
   --pos-rail-width: min(380px, 100%);
 

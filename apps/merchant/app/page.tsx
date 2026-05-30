@@ -6,7 +6,7 @@ import type { OrderStatus } from "@airrand/domain";
 import { MerchantGate } from "../components/merchant-gate";
 import { OrderDetailPanel } from "../components/pos/order-detail-panel";
 import { OrderLineCards } from "../components/pos/order-line-cards";
-import { OrderSummaryCard } from "../components/pos/order-summary-card";
+import { OrderLineStats } from "../components/pos/order-line-stats";
 import { PosHeader } from "../components/pos/pos-header";
 import { ProductGrid } from "../components/pos/product-grid";
 import { AlertMessage } from "../components/ui/alert-message";
@@ -19,7 +19,6 @@ import {
   updateOrderStatus,
   updateProduct,
 } from "../lib/api";
-import { PollingToolbar } from "../components/polling-toolbar";
 import { isActiveOrderStatus } from "../lib/order-progress";
 import { usePollingRefresh } from "../lib/use-polling-refresh";
 
@@ -140,31 +139,32 @@ function PosConsoleContent() {
 
   return (
     <div className="pos-console">
-      <PosHeader />
-
-      <PollingToolbar
-        lastUpdated={lastUpdated}
-        onRefresh={() => void load({ silent: true })}
-        refreshing={refreshing}
-      />
-
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {success ? <AlertMessage variant="success" message={success} /> : null}
 
       {loading ? (
         <LoadingState label="Loading merchant console…" />
       ) : (
-        <>
-          <section className="pos-section" aria-label="Order queue">
-            <h2 className="pos-section-title">Active order queue</h2>
-            <OrderLineCards
-              orders={activeOrders}
-              selectedOrderId={selectedOrderId}
-              onSelect={setSelectedOrderId}
+        <div className="pos-dashboard">
+          <div className="pos-dashboard__main">
+            <PosHeader
+              lastUpdated={lastUpdated}
+              onRefresh={() => void load({ silent: true })}
+              refreshing={refreshing}
             />
-          </section>
 
-          <div className="pos-workspace-grid">
+            <section className="pos-section" aria-label="Order line">
+              <OrderLineStats orders={orders} />
+              <h2 className="pos-section-title pos-section-title--inline">
+                Active order queue
+              </h2>
+              <OrderLineCards
+                orders={activeOrders}
+                selectedOrderId={selectedOrderId}
+                onSelect={setSelectedOrderId}
+              />
+            </section>
+
             <section className="pos-section" aria-label="Menu">
               <h2 className="pos-section-title">Menu</h2>
               <ProductGrid
@@ -174,17 +174,16 @@ function PosConsoleContent() {
                 onToggleAvailability={handleToggleAvailability}
               />
             </section>
-
-            <aside className="pos-right-rail" aria-label="Order details">
-              <OrderDetailPanel
-                order={selectedOrder}
-                saving={saving}
-                onStatusChange={handleStatusChange}
-              />
-              <OrderSummaryCard order={selectedOrder} />
-            </aside>
           </div>
-        </>
+
+          <aside className="pos-dashboard__rail" aria-label="Current order">
+            <OrderDetailPanel
+              order={selectedOrder}
+              saving={saving}
+              onStatusChange={handleStatusChange}
+            />
+          </aside>
+        </div>
       )}
     </div>
   );

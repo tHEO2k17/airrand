@@ -8,6 +8,7 @@ import {
   Package,
   QrCode,
   ScrollText,
+  Settings,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,13 @@ import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
 const NAV_ITEMS = [
   { href: "/", label: "POS", icon: LayoutDashboard, requiresStaffView: false },
   { href: "/products", label: "Products", icon: Package, requiresStaffView: false },
+  {
+    href: "/settings",
+    label: "Settings",
+    icon: Settings,
+    requiresStaffView: false,
+    requiresOwner: true,
+  },
   { href: "/orders", label: "Orders", icon: ClipboardList, requiresStaffView: false },
   { href: "/pickup", label: "Pickup", icon: QrCode, requiresStaffView: false },
   {
@@ -43,7 +51,12 @@ export function Sidebar() {
   const { merchant } = useMerchant();
   const { canViewAuditLogs, canViewStaff, role } = useMerchantPermissions();
 
+  const isOwner = role === "owner";
+
   const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if ("requiresOwner" in item && item.requiresOwner && !isOwner) {
+      return false;
+    }
     if ("requiresStaffView" in item && item.requiresStaffView && !canViewStaff) {
       return false;
     }

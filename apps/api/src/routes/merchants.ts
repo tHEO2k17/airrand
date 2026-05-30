@@ -74,6 +74,7 @@ import { requireMerchantPermission } from "../middleware/merchant-permission.js"
 import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
 import { staffRoutes } from "./staff.js";
 import { eventsRoutes } from "./events.js";
+import { merchantSettingsRoutes } from "./merchant-settings.js";
 import {
   publishOrderCreatedRealtime,
   publishOrderPickupVerifiedRealtime,
@@ -86,6 +87,7 @@ export const merchantsRoutes = new Hono();
 
 merchantsRoutes.route("/", staffRoutes);
 merchantsRoutes.route("/", eventsRoutes);
+merchantsRoutes.route("/", merchantSettingsRoutes);
 
 merchantsRoutes.get("/", async (c) => {
   try {

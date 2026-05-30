@@ -6,6 +6,7 @@ export * from "./product.js";
 export * from "./order.js";
 export * from "./pickup.js";
 export * from "./merchant.js";
+export * from "./onboarding.js";
 export * from "./audit.js";
 export * from "./staff.js";
 export * from "./account.js";

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { MerchantProvider } from "./merchant-context";
 import { AppShell } from "./ui/app-shell";
 
-const PUBLIC_PATHS = ["/login", "/change-password"];
+const PUBLIC_PATHS = ["/login", "/setup", "/change-password"];
 
 export function MerchantRouteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

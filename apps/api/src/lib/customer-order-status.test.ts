@@ -44,6 +44,7 @@ describe("toCustomerOrderStatusResponse", () => {
         id: "merchant-1",
         name: "Demo Cafe",
         slug: "demo-cafe",
+        description: null,
         createdAt,
         updatedAt,
       },

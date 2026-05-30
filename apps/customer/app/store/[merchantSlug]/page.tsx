@@ -11,6 +11,10 @@ import { Badge } from "../../../components/ui/badge";
 import { useCart } from "../../../components/cart-context";
 import { useMerchant } from "../../../components/merchant-context";
 import { fetchAvailableProductsBySlug } from "../../../lib/api";
+import {
+  filterProductsByCategory,
+  type CategoryFilter,
+} from "../../../lib/catalog-filter";
 import { formatMoney } from "../../../lib/format";
 import { getProductIcon } from "../../../lib/product-icon";
 
@@ -22,7 +26,7 @@ export default function StoreCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
 
   const load = useCallback(async () => {
     if (merchantError) {
@@ -60,12 +64,10 @@ export default function StoreCatalogPage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
-    if (categoryFilter === "all") {
-      return products;
-    }
-    return products.filter((p) => p.categoryId === categoryFilter);
-  }, [products, categoryFilter]);
+  const filteredProducts = useMemo(
+    () => filterProductsByCategory(products, categoryFilter),
+    [products, categoryFilter],
+  );
 
   function handleAdd(product: ProductResponse) {
     addProduct({
@@ -93,7 +95,11 @@ export default function StoreCatalogPage() {
     <div className="store-page">
       <header className="store-hero">
         <h1>{merchant?.name ?? "Store"}</h1>
-        <p>Order ahead and pick up faster.</p>
+        {merchant?.description ? (
+          <p>{merchant.description}</p>
+        ) : (
+          <p>Order ahead and pick up faster.</p>
+        )}
       </header>
 
       {error ? <AlertMessage variant="error" message={error} /> : null}

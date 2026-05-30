@@ -36,6 +36,7 @@ export function toMerchantResponse(merchant: Merchant): MerchantResponse {
     id: merchant.id,
     name: merchant.name,
     slug: merchant.slug,
+    description: merchant.description ?? null,
     createdAt: merchant.createdAt.toISOString(),
     updatedAt: merchant.updatedAt.toISOString(),
   };

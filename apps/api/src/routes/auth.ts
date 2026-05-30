@@ -72,6 +72,7 @@ function issueSessionResponse(
       id: merchant.id,
       name: merchant.name,
       slug: merchant.slug,
+      description: merchant.description ?? null,
     },
     token,
   });
@@ -215,6 +216,7 @@ authRoutes.get("/merchant/me", requireMerchantAuth(), async (c) => {
         id: merchant.id,
         name: merchant.name,
         slug: merchant.slug,
+        description: merchant.description ?? null,
       },
     });
   } catch (error) {

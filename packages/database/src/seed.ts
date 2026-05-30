@@ -259,6 +259,13 @@ async function seed() {
     .limit(1);
 
   if (existingMerchant) {
+    await db
+      .update(merchants)
+      .set({
+        description: "Terminal kiosk with drinks, snacks, and travel essentials.",
+        updatedAt: new Date(),
+      })
+      .where(eq(merchants.id, existingMerchant.id));
     await seedDemoUsers(db, existingMerchant.id);
     await seedDemoCatalog(db, existingMerchant.id);
     console.log("Seed merchant already exists; demo staff and catalog refreshed.");
@@ -270,6 +277,7 @@ async function seed() {
     .values({
       name: "Demo Cafe",
       slug: SEED_MERCHANT_SLUG,
+      description: "Terminal kiosk with drinks, snacks, and travel essentials.",
     })
     .returning();
 

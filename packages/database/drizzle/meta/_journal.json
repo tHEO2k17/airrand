@@ -85,6 +85,13 @@
       "when": 1780142000000,
       "tag": "0011_product_categories_stock",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780143000000,
+      "tag": "0012_merchant_description",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { rateLimitMiddleware } from "./middleware/rate-limit.js";
 import { requestIdMiddleware } from "./middleware/request-id.js";
 import { requestLoggingMiddleware } from "./middleware/request-logging.js";
 import { authRoutes } from "./routes/auth.js";
+import { internalRoutes } from "./routes/internal.js";
 import { merchantsRoutes } from "./routes/merchants.js";
 import { jsonOk } from "./lib/response.js";
 
@@ -20,7 +21,12 @@ app.use(
   cors({
     origin: getCorsAllowedOrigins(),
     allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Request-Id",
+      "X-Internal-Setup-Key",
+    ],
     exposeHeaders: ["Set-Cookie", "X-Request-Id"],
   }),
 );
@@ -58,6 +64,7 @@ app.get("/ready", async (c) => {
 });
 
 app.route("/auth", authRoutes);
+app.route("/internal", internalRoutes);
 app.route("/merchants", merchantsRoutes);
 
 app.notFound((c) =>

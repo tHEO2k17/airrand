@@ -56,6 +56,7 @@ describe("customer realtime payload", () => {
         id: "22222222-2222-2222-2222-222222222222",
         name: "Demo Cafe",
         slug: "demo-cafe",
+        description: null,
         createdAt: now,
         updatedAt: now,
       },

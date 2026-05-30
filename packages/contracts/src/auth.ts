@@ -30,6 +30,7 @@ export const merchantAuthResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     slug: z.string(),
+    description: z.string().nullable().optional(),
   }),
   token: z.string(),
 });
@@ -42,6 +43,7 @@ export const merchantMeResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     slug: z.string(),
+    description: z.string().nullable().optional(),
   }),
 });
 

@@ -31,6 +31,12 @@ export {
   normalizeMerchantSlug,
 } from "./merchant-slug.js";
 export {
+  validateMerchantOnboardInput,
+  validateMerchantSettingsSlug,
+  type MerchantOnboardFieldError,
+  type MerchantOnboardValidationResult,
+} from "./merchant-onboarding.js";
+export {
   AUDIT_EXPORT_CSV_HEADERS,
   buildAuditExportCsv,
   escapeCsvField,

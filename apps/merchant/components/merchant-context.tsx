@@ -30,6 +30,7 @@ export function MerchantProvider({ children }: { children: React.ReactNode }) {
       id: merchant.id,
       name: merchant.name,
       slug: merchant.slug,
+      description: merchant.description ?? null,
       createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString(),
     };

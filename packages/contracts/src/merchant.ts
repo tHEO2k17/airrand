@@ -4,6 +4,7 @@ export const merchantResponseSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   slug: z.string(),
+  description: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

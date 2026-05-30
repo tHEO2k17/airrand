@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { LoadingState } from "./ui/loading-state";
 import { useAuth } from "./auth-context";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/setup"];
 const PASSWORD_CHANGE_PATH = "/change-password";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {

@@ -6,6 +6,8 @@ import type {
   CreateProductCategoryInput,
   CreateProductInput,
   CreateStaffRequest,
+  MerchantOnboardRequest,
+  MerchantOnboardResponse,
   MerchantResponse,
   OrderResponse,
   PickupVerifyResponse,
@@ -13,6 +15,7 @@ import type {
   ProductResponse,
   ProductStockState,
   StaffMemberResponse,
+  UpdateMerchantSettingsInput,
   UpdateProductCategoryInput,
   UpdateProductInput,
 } from "@airrand/contracts";
@@ -71,6 +74,45 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function fetchMerchants(): Promise<MerchantResponse[]> {
   const data = await request<{ merchants: MerchantResponse[] }>("/merchants");
   return data.merchants;
+}
+
+export async function onboardMerchant(
+  input: MerchantOnboardRequest,
+  setupKey: string,
+): Promise<MerchantOnboardResponse> {
+  const res = await fetch(`${getApiBaseUrl()}/internal/merchants/onboard`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Internal-Setup-Key": setupKey,
+    },
+    body: JSON.stringify(input),
+  });
+
+  const body = (await res.json()) as ApiEnvelope<MerchantOnboardResponse>;
+
+  if (!res.ok || "error" in body) {
+    const err = "error" in body ? body.error : { code: "UNKNOWN", message: res.statusText };
+    throw new ApiError(err.code, err.message, res.status);
+  }
+
+  return body.data;
+}
+
+export async function fetchMerchantSettings(
+  merchantId: string,
+): Promise<MerchantResponse> {
+  return request<MerchantResponse>(`/merchants/${merchantId}/settings`);
+}
+
+export async function updateMerchantSettings(
+  merchantId: string,
+  input: UpdateMerchantSettingsInput,
+): Promise<MerchantResponse> {
+  return request<MerchantResponse>(`/merchants/${merchantId}/settings`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function fetchCategories(

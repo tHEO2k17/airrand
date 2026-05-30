@@ -8,17 +8,21 @@ import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
 import { Surface } from "../../components/ui/surface";
 import { useMerchant } from "../../components/merchant-context";
-import { fetchAuditLogs } from "../../lib/api";
+import { ApiError, fetchAuditLogs } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
+import { isForbiddenApiError } from "../../lib/permissions";
+import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
 
 function AuditLogsContent() {
   const { merchantId } = useMerchant();
+  const { canViewAuditLogs } = useMerchantPermissions();
   const [logs, setLogs] = useState<AuditLogResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!merchantId) {
+    if (!merchantId || !canViewAuditLogs) {
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -27,15 +31,35 @@ function AuditLogsContent() {
       const rows = await fetchAuditLogs(merchantId);
       setLogs(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load audit logs");
+      if (err instanceof ApiError && isForbiddenApiError(err)) {
+        setError("You do not have permission to view audit logs.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to load audit logs");
+      }
     } finally {
       setLoading(false);
     }
-  }, [merchantId]);
+  }, [merchantId, canViewAuditLogs]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  if (!canViewAuditLogs) {
+    return (
+      <PageShell
+        title="Audit log"
+        description="Recent order and pickup events for this merchant."
+      >
+        <Surface>
+          <AlertMessage
+            variant="error"
+            message="You do not have permission to view audit logs."
+          />
+        </Surface>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell
@@ -45,7 +69,7 @@ function AuditLogsContent() {
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {loading ? <LoadingState /> : null}
 
-      {!loading && logs.length === 0 ? (
+      {!loading && logs.length === 0 && !error ? (
         <Surface>
           <p className="pos-muted">No audit events yet.</p>
         </Surface>

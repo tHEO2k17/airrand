@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import path from "node:path";
 import { createDb } from "./client.js";
 import { merchantUsers, merchants, products } from "./schema/index.js";
+import type { MerchantUserRole } from "./schema/merchant-user-role.js";
 
 config({ path: path.resolve(process.cwd(), "../../.env") });
 config();
@@ -15,46 +16,74 @@ const connectionString =
 const SEED_MERCHANT_SLUG = "demo-cafe";
 
 /** Local demo only — change before any real deployment. */
-const DEMO_OWNER_EMAIL = "owner@demo-cafe.test";
-const DEMO_OWNER_PASSWORD = "ChangeMe123!";
+const DEMO_PASSWORD = "ChangeMe123!";
 
-async function upsertDemoOwner(
+const DEMO_USERS: Array<{
+  email: string;
+  displayName: string;
+  role: MerchantUserRole;
+}> = [
+  { email: "owner@demo-cafe.test", displayName: "Demo Owner", role: "owner" },
+  {
+    email: "manager@demo-cafe.test",
+    displayName: "Demo Manager",
+    role: "manager",
+  },
+  { email: "staff@demo-cafe.test", displayName: "Demo Staff", role: "staff" },
+];
+
+async function upsertDemoUser(
   db: ReturnType<typeof createDb>,
   merchantId: string,
+  user: (typeof DEMO_USERS)[number],
 ) {
-  const passwordHash = await hashPassword(DEMO_OWNER_PASSWORD);
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
 
   const [existingUser] = await db
     .select({ id: merchantUsers.id })
     .from(merchantUsers)
-    .where(eq(merchantUsers.email, DEMO_OWNER_EMAIL))
+    .where(eq(merchantUsers.email, user.email))
     .limit(1);
 
   if (existingUser) {
     await db
       .update(merchantUsers)
       .set({
+        merchantId,
         passwordHash,
-        role: "owner",
-        displayName: "Demo Owner",
+        role: user.role,
+        displayName: user.displayName,
         isActive: true,
         updatedAt: new Date(),
       })
       .where(eq(merchantUsers.id, existingUser.id));
-    console.log(`Updated demo owner ${DEMO_OWNER_EMAIL} (password: ${DEMO_OWNER_PASSWORD}).`);
+    console.log(
+      `Updated demo ${user.role} ${user.email} (password: ${DEMO_PASSWORD}).`,
+    );
     return;
   }
 
   await db.insert(merchantUsers).values({
     merchantId,
-    email: DEMO_OWNER_EMAIL,
-    displayName: "Demo Owner",
+    email: user.email,
+    displayName: user.displayName,
     passwordHash,
-    role: "owner",
+    role: user.role,
     isActive: true,
   });
 
-  console.log(`Created demo owner ${DEMO_OWNER_EMAIL} (password: ${DEMO_OWNER_PASSWORD}).`);
+  console.log(
+    `Created demo ${user.role} ${user.email} (password: ${DEMO_PASSWORD}).`,
+  );
+}
+
+async function seedDemoUsers(
+  db: ReturnType<typeof createDb>,
+  merchantId: string,
+) {
+  for (const user of DEMO_USERS) {
+    await upsertDemoUser(db, merchantId, user);
+  }
 }
 
 async function seed() {
@@ -67,8 +96,8 @@ async function seed() {
     .limit(1);
 
   if (existingMerchant) {
-    await upsertDemoOwner(db, existingMerchant.id);
-    console.log("Seed merchant already exists; demo owner credentials refreshed.");
+    await seedDemoUsers(db, existingMerchant.id);
+    console.log("Seed merchant already exists; demo staff credentials refreshed.");
     return;
   }
 
@@ -84,7 +113,7 @@ async function seed() {
     throw new Error("Failed to create seed merchant");
   }
 
-  await upsertDemoOwner(db, merchant.id);
+  await seedDemoUsers(db, merchant.id);
 
   await db.insert(products).values([
     {

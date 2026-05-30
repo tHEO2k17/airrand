@@ -38,6 +38,7 @@ import { getQrSigningSecret } from "../lib/qr.js";
 import { getMerchantActor } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
+import { requireMerchantPermission } from "../middleware/merchant-permission.js";
 
 export const merchantsRoutes = new Hono();
 
@@ -83,6 +84,7 @@ merchantsRoutes.get("/:merchantId/products", async (c) => {
 merchantsRoutes.post(
   "/:merchantId/products",
   requireMerchantAuth(),
+  requireMerchantPermission("product:create"),
   zValidator("json", createProductSchema),
   async (c) => {
     try {
@@ -118,6 +120,7 @@ merchantsRoutes.post(
 merchantsRoutes.patch(
   "/:merchantId/products/:productId",
   requireMerchantAuth(),
+  requireMerchantPermission("product:update"),
   zValidator("json", updateProductSchema),
   async (c) => {
     try {
@@ -275,7 +278,11 @@ merchantsRoutes.post(
   },
 );
 
-merchantsRoutes.get("/:merchantId/orders", requireMerchantAuth(), async (c) => {
+merchantsRoutes.get(
+  "/:merchantId/orders",
+  requireMerchantAuth(),
+  requireMerchantPermission("order:view"),
+  async (c) => {
   try {
     const merchantId = c.req.param("merchantId");
     const merchant = await findMerchant(merchantId);
@@ -313,7 +320,8 @@ merchantsRoutes.get("/:merchantId/orders", requireMerchantAuth(), async (c) => {
   } catch (error) {
     return handleRouteError(c, error);
   }
-});
+  },
+);
 
 merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
   try {
@@ -349,6 +357,7 @@ merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
 merchantsRoutes.post(
   "/:merchantId/orders/:orderId/pickup/verify",
   requireMerchantAuth(),
+  requireMerchantPermission("pickup:verify"),
   zValidator("json", pickupVerifyRequestSchema),
   async (c) => {
     try {
@@ -428,6 +437,7 @@ merchantsRoutes.post(
 merchantsRoutes.patch(
   "/:merchantId/orders/:orderId/status",
   requireMerchantAuth(),
+  requireMerchantPermission("order:update_status"),
   zValidator("json", updateOrderStatusSchema),
   async (c) => {
     try {
@@ -497,7 +507,11 @@ merchantsRoutes.patch(
   },
 );
 
-merchantsRoutes.get("/:merchantId/audit-logs", requireMerchantAuth(), async (c) => {
+merchantsRoutes.get(
+  "/:merchantId/audit-logs",
+  requireMerchantAuth(),
+  requireMerchantPermission("audit_log:view"),
+  async (c) => {
   try {
     const merchantId = c.req.param("merchantId");
     const merchant = await findMerchant(merchantId);
@@ -518,7 +532,8 @@ merchantsRoutes.get("/:merchantId/audit-logs", requireMerchantAuth(), async (c) 
   } catch (error) {
     return handleRouteError(c, error);
   }
-});
+  },
+);
 
 async function findMerchant(merchantId: string) {
   const [merchant] = await db

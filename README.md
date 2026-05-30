@@ -141,12 +141,25 @@ Staff sign in at the merchant app **/login**. Sessions use HMAC-signed tokens (A
 | `AUTH_SESSION_SECRET` | (required, ≥32 chars) | Signs session tokens |
 | `AUTH_SESSION_TTL_MS` | `604800000` (7 days) | Session lifetime |
 
-**Local demo credentials only** (from `pnpm db:seed`):
+**Local demo credentials only** (from `pnpm db:seed`). All use password `ChangeMe123!`:
 
-| Field | Value |
-|-------|-------|
-| Email | `owner@demo-cafe.test` |
-| Password | `ChangeMe123!` |
+| Role | Email |
+|------|-------|
+| Owner | `owner@demo-cafe.test` |
+| Manager | `manager@demo-cafe.test` |
+| Staff | `staff@demo-cafe.test` |
+
+### Merchant roles (Phase 8B)
+
+| Action | Owner | Manager | Staff |
+|--------|:-----:|:-------:|:-----:|
+| Create / update products, toggle availability | Yes | Yes | No |
+| View orders | Yes | Yes | Yes |
+| Update order status | Yes | Yes | Yes |
+| Verify pickup | Yes | Yes | Yes |
+| View audit logs | Yes | Yes | No |
+
+The API returns `403` with `{ "error": { "code": "forbidden", "message": "You do not have permission to perform this action." } }` when a role is not allowed. The merchant UI hides or disables controls staff cannot use (for example, product edits and the Audit nav item).
 
 The merchant app stores the session token in `localStorage` and sends `Authorization: Bearer …` on protected API calls. The API also sets an HttpOnly `airrand_session` cookie on login for same-site deployments.
 

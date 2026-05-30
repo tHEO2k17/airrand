@@ -11,9 +11,11 @@ import { Button } from "../../components/ui/button";
 import { Surface } from "../../components/ui/surface";
 import { createProduct, fetchProducts, updateProduct } from "../../lib/api";
 import { formatMoney } from "../../lib/format";
+import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
 
 function ProductsContent() {
   const { merchantId } = useMerchant();
+  const { canCreateProduct, canUpdateProduct } = useMerchantPermissions();
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -113,6 +115,7 @@ function ProductsContent() {
       {success ? <AlertMessage variant="success" message={success} /> : null}
 
       <div className="pos-split">
+        {canCreateProduct ? (
         <Surface>
           <h2 className="pos-section-title">Add product</h2>
           <form className="pos-form-grid" onSubmit={handleCreate}>
@@ -147,6 +150,13 @@ function ProductsContent() {
             </Button>
           </form>
         </Surface>
+        ) : (
+          <Surface>
+            <p className="pos-muted">
+              Your role can view the catalog but cannot create products.
+            </p>
+          </Surface>
+        )}
 
         <Surface>
           <h2 className="pos-section-title">Catalog</h2>
@@ -162,7 +172,7 @@ function ProductsContent() {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Available</th>
-                    <th />
+                    {canUpdateProduct ? <th /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -176,16 +186,20 @@ function ProductsContent() {
                       </td>
                       <td>{formatMoney(product.unitPriceCents)}</td>
                       <td>{product.isAvailable ? "Yes" : "No"}</td>
-                      <td>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={saving}
-                          onClick={() => void toggleAvailability(product)}
-                        >
-                          {product.isAvailable ? "Mark unavailable" : "Mark available"}
-                        </Button>
-                      </td>
+                      {canUpdateProduct ? (
+                        <td>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={saving}
+                            onClick={() => void toggleAvailability(product)}
+                          >
+                            {product.isAvailable
+                              ? "Mark unavailable"
+                              : "Mark available"}
+                          </Button>
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

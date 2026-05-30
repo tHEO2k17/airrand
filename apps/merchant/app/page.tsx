@@ -12,6 +12,7 @@ import { ProductGrid } from "../components/pos/product-grid";
 import { AlertMessage } from "../components/ui/alert-message";
 import { LoadingState } from "../components/ui/loading-state";
 import { useMerchant } from "../components/merchant-context";
+import { useMerchantPermissions } from "../lib/use-merchant-permissions";
 import {
   fetchOrders,
   fetchProducts,
@@ -26,6 +27,7 @@ const POLL_INTERVAL_MS = 10_000;
 
 function PosConsoleContent() {
   const { merchantId } = useMerchant();
+  const { canUpdateProduct } = useMerchantPermissions();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +170,7 @@ function PosConsoleContent() {
               <ProductGrid
                 products={products}
                 saving={saving}
+                canManageProducts={canUpdateProduct}
                 onToggleAvailability={handleToggleAvailability}
               />
             </section>

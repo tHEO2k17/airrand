@@ -121,6 +121,9 @@ importers:
 
   apps/merchant:
     dependencies:
+      '@airrand/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@airrand/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

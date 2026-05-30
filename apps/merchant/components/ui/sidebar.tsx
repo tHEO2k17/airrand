@@ -11,27 +11,42 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../auth-context";
+import { formatRoleLabel } from "../../lib/permissions";
+import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
 
 const NAV_ITEMS = [
-  { href: "/", label: "POS", icon: LayoutDashboard },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/orders", label: "Orders", icon: ClipboardList },
-  { href: "/pickup", label: "Pickup", icon: QrCode },
-  { href: "/audit-logs", label: "Audit", icon: ScrollText },
+  { href: "/", label: "POS", icon: LayoutDashboard, requiresAudit: false },
+  { href: "/products", label: "Products", icon: Package, requiresAudit: false },
+  { href: "/orders", label: "Orders", icon: ClipboardList, requiresAudit: false },
+  { href: "/pickup", label: "Pickup", icon: QrCode, requiresAudit: false },
+  {
+    href: "/audit-logs",
+    label: "Audit",
+    icon: ScrollText,
+    requiresAudit: true,
+  },
 ] as const;
 
 export function Sidebar() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { canViewAuditLogs, role } = useMerchantPermissions();
+
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !item.requiresAudit || canViewAuditLogs,
+  );
 
   return (
     <aside className="pos-sidebar" aria-label="Merchant navigation">
       <div className="pos-sidebar__brand" title="airRand Merchant">
         <span className="pos-sidebar__mark">aR</span>
+        {role ? (
+          <span className="pos-sidebar__role">{formatRoleLabel(role)}</span>
+        ) : null}
       </div>
 
       <nav className="pos-sidebar__nav">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {visibleNavItems.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (

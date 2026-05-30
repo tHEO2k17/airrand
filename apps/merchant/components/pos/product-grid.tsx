@@ -11,10 +11,12 @@ import { getProductIcon } from "../../lib/product-icon";
 export function ProductGrid({
   products,
   saving,
+  canManageProducts = true,
   onToggleAvailability,
 }: {
   products: ProductResponse[];
   saving: boolean;
+  canManageProducts?: boolean;
   onToggleAvailability: (product: ProductResponse) => void;
 }) {
   if (products.length === 0) {
@@ -50,14 +52,16 @@ export function ProductGrid({
               <p className="pos-product-card__price">
                 {formatMoney(product.unitPriceCents)}
               </p>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={saving}
-                onClick={() => onToggleAvailability(product)}
-              >
-                {product.isAvailable ? "Mark unavailable" : "Mark available"}
-              </Button>
+              {canManageProducts ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={saving}
+                  onClick={() => onToggleAvailability(product)}
+                >
+                  {product.isAvailable ? "Mark unavailable" : "Mark available"}
+                </Button>
+              ) : null}
             </div>
           </Surface>
         );

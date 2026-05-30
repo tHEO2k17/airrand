@@ -43,7 +43,6 @@ import { handleRouteError } from "../lib/errors.js";
 import { toAuditLogResponse } from "../lib/audit.js";
 import { toCustomerOrderStatusResponse } from "../lib/customer-order-status.js";
 import {
-  toMerchantResponse,
   toOrderResponse,
   toProductCategoryResponse,
   toProductResponse,
@@ -72,6 +71,9 @@ import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
 import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
+import { getMerchantBySlugHandler } from "../queries/get-merchant-by-slug/index.js";
+import { listMerchantsHandler } from "../queries/list-merchants/index.js";
+import { listPublicProductsBySlugHandler } from "../queries/list-public-products-by-slug/index.js";
 import { staffRoutes } from "./staff.js";
 import { eventsRoutes } from "./events.js";
 import { merchantSettingsRoutes } from "./merchant-settings.js";
@@ -91,8 +93,8 @@ merchantsRoutes.route("/", merchantSettingsRoutes);
 
 merchantsRoutes.get("/", async (c) => {
   try {
-    const rows = await db.select().from(merchants).orderBy(asc(merchants.name));
-    return jsonOk(c, { merchants: rows.map(toMerchantResponse) });
+    const result = await listMerchantsHandler();
+    return jsonOk(c, result);
   } catch (error) {
     return handleRouteError(c, error);
   }
@@ -100,12 +102,12 @@ merchantsRoutes.get("/", async (c) => {
 
 merchantsRoutes.get("/by-slug/:slug", async (c) => {
   try {
-    const merchant = await findMerchantBySlug(c.req.param("slug"));
-    if (!merchant) {
+    const result = await getMerchantBySlugHandler({ slug: c.req.param("slug") });
+    if (result.kind === "not_found") {
       return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
     }
 
-    return jsonOk(c, toMerchantResponse(merchant));
+    return jsonOk(c, result.merchant);
   } catch (error) {
     return handleRouteError(c, error);
   }
@@ -113,26 +115,20 @@ merchantsRoutes.get("/by-slug/:slug", async (c) => {
 
 merchantsRoutes.get("/by-slug/:slug/products", async (c) => {
   try {
-    const merchant = await findMerchantBySlug(c.req.param("slug"));
-    if (!merchant) {
+    const result = await listPublicProductsBySlugHandler({
+      slug: c.req.param("slug"),
+      query: c.req.query(),
+    });
+
+    if (result.kind === "not_found") {
       return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
     }
 
-    const query = listProductsQuerySchema.safeParse(c.req.query());
-    if (!query.success) {
-      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
+    if (result.kind === "validation_error") {
+      return jsonError(c, "VALIDATION_ERROR", result.message, 400);
     }
 
-    const rows = await listProductsWithCategories(
-      merchant.id,
-      query.data.availableOnly ?? false,
-    );
-
-    return jsonOk(c, {
-      products: rows.map(({ product, category }) =>
-        toProductResponse(product, category),
-      ),
-    });
+    return jsonOk(c, { products: result.products });
   } catch (error) {
     return handleRouteError(c, error);
   }

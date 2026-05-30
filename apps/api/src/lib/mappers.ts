@@ -55,6 +55,7 @@ export function toOrderResponse(
     customerName: order.customerName,
     customerContact: order.customerContact,
     notes: order.notes,
+    pickedUpAt: order.pickedUpAt?.toISOString() ?? null,
     lines: lines.map(toOrderLineResponse),
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),

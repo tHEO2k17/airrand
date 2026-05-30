@@ -31,14 +31,21 @@ stateDiagram-v2
 
 Invalid transitions are rejected by `@airrand/domain` (`canTransitionOrderStatus`, `assertCanTransitionOrderStatus`) and enforced on `PATCH /merchants/:merchantId/orders/:orderId/status` (409 on invalid transition).
 
-## Pickup verification (Phase 2+)
+## Pickup verification (Phase 2)
 
-1. On order creation, API issues a pickup token (encoded in QR).
-2. Customer displays QR at counter.
-3. Merchant app scans QR → API verifies signature, expiry, and order state.
-4. On success, order moves to `picked_up` (idempotent if already picked up).
+1. On order creation, the API issues an HMAC-signed pickup token and stores `pickup_token_nonce` + `pickup_token_expires_at` on the order. The create-order response includes `{ pickup: { token, expiresAt } }`.
+2. The customer displays the token as a QR code (UI in Phase 4).
+3. When the order is `ready`, the merchant calls `POST /merchants/:merchantId/orders/:orderId/pickup/verify` with `{ token }`.
+4. The API verifies signature, expiry, route/order/merchant match, nonce, and `ready` status, then transitions to `picked_up` and sets `picked_up_at`.
 
-Tokens must not encode payment or wallet data.
+| HTTP | Code | When |
+|------|------|------|
+| 400 | `MALFORMED_TOKEN`, `INVALID_SIGNATURE`, `MERCHANT_MISMATCH`, `ORDER_MISMATCH`, `TOKEN_NONCE_MISMATCH` | Invalid token |
+| 404 | `ORDER_NOT_FOUND` | Unknown order |
+| 409 | `ORDER_NOT_READY`, `ORDER_ALREADY_PICKED_UP` | Wrong lifecycle state |
+| 410 | `EXPIRED_TOKEN` | Past `expiresAt` |
+
+Tokens encode only `orderId`, `merchantId`, `issuedAt`, `expiresAt`, and `nonce` — no payment or wallet data.
 
 ## What is not modeled
 

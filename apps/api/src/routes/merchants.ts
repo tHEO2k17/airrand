@@ -1,7 +1,9 @@
+import { randomBytes } from "node:crypto";
 import {
   createOrderSchema,
   createProductSchema,
   listProductsQuerySchema,
+  pickupVerifyRequestSchema,
   updateOrderStatusSchema,
   updateProductSchema,
 } from "@airrand/contracts";
@@ -9,6 +11,7 @@ import {
   assertCanTransitionOrderStatus,
   type OrderStatus,
 } from "@airrand/domain";
+import { createPickupToken, PICKUP_TOKEN_TTL_MS, verifyPickupToken } from "@airrand/qr";
 import {
   merchants,
   orderLines,
@@ -25,6 +28,8 @@ import {
   toOrderResponse,
   toProductResponse,
 } from "../lib/mappers.js";
+import { assertPickupAllowed } from "../lib/pickup-verify.js";
+import { getQrSigningSecret } from "../lib/qr.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 
 export const merchantsRoutes = new Hono();
@@ -182,6 +187,10 @@ merchantsRoutes.post(
         }
       }
 
+      const issuedAt = Date.now();
+      const expiresAt = issuedAt + PICKUP_TOKEN_TTL_MS;
+      const nonce = randomBytes(16).toString("hex");
+
       const result = await db.transaction(async (tx) => {
         const [order] = await tx
           .insert(orders)
@@ -191,6 +200,8 @@ merchantsRoutes.post(
             customerName: body.customerName,
             customerContact: body.customerContact,
             notes: body.notes,
+            pickupTokenNonce: nonce,
+            pickupTokenExpiresAt: new Date(expiresAt),
           })
           .returning();
 
@@ -217,9 +228,24 @@ merchantsRoutes.post(
         return { order, lines: insertedLines };
       });
 
+      const { token } = createPickupToken({
+        orderId: result.order.id,
+        merchantId,
+        secret: getQrSigningSecret(),
+        nonce,
+        issuedAt,
+        expiresAt,
+      });
+
       return jsonOk(
         c,
-        toOrderResponse(result.order, result.lines),
+        {
+          ...toOrderResponse(result.order, result.lines),
+          pickup: {
+            token,
+            expiresAt: new Date(expiresAt).toISOString(),
+          },
+        },
         201,
       );
     } catch (error) {
@@ -267,6 +293,62 @@ merchantsRoutes.get("/:merchantId/orders", async (c) => {
     return handleRouteError(c, error);
   }
 });
+
+merchantsRoutes.post(
+  "/:merchantId/orders/:orderId/pickup/verify",
+  zValidator("json", pickupVerifyRequestSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const orderId = c.req.param("orderId");
+      const { token } = c.req.valid("json");
+
+      const payload = verifyPickupToken({
+        token,
+        secret: getQrSigningSecret(),
+        expectedMerchantId: merchantId,
+        expectedOrderId: orderId,
+      });
+
+      const [existing] = await db
+        .select()
+        .from(orders)
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+        .limit(1);
+
+      assertPickupAllowed(existing, payload);
+
+      assertCanTransitionOrderStatus(existing!.status, "picked_up");
+
+      const verifiedAt = new Date();
+      const [order] = await db
+        .update(orders)
+        .set({
+          status: "picked_up",
+          pickedUpAt: verifiedAt,
+          updatedAt: verifiedAt,
+        })
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+        .returning();
+
+      if (!order) {
+        return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      const lines = await db
+        .select()
+        .from(orderLines)
+        .where(eq(orderLines.orderId, orderId));
+
+      return jsonOk(c, {
+        order: toOrderResponse(order, lines),
+        verifiedAt: verifiedAt.toISOString(),
+      });
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
 
 merchantsRoutes.patch(
   "/:merchantId/orders/:orderId/status",

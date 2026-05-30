@@ -11,6 +11,11 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name"),
   customerContact: text("customer_contact"),
   notes: text("notes"),
+  pickupTokenNonce: text("pickup_token_nonce"),
+  pickupTokenExpiresAt: timestamp("pickup_token_expires_at", {
+    withTimezone: true,
+  }),
+  pickedUpAt: timestamp("picked_up_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

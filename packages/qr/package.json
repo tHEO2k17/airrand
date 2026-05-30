@@ -14,11 +14,14 @@
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",
+    "@types/node": "^22.15.29",
     "eslint": "^9.28.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
   }
 }

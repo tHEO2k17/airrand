@@ -39,6 +39,7 @@ export const orderResponseSchema = z.object({
   customerName: z.string().nullable(),
   customerContact: z.string().nullable(),
   notes: z.string().nullable(),
+  pickedUpAt: z.string().datetime().nullable().optional(),
   lines: z.array(orderLineResponseSchema),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

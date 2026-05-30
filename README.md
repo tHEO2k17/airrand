@@ -30,7 +30,7 @@ See [docs/architecture.md](./docs/architecture.md) and [docs/adr/0001-walletless
 corepack enable && corepack prepare pnpm@9.15.9 --activate
 pnpm install
 
-# Copy environment template
+# Copy environment template (set QR_SIGNING_SECRET to at least 32 characters)
 cp .env.example .env
 
 # Start local PostgreSQL (port 5433 on host)
@@ -66,6 +66,8 @@ pnpm --filter @airrand/api dev        # http://localhost:3003
 ```
 
 API health check: `GET http://localhost:3003/health`
+
+Pickup flow (Phase 2): create an order to receive `data.pickup.token`, mark the order `ready`, then `POST /merchants/:merchantId/orders/:orderId/pickup/verify` with `{ "token": "..." }`.
 
 ## Local database (Docker)
 
@@ -121,7 +123,7 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 
 - **Phase 0**: Repo scaffold
 - **Phase 1**: Database schema, contracts, domain rules, API
-- **Phase 1.5** (current): Local Docker PostgreSQL
-- **Phase 2**: QR pickup token issue/verify
+- **Phase 1.5**: Local Docker PostgreSQL
+- **Phase 2** (current): QR pickup token issue/verify
 - **Phase 3**: Merchant UI
 - **Phase 4**: Customer UI

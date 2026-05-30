@@ -51,7 +51,7 @@ Does **not** collect card/bank details in MVP.
 | `@airrand/contracts` | API request/response shapes (Zod); no business logic |
 | `@airrand/domain` | Pure TS: valid order transitions, invariants |
 | `@airrand/database` | Drizzle schema + migrations + client (Phase 1) |
-| `@airrand/qr` | HMAC/JWT-style pickup tokens; no payment payloads |
+| `@airrand/qr` | HMAC-SHA256 pickup tokens (`QR_SIGNING_SECRET`); payload: orderId, merchantId, issuedAt, expiresAt, nonce |
 | `@airrand/config` | Shared TS/ESLint presets |
 
 ## Data ownership
@@ -63,7 +63,7 @@ Does **not** collect card/bank details in MVP.
 ## Security principles (MVP)
 
 - Tenant isolation: every query filtered by `merchant_id` where applicable.
-- Pickup tokens: signed, time-bounded, verified server-side on scan.
+- Pickup tokens: HMAC-SHA256 signed, 48h default TTL, nonce stored on order for replay binding, verified server-side on scan.
 - No secrets in client bundles except public URLs.
 
 ## Explicit non-goals (MVP)

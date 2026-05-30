@@ -6,6 +6,7 @@ import type {
   ProductResponse,
 } from "@airrand/contracts";
 import { getApiBaseUrl } from "./config";
+import { normalizeStoreSlug } from "./store-slug";
 
 export class ApiError extends Error {
   constructor(
@@ -44,11 +45,26 @@ export async function fetchMerchants(): Promise<MerchantResponse[]> {
   return data.merchants;
 }
 
+export async function fetchMerchantBySlug(slug: string): Promise<MerchantResponse> {
+  const encoded = encodeURIComponent(normalizeStoreSlug(slug));
+  return request<MerchantResponse>(`/merchants/by-slug/${encoded}`);
+}
+
 export async function fetchAvailableProducts(
   merchantId: string,
 ): Promise<ProductResponse[]> {
   const data = await request<{ products: ProductResponse[] }>(
     `/merchants/${merchantId}/products?availableOnly=true`,
+  );
+  return data.products;
+}
+
+export async function fetchAvailableProductsBySlug(
+  merchantSlug: string,
+): Promise<ProductResponse[]> {
+  const encoded = encodeURIComponent(normalizeStoreSlug(merchantSlug));
+  const data = await request<{ products: ProductResponse[] }>(
+    `/merchants/by-slug/${encoded}/products?availableOnly=true`,
   );
   return data.products;
 }
@@ -79,5 +95,16 @@ export async function fetchOrderStatusByReference(
   const encoded = encodeURIComponent(reference.trim());
   return request<CustomerOrderStatusResponse>(
     `/merchants/${merchantId}/orders/by-reference/${encoded}/status`,
+  );
+}
+
+export async function fetchOrderStatusByMerchantSlug(
+  merchantSlug: string,
+  reference: string,
+): Promise<CustomerOrderStatusResponse> {
+  const slug = encodeURIComponent(normalizeStoreSlug(merchantSlug));
+  const encodedReference = encodeURIComponent(reference.trim());
+  return request<CustomerOrderStatusResponse>(
+    `/merchants/by-slug/${slug}/orders/by-reference/${encodedReference}/status`,
   );
 }

@@ -35,6 +35,10 @@ import { zValidator } from "@hono/zod-validator";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../lib/db.js";
+import {
+  findMerchantById,
+  findMerchantBySlug,
+} from "../lib/merchant-lookup.js";
 import { handleRouteError } from "../lib/errors.js";
 import { toAuditLogResponse } from "../lib/audit.js";
 import { toCustomerOrderStatusResponse } from "../lib/customer-order-status.js";
@@ -91,6 +95,81 @@ merchantsRoutes.get("/", async (c) => {
     return handleRouteError(c, error);
   }
 });
+
+merchantsRoutes.get("/by-slug/:slug", async (c) => {
+  try {
+    const merchant = await findMerchantBySlug(c.req.param("slug"));
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    return jsonOk(c, toMerchantResponse(merchant));
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.get("/by-slug/:slug/products", async (c) => {
+  try {
+    const merchant = await findMerchantBySlug(c.req.param("slug"));
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    const query = listProductsQuerySchema.safeParse(c.req.query());
+    if (!query.success) {
+      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
+    }
+
+    const rows = await listProductsWithCategories(
+      merchant.id,
+      query.data.availableOnly ?? false,
+    );
+
+    return jsonOk(c, {
+      products: rows.map(({ product, category }) =>
+        toProductResponse(product, category),
+      ),
+    });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.get(
+  "/by-slug/:slug/orders/by-reference/:reference/status",
+  async (c) => {
+    try {
+      const merchant = await findMerchantBySlug(c.req.param("slug"));
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const reference = normalizeOrderReferenceQuery(c.req.param("reference"));
+
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(
+          and(eq(orders.merchantId, merchant.id), eq(orders.reference, reference)),
+        )
+        .limit(1);
+
+      if (!order) {
+        return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      const lines = await db
+        .select()
+        .from(orderLines)
+        .where(eq(orderLines.orderId, order.id));
+
+      return jsonOk(c, toCustomerOrderStatusResponse(order, lines, merchant));
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
 
 merchantsRoutes.get(
   "/:merchantId/categories",
@@ -979,10 +1058,5 @@ merchantsRoutes.get(
 );
 
 async function findMerchant(merchantId: string) {
-  const [merchant] = await db
-    .select()
-    .from(merchants)
-    .where(eq(merchants.id, merchantId))
-    .limit(1);
-  return merchant;
+  return findMerchantById(merchantId);
 }

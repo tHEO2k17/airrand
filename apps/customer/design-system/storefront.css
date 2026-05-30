@@ -595,6 +595,20 @@
   flex-wrap: wrap;
 }
 
+.store-tracking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--store-space-2);
+  margin: var(--store-space-4) 0;
+}
+
+.store-store-list {
+  display: grid;
+  gap: var(--store-space-4);
+  width: 100%;
+  max-width: 480px;
+}
+
 .store-status-ref {
   margin: 0;
   font-size: var(--store-font-size-xl);

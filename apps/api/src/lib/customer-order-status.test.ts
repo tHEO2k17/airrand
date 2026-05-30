@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertCustomerSafeOrderStatusPayload,
   toCustomerOrderStatusResponse,
 } from "./customer-order-status.js";
+
+vi.mock("./customer-pickup-token.js", () => ({
+  issueCustomerPickupToken: () => "signed-pickup-token",
+}));
 
 describe("toCustomerOrderStatusResponse", () => {
   it("returns only customer-safe fields", () => {
@@ -53,8 +57,9 @@ describe("toCustomerOrderStatusResponse", () => {
       updatedAt: updatedAt.toISOString(),
       pickedUpAt: null,
       pickupTokenExpiresAt: expiresAt.toISOString(),
+      pickupToken: "signed-pickup-token",
       lines: [{ productName: "Espresso", quantity: 2 }],
-      merchant: { id: "merchant-1", name: "Demo Cafe" },
+      merchant: { id: "merchant-1", name: "Demo Cafe", slug: "demo-cafe" },
     });
 
     const serialized = JSON.stringify(result);

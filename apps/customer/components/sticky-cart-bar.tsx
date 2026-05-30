@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "./cart-context";
+import { useMerchant } from "./merchant-context";
 import { formatMoney } from "../lib/format";
+import { buildStoreCartPath } from "../lib/store-paths";
 import { Button } from "./ui/button";
 
 export function StickyCartBar() {
   const pathname = usePathname();
+  const { merchantSlug } = useMerchant();
   const { itemCount, subtotalCents, hydrated } = useCart();
+  const isCatalogPage = /^\/store\/[^/]+$/u.test(pathname);
 
-  if (pathname !== "/" || !hydrated || itemCount === 0) {
+  if (!isCatalogPage || !hydrated || itemCount === 0) {
     return null;
   }
 
@@ -23,7 +27,7 @@ export function StickyCartBar() {
           </strong>
           <span>Estimated order value {formatMoney(subtotalCents)}</span>
         </div>
-        <Link href="/cart">
+        <Link href={buildStoreCartPath(merchantSlug)}>
           <Button>View cart</Button>
         </Link>
       </div>

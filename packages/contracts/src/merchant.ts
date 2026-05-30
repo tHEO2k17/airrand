@@ -13,3 +13,7 @@ export type MerchantResponse = z.infer<typeof merchantResponseSchema>;
 export const listMerchantsResponseSchema = z.object({
   merchants: z.array(merchantResponseSchema),
 });
+
+export const merchantBySlugResponseSchema = merchantResponseSchema;
+
+export type MerchantBySlugResponse = z.infer<typeof merchantBySlugResponseSchema>;

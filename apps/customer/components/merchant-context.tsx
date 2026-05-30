@@ -9,19 +9,27 @@ import {
   useMemo,
   useState,
 } from "react";
-import { fetchMerchants } from "../lib/api";
-import { DEMO_MERCHANT_SLUG } from "../lib/config";
+import { ApiError, fetchMerchantBySlug } from "../lib/api";
+import { normalizeStoreSlug } from "../lib/store-slug";
 
 interface MerchantContextValue {
   merchant: MerchantResponse | null;
   merchantId: string | null;
+  merchantSlug: string;
   loading: boolean;
   error: string | null;
 }
 
 const MerchantContext = createContext<MerchantContextValue | null>(null);
 
-export function MerchantProvider({ children }: { children: React.ReactNode }) {
+export function StoreMerchantProvider({
+  merchantSlug,
+  children,
+}: {
+  merchantSlug: string;
+  children: React.ReactNode;
+}) {
+  const normalizedSlug = normalizeStoreSlug(merchantSlug);
   const [merchant, setMerchant] = useState<MerchantResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,21 +38,18 @@ export function MerchantProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const merchants = await fetchMerchants();
-      const demo = merchants.find((m) => m.slug === DEMO_MERCHANT_SLUG);
-      if (!demo) {
-        throw new Error(
-          `Demo merchant "${DEMO_MERCHANT_SLUG}" not found. Run pnpm db:seed.`,
-        );
-      }
-      setMerchant(demo);
+      setMerchant(await fetchMerchantBySlug(normalizedSlug));
     } catch (err) {
       setMerchant(null);
-      setError(err instanceof Error ? err.message : "Failed to load store");
+      if (err instanceof ApiError && err.code === "MERCHANT_NOT_FOUND") {
+        setError("This store could not be found. Check the link and try again.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to load store");
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [normalizedSlug]);
 
   useEffect(() => {
     void load();
@@ -54,10 +59,11 @@ export function MerchantProvider({ children }: { children: React.ReactNode }) {
     () => ({
       merchant,
       merchantId: merchant?.id ?? null,
+      merchantSlug: normalizedSlug,
       loading,
       error,
     }),
-    [merchant, loading, error],
+    [merchant, normalizedSlug, loading, error],
   );
 
   return (
@@ -68,7 +74,7 @@ export function MerchantProvider({ children }: { children: React.ReactNode }) {
 export function useMerchant() {
   const ctx = useContext(MerchantContext);
   if (!ctx) {
-    throw new Error("useMerchant must be used within MerchantProvider");
+    throw new Error("useMerchant must be used within StoreMerchantProvider");
   }
   return ctx;
 }

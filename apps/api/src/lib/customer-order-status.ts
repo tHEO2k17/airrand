@@ -1,5 +1,6 @@
 import type { CustomerOrderStatusResponse } from "@airrand/contracts";
 import type { Merchant, Order, OrderLine } from "@airrand/database";
+import { issueCustomerPickupToken } from "./customer-pickup-token.js";
 
 export function toCustomerOrderStatusResponse(
   order: Order,
@@ -14,6 +15,7 @@ export function toCustomerOrderStatusResponse(
     updatedAt: order.updatedAt.toISOString(),
     pickedUpAt: order.pickedUpAt?.toISOString() ?? null,
     pickupTokenExpiresAt: order.pickupTokenExpiresAt?.toISOString() ?? null,
+    pickupToken: issueCustomerPickupToken(order, merchant.id),
     lines: lines.map((line) => ({
       productName: line.productName,
       quantity: line.quantity,
@@ -21,6 +23,7 @@ export function toCustomerOrderStatusResponse(
     merchant: {
       id: merchant.id,
       name: merchant.name,
+      slug: merchant.slug,
     },
   };
 }

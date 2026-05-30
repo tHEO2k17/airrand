@@ -1,176 +1,67 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ProductResponse } from "@airrand/contracts";
-import { EmptyState } from "../components/ui/empty-state";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { MerchantResponse } from "@airrand/contracts";
 import { AlertMessage } from "../components/ui/alert-message";
 import { Button } from "../components/ui/button";
+import { EmptyState } from "../components/ui/empty-state";
 import { LoadingState } from "../components/ui/loading-state";
 import { Surface } from "../components/ui/surface";
-import { Badge } from "../components/ui/badge";
-import { useCart } from "../components/cart-context";
-import { useMerchant } from "../components/merchant-context";
-import { fetchAvailableProducts } from "../lib/api";
-import { formatMoney } from "../lib/format";
-import { getProductIcon } from "../lib/product-icon";
+import { fetchMerchants } from "../lib/api";
+import { buildStorePath } from "../lib/store-paths";
 
-export default function CatalogPage() {
-  const { merchant, merchantId, loading: merchantLoading, error: merchantError } =
-    useMerchant();
-  const { addProduct } = useCart();
-  const [products, setProducts] = useState<ProductResponse[]>([]);
+export default function HomePage() {
+  const [merchants, setMerchants] = useState<MerchantResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [addedId, setAddedId] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
-
-  const load = useCallback(async () => {
-    if (!merchantId) {
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      setProducts(await fetchAvailableProducts(merchantId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load menu");
-    } finally {
-      setLoading(false);
-    }
-  }, [merchantId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  const categoryChips = useMemo(() => {
-    const byId = new Map<string, string>();
-    for (const product of products) {
-      if (product.category) {
-        byId.set(product.category.id, product.category.name);
+    void (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        setMerchants(await fetchMerchants());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load stores");
+      } finally {
+        setLoading(false);
       }
-    }
-    return [...byId.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
-
-  const filteredProducts = useMemo(() => {
-    if (categoryFilter === "all") {
-      return products;
-    }
-    return products.filter((p) => p.categoryId === categoryFilter);
-  }, [products, categoryFilter]);
-
-  function handleAdd(product: ProductResponse) {
-    addProduct({
-      id: product.id,
-      name: product.name,
-      unitPriceCents: product.unitPriceCents,
-    });
-    setAddedId(product.id);
-    setTimeout(() => setAddedId(null), 1500);
-  }
+    })();
+  }, []);
 
   return (
-    <div className="store-page">
+    <div className="store-page store-page--centered">
       <header className="store-hero">
-        <h1>{merchant?.name ?? "Store"}</h1>
-        <p>Order ahead and pick up faster.</p>
+        <p className="store-header__brand">airRand</p>
+        <h1>Order ahead for pickup</h1>
+        <p>Choose a store to browse the menu and reserve for pickup.</p>
       </header>
 
-      {merchantError ? <AlertMessage variant="error" message={merchantError} /> : null}
       {error ? <AlertMessage variant="error" message={error} /> : null}
-      {merchantLoading || loading ? <LoadingState label="Loading menu…" /> : null}
+      {loading ? <LoadingState label="Loading stores…" /> : null}
 
-      {!loading && !error && products.length > 0 && categoryChips.length > 0 ? (
-        <div className="store-category-chips" role="tablist" aria-label="Categories">
-          <button
-            type="button"
-            className={`store-category-chip${categoryFilter === "all" ? " store-category-chip--active" : ""}`}
-            onClick={() => setCategoryFilter("all")}
-          >
-            All
-          </button>
-          {categoryChips.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              className={`store-category-chip${categoryFilter === category.id ? " store-category-chip--active" : ""}`}
-              onClick={() => setCategoryFilter(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {!loading && !error && products.length === 0 ? (
+      {!loading && !error && merchants.length === 0 ? (
         <Surface>
           <EmptyState
-            title="Nothing on the menu yet"
-            description="Check back soon — this store has no available items right now."
+            title="No stores available"
+            description="Check back soon — no merchants are listed yet."
           />
         </Surface>
       ) : null}
 
-      {!loading && filteredProducts.length > 0 ? (
-        <div className="store-product-grid">
-          {filteredProducts.map((product) => {
-            const Icon = getProductIcon(product.name);
-            const outOfStock = product.stockState === "out_of_stock";
-            return (
-              <Surface
-                key={product.id}
-                className={`store-product-card${outOfStock ? " store-product-card--disabled" : ""}`}
-                padding="lg"
-              >
-                <div className="store-product-card__top">
-                  <div className="store-product-card__icon" aria-hidden>
-                    <Icon size={24} strokeWidth={1.75} />
-                  </div>
-                  <div className="store-product-card__body">
-                    <div className="store-product-card__meta">
-                      {product.category ? (
-                        <span className="store-product-card__category">
-                          {product.category.name}
-                        </span>
-                      ) : null}
-                      {product.stockState === "low_stock" ? (
-                        <Badge tone="accent">Low stock</Badge>
-                      ) : null}
-                    </div>
-                    <h2 className="store-product-card__name">{product.name}</h2>
-                    {product.description ? (
-                      <p className="store-product-card__desc">
-                        {product.description}
-                      </p>
-                    ) : null}
-                    <p className="store-product-card__price">
-                      {formatMoney(product.unitPriceCents)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  block
-                  variant={addedId === product.id ? "secondary" : "primary"}
-                  disabled={outOfStock || !product.isAvailable}
-                  onClick={() => handleAdd(product)}
-                >
-                  {outOfStock
-                    ? "Out of stock"
-                    : addedId === product.id
-                      ? "Added to cart"
-                      : "Add to cart"}
-                </Button>
-              </Surface>
-            );
-          })}
+      {!loading && merchants.length > 0 ? (
+        <div className="store-store-list">
+          {merchants.map((merchant) => (
+            <Surface key={merchant.id} padding="lg">
+              <h2 className="store-section-title">{merchant.name}</h2>
+              <p className="store-total-hint">/{merchant.slug}</p>
+              <Link href={buildStorePath(merchant.slug)} style={{ display: "block", marginTop: "1rem" }}>
+                <Button block>Open store</Button>
+              </Link>
+            </Surface>
+          ))}
         </div>
-      ) : null}
-
-      {!loading && products.length > 0 && filteredProducts.length === 0 ? (
-        <p className="store-muted">No items in this category right now.</p>
       ) : null}
     </div>
   );

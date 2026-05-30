@@ -38,22 +38,31 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  merchantSlug,
+  children,
+}: {
+  merchantSlug: string;
+  children: React.ReactNode;
+}) {
   const [cart, setCart] = useState<CartState>({ items: [] });
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setCart(readCartFromStorage());
+    setCart(readCartFromStorage(merchantSlug));
     setHydrated(true);
-  }, []);
+  }, [merchantSlug]);
 
-  const updateCart = useCallback((updater: (current: CartState) => CartState) => {
-    setCart((current) => {
-      const next = updater(current);
-      writeCartToStorage(next);
-      return next;
-    });
-  }, []);
+  const updateCart = useCallback(
+    (updater: (current: CartState) => CartState) => {
+      setCart((current) => {
+        const next = updater(current);
+        writeCartToStorage(merchantSlug, next);
+        return next;
+      });
+    },
+    [merchantSlug],
+  );
 
   const addProduct = useCallback(
     (product: { id: string; name: string; unitPriceCents: number }) => {
@@ -77,9 +86,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const clearCart = useCallback(() => {
-    clearCartStorage();
+    clearCartStorage(merchantSlug);
     setCart({ items: [] });
-  }, []);
+  }, [merchantSlug]);
 
   const value = useMemo<CartContextValue>(
     () => ({

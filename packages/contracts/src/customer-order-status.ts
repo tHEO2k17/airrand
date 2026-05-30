@@ -11,6 +11,7 @@ export type CustomerOrderStatusLine = z.infer<typeof customerOrderStatusLineSche
 export const customerOrderStatusMerchantSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
+  slug: z.string(),
 });
 
 export type CustomerOrderStatusMerchant = z.infer<
@@ -25,6 +26,7 @@ export const customerOrderStatusResponseSchema = z.object({
   updatedAt: z.string().datetime(),
   pickedUpAt: z.string().datetime().nullable(),
   pickupTokenExpiresAt: z.string().datetime().nullable(),
+  pickupToken: z.string().nullable(),
   lines: z.array(customerOrderStatusLineSchema),
   merchant: customerOrderStatusMerchantSchema,
 });

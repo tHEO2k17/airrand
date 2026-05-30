@@ -1,4 +1,4 @@
-import { CART_STORAGE_KEY } from "./config";
+import { getCartStorageKey, LEGACY_CART_STORAGE_KEY } from "./config";
 
 export interface CartItem {
   productId: string;
@@ -15,15 +15,8 @@ export function emptyCart(): CartState {
   return { items: [] };
 }
 
-export function readCartFromStorage(): CartState {
-  if (typeof window === "undefined") {
-    return emptyCart();
-  }
+function parseCartState(raw: string): CartState {
   try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
-    if (!raw) {
-      return emptyCart();
-    }
     const parsed = JSON.parse(raw) as CartState;
     if (!Array.isArray(parsed.items)) {
       return emptyCart();
@@ -44,12 +37,30 @@ export function readCartFromStorage(): CartState {
   }
 }
 
-export function writeCartToStorage(cart: CartState): void {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+export function readCartFromStorage(merchantSlug: string): CartState {
+  if (typeof window === "undefined") {
+    return emptyCart();
+  }
+
+  const scoped = localStorage.getItem(getCartStorageKey(merchantSlug));
+  if (scoped) {
+    return parseCartState(scoped);
+  }
+
+  const legacy = localStorage.getItem(LEGACY_CART_STORAGE_KEY);
+  if (legacy) {
+    return parseCartState(legacy);
+  }
+
+  return emptyCart();
 }
 
-export function clearCartStorage(): void {
-  localStorage.removeItem(CART_STORAGE_KEY);
+export function writeCartToStorage(merchantSlug: string, cart: CartState): void {
+  localStorage.setItem(getCartStorageKey(merchantSlug), JSON.stringify(cart));
+}
+
+export function clearCartStorage(merchantSlug: string): void {
+  localStorage.removeItem(getCartStorageKey(merchantSlug));
 }
 
 export function getCartItemCount(cart: CartState): number {

@@ -27,6 +27,10 @@ export {
   parseOrderReference,
 } from "./order-reference.js";
 export {
+  isValidMerchantSlug,
+  normalizeMerchantSlug,
+} from "./merchant-slug.js";
+export {
   AUDIT_EXPORT_CSV_HEADERS,
   buildAuditExportCsv,
   escapeCsvField,

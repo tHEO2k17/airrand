@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import { CartProvider } from "../components/cart-context";
+import { MerchantProvider } from "../components/merchant-context";
+import { SiteHeader } from "../components/site-header";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "airRand",
@@ -12,7 +16,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <div className="app-shell">
+          <MerchantProvider>
+            <CartProvider>
+              <SiteHeader />
+              <main className="app-main">{children}</main>
+            </CartProvider>
+          </MerchantProvider>
+        </div>
+      </body>
     </html>
   );
 }

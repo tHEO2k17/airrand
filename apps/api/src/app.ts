@@ -10,7 +10,9 @@ app.use(
   cors({
     origin: [
       "http://localhost:3001",
+      "http://localhost:3002",
       process.env.MERCHANT_APP_URL ?? "",
+      process.env.CUSTOMER_APP_URL ?? "",
     ].filter(Boolean),
     allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type"],

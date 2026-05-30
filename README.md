@@ -53,10 +53,11 @@ pnpm test
 
 ### Environment
 
-Root `.env` powers the API and database scripts. The merchant app needs its own env file:
+Root `.env` powers the API and database scripts. Each Next.js app needs its own env file:
 
 ```bash
 cp apps/merchant/.env.example apps/merchant/.env.local
+cp apps/customer/.env.example apps/customer/.env.local
 # NEXT_PUBLIC_API_BASE_URL=http://localhost:3003
 ```
 
@@ -65,9 +66,9 @@ cp apps/merchant/.env.example apps/merchant/.env.local
 Start Postgres if needed (`docker compose up -d`), then:
 
 ```bash
-# API + merchant UI (recommended for Phase 3)
 pnpm --filter @airrand/api dev        # http://localhost:3003
 pnpm --filter @airrand/merchant dev   # http://localhost:3001
+pnpm --filter @airrand/customer dev   # http://localhost:3002
 ```
 
 Or all apps:
@@ -78,9 +79,15 @@ pnpm dev
 
 API health check: `GET http://localhost:3003/health`
 
-The merchant UI loads the seeded **Demo Cafe** merchant (`demo-cafe`) automatically.
+Both web apps load the seeded **Demo Cafe** merchant (`demo-cafe`) automatically.
 
-Pickup flow: mark an order **ready** on the Orders screen, paste the customer's pickup token on **Pickup**, or use the API directly.
+### End-to-end demo flow
+
+1. **Customer** (`:3002`): browse menu → add to cart → place pickup order → show QR/token on confirmation.
+2. **Merchant** (`:3001`): see order on Orders → Accept → Mark ready.
+3. **Merchant** Pickup screen: paste token (or scan later) → verify → order becomes `picked_up`.
+
+Payment happens outside airRand; the apps only coordinate reservation and pickup verification.
 
 ## Local database (Docker)
 
@@ -138,5 +145,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 1**: Database schema, contracts, domain rules, API
 - **Phase 1.5**: Local Docker PostgreSQL
 - **Phase 2**: QR pickup token issue/verify
-- **Phase 3** (current): Merchant UI
-- **Phase 4**: Customer UI
+- **Phase 3**: Merchant UI
+- **Phase 4** (current): Customer UI

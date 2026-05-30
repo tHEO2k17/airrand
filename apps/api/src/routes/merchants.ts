@@ -3,9 +3,6 @@ import {
   createOrderSchema,
   createProductCategorySchema,
   createProductSchema,
-  listOrdersQuerySchema,
-  listProductsQuerySchema,
-  auditExportJobResponseSchema,
   auditExportQueuedResponseSchema,
   auditExportRequestSchema,
   pickupVerifyRequestSchema,
@@ -23,7 +20,6 @@ import {
   allocateOrderReference,
   AUDIT_ACTIONS,
   auditExportJobs,
-  auditLogs,
   insertAuditLog,
   merchants,
   orderLines,
@@ -32,15 +28,13 @@ import {
   products,
 } from "@airrand/database";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../lib/db.js";
 import {
   findMerchantById,
-  findMerchantBySlug,
 } from "../lib/merchant-lookup.js";
 import { handleRouteError } from "../lib/errors.js";
-import { toAuditLogResponse } from "../lib/audit.js";
 import { toCustomerOrderStatusResponse } from "../lib/customer-order-status.js";
 import {
   toOrderResponse,
@@ -50,7 +44,6 @@ import {
 import {
   assertProductOrderable,
   findMerchantCategory,
-  listProductsWithCategories,
 } from "../lib/product-catalog.js";
 import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
@@ -60,7 +53,6 @@ import {
   buildOrderReadyForPickupNotification,
   enqueueOperationalNotificationBestEffort,
 } from "../lib/notification-queue.js";
-import { toAuditExportJobResponse } from "../lib/audit-export.js";
 import {
   ExportDownloadError,
   getExportDownloadFilename,
@@ -71,7 +63,14 @@ import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
 import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
+import { getAuditExportJobStatusHandler } from "../queries/get-audit-export-job-status/index.js";
+import { getCustomerOrderStatusBySlugReferenceHandler } from "../queries/get-customer-order-status-by-slug-reference/index.js";
+import { getCustomerOrderStatusHandler } from "../queries/get-customer-order-status/index.js";
 import { getMerchantBySlugHandler } from "../queries/get-merchant-by-slug/index.js";
+import { listAuditLogsHandler } from "../queries/list-audit-logs/index.js";
+import { listMerchantCategoriesHandler } from "../queries/list-merchant-categories/index.js";
+import { listMerchantOrdersHandler } from "../queries/list-merchant-orders/index.js";
+import { listMerchantProductsHandler } from "../queries/list-merchant-products/index.js";
 import { listMerchantsHandler } from "../queries/list-merchants/index.js";
 import { listPublicProductsBySlugHandler } from "../queries/list-public-products-by-slug/index.js";
 import { staffRoutes } from "./staff.js";
@@ -138,31 +137,20 @@ merchantsRoutes.get(
   "/by-slug/:slug/orders/by-reference/:reference/status",
   async (c) => {
     try {
-      const merchant = await findMerchantBySlug(c.req.param("slug"));
-      if (!merchant) {
+      const result = await getCustomerOrderStatusBySlugReferenceHandler({
+        slug: c.req.param("slug"),
+        reference: c.req.param("reference"),
+      });
+
+      if (result.kind === "merchant_not_found") {
         return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
       }
 
-      const reference = normalizeOrderReferenceQuery(c.req.param("reference"));
-
-      const [order] = await db
-        .select()
-        .from(orders)
-        .where(
-          and(eq(orders.merchantId, merchant.id), eq(orders.reference, reference)),
-        )
-        .limit(1);
-
-      if (!order) {
+      if (result.kind === "order_not_found") {
         return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
       }
 
-      const lines = await db
-        .select()
-        .from(orderLines)
-        .where(eq(orderLines.orderId, order.id));
-
-      return jsonOk(c, toCustomerOrderStatusResponse(order, lines, merchant));
+      return jsonOk(c, result.status);
     } catch (error) {
       return handleRouteError(c, error);
     }
@@ -175,19 +163,15 @@ merchantsRoutes.get(
   requirePasswordChangeComplete(),
   async (c) => {
     try {
-      const merchantId = c.req.param("merchantId");
-      const merchant = await findMerchant(merchantId);
-      if (!merchant) {
+      const result = await listMerchantCategoriesHandler({
+        merchantId: c.req.param("merchantId"),
+      });
+
+      if (result.kind === "merchant_not_found") {
         return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
       }
 
-      const rows = await db
-        .select()
-        .from(productCategories)
-        .where(eq(productCategories.merchantId, merchantId))
-        .orderBy(asc(productCategories.sortOrder), asc(productCategories.name));
-
-      return jsonOk(c, { categories: rows.map(toProductCategoryResponse) });
+      return jsonOk(c, { categories: result.categories });
     } catch (error) {
       return handleRouteError(c, error);
     }
@@ -274,27 +258,20 @@ merchantsRoutes.patch(
 
 merchantsRoutes.get("/:merchantId/products", async (c) => {
   try {
-    const merchantId = c.req.param("merchantId");
-    const merchant = await findMerchant(merchantId);
-    if (!merchant) {
+    const result = await listMerchantProductsHandler({
+      merchantId: c.req.param("merchantId"),
+      query: c.req.query(),
+    });
+
+    if (result.kind === "merchant_not_found") {
       return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
     }
 
-    const query = listProductsQuerySchema.safeParse(c.req.query());
-    if (!query.success) {
-      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
+    if (result.kind === "validation_error") {
+      return jsonError(c, "VALIDATION_ERROR", result.message, 400);
     }
 
-    const rows = await listProductsWithCategories(
-      merchantId,
-      query.data.availableOnly ?? false,
-    );
-
-    return jsonOk(c, {
-      products: rows.map(({ product, category }) =>
-        toProductResponse(product, category),
-      ),
-    });
+    return jsonOk(c, { products: result.products });
   } catch (error) {
     return handleRouteError(c, error);
   }
@@ -549,55 +526,24 @@ merchantsRoutes.get(
   requirePasswordChangeComplete(),
   requireMerchantPermission("order:view"),
   async (c) => {
-  try {
-    const merchantId = c.req.param("merchantId");
-    const merchant = await findMerchant(merchantId);
-    if (!merchant) {
-      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    try {
+      const result = await listMerchantOrdersHandler({
+        merchantId: c.req.param("merchantId"),
+        query: c.req.query(),
+      });
+
+      if (result.kind === "merchant_not_found") {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      if (result.kind === "validation_error") {
+        return jsonError(c, "VALIDATION_ERROR", result.message, 400);
+      }
+
+      return jsonOk(c, { orders: result.orders });
+    } catch (error) {
+      return handleRouteError(c, error);
     }
-
-    const query = listOrdersQuerySchema.safeParse(c.req.query());
-    if (!query.success) {
-      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
-    }
-
-    const conditions = [eq(orders.merchantId, merchantId)];
-    if (query.data.reference) {
-      conditions.push(
-        eq(orders.reference, normalizeOrderReferenceQuery(query.data.reference)),
-      );
-    }
-
-    const orderRows = await db
-      .select()
-      .from(orders)
-      .where(and(...conditions))
-      .orderBy(asc(orders.createdAt));
-
-    const orderIds = orderRows.map((o) => o.id);
-    const lines =
-      orderIds.length === 0
-        ? []
-        : await db
-            .select()
-            .from(orderLines)
-            .where(inArray(orderLines.orderId, orderIds));
-
-    const linesByOrderId = new Map<string, typeof lines>();
-    for (const line of lines) {
-      const existing = linesByOrderId.get(line.orderId) ?? [];
-      existing.push(line);
-      linesByOrderId.set(line.orderId, existing);
-    }
-
-    return jsonOk(c, {
-      orders: orderRows.map((order) =>
-        toOrderResponse(order, linesByOrderId.get(order.id) ?? []),
-      ),
-    });
-  } catch (error) {
-    return handleRouteError(c, error);
-  }
   },
 );
 
@@ -639,30 +585,20 @@ merchantsRoutes.get(
 
 merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
   try {
-    const merchantId = c.req.param("merchantId");
-    const orderId = c.req.param("orderId");
+    const result = await getCustomerOrderStatusHandler({
+      merchantId: c.req.param("merchantId"),
+      orderId: c.req.param("orderId"),
+    });
 
-    const merchant = await findMerchant(merchantId);
-    if (!merchant) {
+    if (result.kind === "merchant_not_found") {
       return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
     }
 
-    const [order] = await db
-      .select()
-      .from(orders)
-      .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
-      .limit(1);
-
-    if (!order) {
+    if (result.kind === "order_not_found") {
       return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
     }
 
-    const lines = await db
-      .select()
-      .from(orderLines)
-      .where(eq(orderLines.orderId, orderId));
-
-    return jsonOk(c, toCustomerOrderStatusResponse(order, lines, merchant));
+    return jsonOk(c, result.status);
   } catch (error) {
     return handleRouteError(c, error);
   }
@@ -874,32 +810,19 @@ merchantsRoutes.get(
   requirePasswordChangeComplete(),
   requireMerchantPermission("audit_log:view"),
   async (c) => {
-  try {
-    const merchantId = c.req.param("merchantId");
-    const merchant = await findMerchant(merchantId);
-    if (!merchant) {
-      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    try {
+      const result = await listAuditLogsHandler({
+        merchantId: c.req.param("merchantId"),
+      });
+
+      if (result.kind === "merchant_not_found") {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      return jsonOk(c, { auditLogs: result.auditLogs });
+    } catch (error) {
+      return handleRouteError(c, error);
     }
-
-    const rows = await db
-      .select({
-        log: auditLogs,
-        orderReference: orders.reference,
-      })
-      .from(auditLogs)
-      .leftJoin(orders, eq(auditLogs.orderId, orders.id))
-      .where(eq(auditLogs.merchantId, merchantId))
-      .orderBy(desc(auditLogs.createdAt))
-      .limit(100);
-
-    return jsonOk(c, {
-      auditLogs: rows.map((row) =>
-        toAuditLogResponse(row.log, row.orderReference),
-      ),
-    });
-  } catch (error) {
-    return handleRouteError(c, error);
-  }
   },
 );
 
@@ -977,29 +900,16 @@ merchantsRoutes.get(
   requireMerchantPermission("audit_log:view"),
   async (c) => {
     try {
-      const merchantId = c.req.param("merchantId");
-      const exportJobId = c.req.param("exportJobId");
+      const result = await getAuditExportJobStatusHandler({
+        merchantId: c.req.param("merchantId"),
+        exportJobId: c.req.param("exportJobId"),
+      });
 
-      const [job] = await db
-        .select()
-        .from(auditExportJobs)
-        .where(
-          and(
-            eq(auditExportJobs.id, exportJobId),
-            eq(auditExportJobs.merchantId, merchantId),
-          ),
-        )
-        .limit(1);
-
-      if (!job) {
+      if (result.kind === "not_found") {
         return jsonError(c, "EXPORT_NOT_FOUND", "Export job not found", 404);
       }
 
-      const response = auditExportJobResponseSchema.parse(
-        toAuditExportJobResponse(job, merchantId),
-      );
-
-      return jsonOk(c, response);
+      return jsonOk(c, result.job);
     } catch (error) {
       return handleRouteError(c, error);
     }

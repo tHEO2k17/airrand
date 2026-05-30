@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { AuditLogResponse } from "@airrand/contracts";
+import type { AuditExportJobResponse, AuditLogResponse } from "@airrand/contracts";
 import { AlertMessage } from "../../components/ui/alert-message";
 import { Button } from "../../components/ui/button";
 import { LoadingState } from "../../components/ui/loading-state";
@@ -9,10 +9,31 @@ import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
 import { Surface } from "../../components/ui/surface";
 import { useMerchant } from "../../components/merchant-context";
-import { ApiError, fetchAuditLogs, requestAuditExport } from "../../lib/api";
+import {
+  ApiError,
+  downloadAuditExportCsv,
+  fetchAuditExportStatus,
+  fetchAuditLogs,
+  requestAuditExport,
+} from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
 import { isForbiddenApiError } from "../../lib/permissions";
 import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
+
+const EXPORT_POLL_MS = 4000;
+
+function exportStatusLabel(status: AuditExportJobResponse["status"]): string {
+  switch (status) {
+    case "queued":
+      return "Queued";
+    case "processing":
+      return "Processing";
+    case "completed":
+      return "Ready";
+    case "failed":
+      return "Failed";
+  }
+}
 
 function AuditLogsContent() {
   const { merchantId } = useMerchant();
@@ -21,7 +42,11 @@ function AuditLogsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [exportSuccess, setExportSuccess] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [activeExportJobId, setActiveExportJobId] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<AuditExportJobResponse | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     if (!merchantId || !canViewAuditLogs) {
@@ -48,16 +73,83 @@ function AuditLogsContent() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!merchantId || !activeExportJobId) {
+      return;
+    }
+
+    let cancelled = false;
+    const intervalId = window.setInterval(() => {
+      void fetchAuditExportStatus(merchantId, activeExportJobId)
+        .then((status) => {
+          if (cancelled) {
+            return;
+          }
+          setExportStatus(status);
+          if (status.status === "failed") {
+            setError(status.errorMessage ?? "Audit export failed.");
+          }
+          if (status.status === "completed" || status.status === "failed") {
+            window.clearInterval(intervalId);
+          }
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setError(
+              err instanceof Error ? err.message : "Failed to check export status",
+            );
+          }
+        });
+    }, EXPORT_POLL_MS);
+
+    void fetchAuditExportStatus(merchantId, activeExportJobId)
+      .then((status) => {
+        if (cancelled) {
+          return;
+        }
+        setExportStatus(status);
+        if (status.status === "failed") {
+          setError(status.errorMessage ?? "Audit export failed.");
+        }
+        if (status.status === "completed" || status.status === "failed") {
+          window.clearInterval(intervalId);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to check export status",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [merchantId, activeExportJobId]);
+
   async function handleRequestExport() {
     if (!merchantId) {
       return;
     }
     setExporting(true);
     setError(null);
-    setExportSuccess(null);
+    setExportStatus(null);
     try {
       const result = await requestAuditExport(merchantId);
-      setExportSuccess(`Export queued (job ${result.jobId}).`);
+      setActiveExportJobId(result.exportJobId);
+      setExportStatus({
+        exportJobId: result.exportJobId,
+        merchantId,
+        status: result.status,
+        format: "csv",
+        createdAt: new Date().toISOString(),
+        startedAt: null,
+        completedAt: null,
+        downloadUrl: null,
+        errorMessage: null,
+      });
     } catch (err) {
       if (err instanceof ApiError && isForbiddenApiError(err)) {
         setError("You do not have permission to export audit logs.");
@@ -70,6 +162,27 @@ function AuditLogsContent() {
       }
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleDownloadExport() {
+    if (!merchantId || !activeExportJobId) {
+      return;
+    }
+    setDownloading(true);
+    setError(null);
+    try {
+      const blob = await downloadAuditExportCsv(merchantId, activeExportJobId);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `audit-export-${activeExportJobId}.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download export");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -104,9 +217,29 @@ function AuditLogsContent() {
         >
           {exporting ? "Requesting…" : "Request Export"}
         </Button>
+        {exportStatus ? (
+          <span className="pos-muted">
+            Export {exportStatus.exportJobId.slice(0, 8)}… —{" "}
+            {exportStatusLabel(exportStatus.status)}
+          </span>
+        ) : null}
+        {exportStatus?.status === "completed" ? (
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => void handleDownloadExport()}
+            disabled={downloading}
+          >
+            {downloading ? "Downloading…" : "Download CSV"}
+          </Button>
+        ) : null}
       </Surface>
-      {exportSuccess ? (
-        <AlertMessage variant="success" message={exportSuccess} />
+      {exportStatus?.status === "completed" ? (
+        <AlertMessage
+          variant="success"
+          message={`Export ready (job ${exportStatus.exportJobId}).`}
+        />
       ) : null}
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {loading ? <LoadingState /> : null}

@@ -26,3 +26,18 @@ export {
   normalizeOrderReferenceQuery,
   parseOrderReference,
 } from "./order-reference.js";
+export {
+  AUDIT_EXPORT_CSV_HEADERS,
+  buildAuditExportCsv,
+  escapeCsvField,
+  formatAuditExportCsvRow,
+  sanitizeAuditExportMetadata,
+  type AuditExportCsvRow,
+} from "./audit-export-csv.js";
+export {
+  DEFAULT_EXPORT_STORAGE_DIR,
+  buildAuditExportDownloadFilename,
+  buildRelativeExportFilePath,
+  assertSafeRelativeExportPath,
+  getExportStorageDir,
+} from "./audit-export-storage.js";

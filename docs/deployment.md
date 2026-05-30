@@ -103,16 +103,18 @@ Readiness checks:
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
 
-### Background worker (Phase 10A–10B)
+### Background worker (Phase 10A–10C)
 
 | Property | Detail |
 |----------|--------|
 | Process | `apps/worker` — BullMQ consumers only |
 | HTTP | **None** — do not route traffic to the worker |
 | Redis | **Required** — same `REDIS_URL` as the API |
-| Queues | `audit.export.requested` (API producer wired in 10B), `notification.placeholder` (placeholder) |
+| Database | **Required** — same `DATABASE_URL` as the API (audit export jobs + audit log reads) |
+| Storage | **Local filesystem** — `EXPORT_STORAGE_DIR` (default `./storage/exports`); mount shared volume if API and worker are separate containers |
+| Queues | `audit.export.requested` (CSV generation), `notification.placeholder` (placeholder) |
 
-**Audit export:** `POST /merchants/:merchantId/audit-logs/export` enqueues `audit.export.requested`. The worker validates the job and logs `audit_export_requested`. There is **no file output or email** in this phase — jobs are acknowledged only. If the worker is not running, jobs accumulate in Redis until a worker starts.
+**Audit export:** `POST /merchants/:merchantId/audit-logs/export` creates an `audit_export_jobs` row and enqueues BullMQ work. The worker generates a CSV and the merchant downloads it via authenticated `GET .../exports/:exportJobId/download`. **No email** in this phase. For production, plan durable object storage instead of local disk.
 
 **Readiness:** The API `GET /ready` checks Redis for the API process. The worker has no `/ready` endpoint. For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
 

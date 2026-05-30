@@ -1,5 +1,6 @@
 import type {
   AssignableStaffRole,
+  AuditExportJobResponse,
   AuditExportQueuedResponse,
   AuditLogResponse,
   CreateProductInput,
@@ -162,6 +163,46 @@ export async function requestAuditExport(
       body: JSON.stringify(input ?? {}),
     },
   );
+}
+
+export async function fetchAuditExportStatus(
+  merchantId: string,
+  exportJobId: string,
+): Promise<AuditExportJobResponse> {
+  return request<AuditExportJobResponse>(
+    `/merchants/${merchantId}/audit-logs/exports/${exportJobId}`,
+  );
+}
+
+export async function downloadAuditExportCsv(
+  merchantId: string,
+  exportJobId: string,
+): Promise<Blob> {
+  const res = await fetch(
+    `${getApiBaseUrl()}/merchants/${merchantId}/audit-logs/exports/${exportJobId}/download`,
+    {
+      headers: {
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+      },
+    },
+  );
+
+  if (!res.ok) {
+    let message = res.statusText;
+    let code = "DOWNLOAD_FAILED";
+    try {
+      const body = (await res.json()) as ApiEnvelope<unknown>;
+      if ("error" in body) {
+        message = body.error.message;
+        code = body.error.code;
+      }
+    } catch {
+      // Non-JSON error body
+    }
+    throw new ApiError(code, message, res.status);
+  }
+
+  return res.blob();
 }
 
 export async function fetchStaff(merchantId: string): Promise<StaffMemberResponse[]> {

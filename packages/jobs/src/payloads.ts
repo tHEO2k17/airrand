@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const auditExportRequestedPayloadSchema = z.object({
+  exportJobId: z.string().uuid(),
   merchantId: z.string().uuid(),
   requestedByMerchantUserId: z.string().uuid(),
   format: z.enum(["csv"]).default("csv"),

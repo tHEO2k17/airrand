@@ -12,6 +12,7 @@ describe("audit export queue helper", () => {
 
   it("builds a validated job payload with defaults", () => {
     const payload = buildAuditExportJobPayload({
+      exportJobId: "33333333-3333-3333-3333-333333333333",
       merchantId: "11111111-1111-1111-1111-111111111111",
       requestedByMerchantUserId: "22222222-2222-2222-2222-222222222222",
       format: "csv",
@@ -19,12 +20,14 @@ describe("audit export queue helper", () => {
     });
 
     expect(payload.format).toBe("csv");
+    expect(payload.exportJobId).toBe("33333333-3333-3333-3333-333333333333");
     expect(payload.requestedAt).toBe("2026-01-01T12:00:00.000Z");
   });
 
   it("rejects invalid merchant ids", () => {
     expect(() =>
       buildAuditExportJobPayload({
+        exportJobId: "33333333-3333-3333-3333-333333333333",
         merchantId: "not-a-uuid",
         requestedByMerchantUserId: "22222222-2222-2222-2222-222222222222",
         format: "csv",

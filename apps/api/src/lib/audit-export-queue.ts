@@ -21,6 +21,7 @@ function getAuditExportQueue(): Queue {
 }
 
 export type EnqueueAuditExportInput = {
+  exportJobId: string;
   merchantId: string;
   requestedByMerchantUserId: string;
   format: "csv";
@@ -29,6 +30,7 @@ export type EnqueueAuditExportInput = {
 
 export function buildAuditExportJobPayload(input: EnqueueAuditExportInput) {
   return auditExportRequestedPayloadSchema.parse({
+    exportJobId: input.exportJobId,
     merchantId: input.merchantId,
     requestedByMerchantUserId: input.requestedByMerchantUserId,
     format: input.format,

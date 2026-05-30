@@ -13,9 +13,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@airrand/database": "workspace:*",
+    "@airrand/domain": "workspace:*",
     "@airrand/jobs": "workspace:*",
     "bullmq": "^5.53.0",
     "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
     "ioredis": "^5.6.1"
   },
   "devDependencies": {

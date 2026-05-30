@@ -25,6 +25,7 @@ Used by `apps/api`, `pnpm db:*`, and Docker API containers.
 | `RATE_LIMIT_MAX_READS` | No | `120` | Max GET (read) requests per IP per window |
 | `RATE_LIMIT_MAX_MUTATIONS` | No | `30` | Max POST/PATCH/etc. per IP per window |
 | `WORKER_CONCURRENCY` | No | `5` | BullMQ job concurrency per queue (`apps/worker`) |
+| `EXPORT_STORAGE_DIR` | No | `./storage/exports` | Local directory for generated audit export CSV files (API download + worker write) |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3001,http://localhost:3002` | Comma-separated browser origins allowed to call the API |
 
 ### Deprecated / optional (documentation only)
@@ -105,9 +106,11 @@ When `REDIS_URL` is set, counters are shared across API replicas via keys `airra
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `REDIS_URL` | Yes (worker) | — | BullMQ connection; worker exits on startup if unset |
+| `DATABASE_URL` | Yes (worker) | — | PostgreSQL for audit export job status and CSV source data |
 | `WORKER_CONCURRENCY` | No | `5` | Concurrent jobs per queue |
+| `EXPORT_STORAGE_DIR` | No | `./storage/exports` | Local directory where completed CSV exports are written |
 
-The worker does not read `DATABASE_URL` in this phase. Queue names and payload schemas live in `@airrand/jobs`.
+Queue names and payload schemas live in `@airrand/jobs`. The worker reads audit logs, writes CSV files under `EXPORT_STORAGE_DIR/{merchantId}/{exportJobId}.csv`, and updates `audit_export_jobs` status. **Use durable object storage (S3/MinIO) in production** — local disk is MVP-only and must be shared/mounted if API and worker run on different hosts.
 
 ---
 

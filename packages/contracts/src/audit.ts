@@ -34,10 +34,36 @@ export const auditExportRequestSchema = z.object({
 export type AuditExportRequest = z.infer<typeof auditExportRequestSchema>;
 
 export const auditExportQueuedResponseSchema = z.object({
+  exportJobId: z.string().uuid(),
   jobId: z.string().min(1),
   status: z.literal("queued"),
 });
 
 export type AuditExportQueuedResponse = z.infer<
   typeof auditExportQueuedResponseSchema
+>;
+
+export const auditExportJobStatusSchema = z.enum([
+  "queued",
+  "processing",
+  "completed",
+  "failed",
+]);
+
+export type AuditExportJobStatus = z.infer<typeof auditExportJobStatusSchema>;
+
+export const auditExportJobResponseSchema = z.object({
+  exportJobId: z.string().uuid(),
+  merchantId: z.string().uuid(),
+  status: auditExportJobStatusSchema,
+  format: z.enum(["csv"]),
+  createdAt: z.string().datetime(),
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  downloadUrl: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+});
+
+export type AuditExportJobResponse = z.infer<
+  typeof auditExportJobResponseSchema
 >;

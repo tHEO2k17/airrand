@@ -176,6 +176,12 @@ importers:
 
   apps/worker:
     dependencies:
+      '@airrand/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@airrand/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@airrand/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
@@ -185,6 +191,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
+      drizzle-orm:
+        specifier: ^0.44.2
+        version: 0.44.7(postgres@3.4.9)
       ioredis:
         specifier: ^5.6.1
         version: 5.11.0

@@ -44,7 +44,7 @@ Require valid session (`Authorization: Bearer` or `airrand_session` cookie):
 
 - Product create/update
 - Order list, status changes, pickup verify
-- Audit log read
+- Audit log read and export
 - `GET /auth/merchant/me`
 
 Middleware enforces `session.merchantId === route :merchantId`.
@@ -62,6 +62,15 @@ Middleware enforces `session.merchantId === route :merchantId`.
 - Actors: `customer` (name label), `merchant_staff` (email), or `unknown` when not applicable.
 - Audit logs are **not authenticated for customers**; only merchant staff can read via protected API.
 - Logs are not tamper-evident (no hash chain) in MVP.
+
+### Audit export (Phase 10C)
+
+- Staff with `audit_log:view` can request CSV exports (`POST .../audit-logs/export`).
+- Export jobs are tracked in `audit_export_jobs`; files are written to **`EXPORT_STORAGE_DIR`** (local disk in MVP).
+- Download requires merchant auth (`GET .../exports/:exportJobId/download`); **no public or unauthenticated file URLs**.
+- CSV includes operational fields only (`created_at`, `action`, `actor_type`, `actor_label`, `order_reference`, `metadata_json`). Sensitive keys (passwords, tokens, secrets) are stripped from metadata before export.
+- **No email delivery** — staff download from the merchant UI when status is `completed`.
+- Production should use durable object storage with short-lived signed URLs; local paths must not be exposed outside the API process.
 
 ## Rate limiting
 

@@ -7,6 +7,7 @@ import {
 describe("job payloads", () => {
   it("parses audit export requested payload", () => {
     const payload = parseAuditExportRequestedPayload({
+      exportJobId: "33333333-3333-3333-3333-333333333333",
       merchantId: "11111111-1111-1111-1111-111111111111",
       requestedByMerchantUserId: "22222222-2222-2222-2222-222222222222",
       requestedAt: "2026-01-01T12:00:00.000Z",

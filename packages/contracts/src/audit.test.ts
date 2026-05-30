@@ -23,6 +23,7 @@ describe("audit export contracts", () => {
 
   it("parses queued export response", () => {
     const parsed = auditExportQueuedResponseSchema.parse({
+      exportJobId: "11111111-1111-1111-1111-111111111111",
       jobId: "job-123",
       status: "queued",
     });

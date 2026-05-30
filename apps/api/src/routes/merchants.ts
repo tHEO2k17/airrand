@@ -4,6 +4,7 @@ import {
   createProductSchema,
   listOrdersQuerySchema,
   listProductsQuerySchema,
+  auditExportJobResponseSchema,
   auditExportQueuedResponseSchema,
   auditExportRequestSchema,
   pickupVerifyRequestSchema,
@@ -19,6 +20,7 @@ import { createPickupToken, PICKUP_TOKEN_TTL_MS, verifyPickupToken } from "@airr
 import {
   allocateOrderReference,
   AUDIT_ACTIONS,
+  auditExportJobs,
   auditLogs,
   insertAuditLog,
   merchants,
@@ -40,7 +42,15 @@ import {
 } from "../lib/mappers.js";
 import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
+import { Readable } from "node:stream";
 import { enqueueAuditExportRequested } from "../lib/audit-export-queue.js";
+import { toAuditExportJobResponse } from "../lib/audit-export.js";
+import {
+  ExportDownloadError,
+  getExportDownloadFilename,
+  openExportFileStream,
+  resolveCompletedExportFilePath,
+} from "../lib/audit-export-download.js";
 import { getMerchantActor, getMerchantAuth } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
@@ -669,14 +679,40 @@ merchantsRoutes.post(
       const body = c.req.valid("json");
       const auth = getMerchantAuth(c)!;
 
-      const { jobId } = await enqueueAuditExportRequested({
+      const [exportJob] = await db
+        .insert(auditExportJobs)
+        .values({
+          merchantId,
+          requestedByMerchantUserId: auth.merchantUserId,
+          format: body.format,
+          status: "queued",
+        })
+        .returning();
+
+      if (!exportJob) {
+        return jsonError(
+          c,
+          "INTERNAL_ERROR",
+          "Failed to create export job",
+          500,
+        );
+      }
+
+      const { jobId: bullJobId } = await enqueueAuditExportRequested({
+        exportJobId: exportJob.id,
         merchantId,
         requestedByMerchantUserId: auth.merchantUserId,
         format: body.format,
       });
 
+      await db
+        .update(auditExportJobs)
+        .set({ bullJobId })
+        .where(eq(auditExportJobs.id, exportJob.id));
+
       const response = auditExportQueuedResponseSchema.parse({
-        jobId,
+        exportJobId: exportJob.id,
+        jobId: bullJobId,
         status: "queued",
       });
 
@@ -691,6 +727,92 @@ merchantsRoutes.post(
           "SERVICE_UNAVAILABLE",
           "Background job queue is not available",
           503,
+        );
+      }
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.get(
+  "/:merchantId/audit-logs/exports/:exportJobId",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("audit_log:view"),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const exportJobId = c.req.param("exportJobId");
+
+      const [job] = await db
+        .select()
+        .from(auditExportJobs)
+        .where(
+          and(
+            eq(auditExportJobs.id, exportJobId),
+            eq(auditExportJobs.merchantId, merchantId),
+          ),
+        )
+        .limit(1);
+
+      if (!job) {
+        return jsonError(c, "EXPORT_NOT_FOUND", "Export job not found", 404);
+      }
+
+      const response = auditExportJobResponseSchema.parse(
+        toAuditExportJobResponse(job, merchantId),
+      );
+
+      return jsonOk(c, response);
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.get(
+  "/:merchantId/audit-logs/exports/:exportJobId/download",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("audit_log:view"),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const exportJobId = c.req.param("exportJobId");
+
+      const [job] = await db
+        .select()
+        .from(auditExportJobs)
+        .where(
+          and(
+            eq(auditExportJobs.id, exportJobId),
+            eq(auditExportJobs.merchantId, merchantId),
+          ),
+        )
+        .limit(1);
+
+      if (!job) {
+        return jsonError(c, "EXPORT_NOT_FOUND", "Export job not found", 404);
+      }
+
+      const absolutePath = await resolveCompletedExportFilePath(job);
+      const readStream = openExportFileStream(absolutePath);
+      const webStream = Readable.toWeb(readStream) as ReadableStream;
+
+      return c.newResponse(webStream, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${getExportDownloadFilename(exportJobId)}"`,
+        },
+      });
+    } catch (error) {
+      if (error instanceof ExportDownloadError) {
+        return jsonError(
+          c,
+          error.code,
+          error.message,
+          error.status as 400 | 404 | 409,
         );
       }
       return handleRouteError(c, error);

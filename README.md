@@ -98,6 +98,10 @@ Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
 
 Wording avoids payment processing: catalog prices and **estimated order value** only; payment is arranged directly with the merchant.
 
+### Order references (operational IDs)
+
+Orders keep an internal **UUID** primary key for APIs and database relations. Staff and customers see a short immutable reference such as **`ORD-1001`** for verbal communication and on-screen display. References are allocated from a database sequence (not derived from UUIDs).
+
 **Realtime (SSE):** Merchant Order Line / Orders use **Server-Sent Events** (`GET /merchants/:merchantId/events`) with automatic **polling fallback** if the stream fails. Customer order status uses `GET /merchants/:merchantId/orders/:orderId/events` (public, customer-safe payloads only). When `REDIS_URL` is set, events fan out across API instances via Redis pub/sub; without Redis, events stay in-process only.
 
 ### Responsive layout (Phase 8C)
@@ -261,6 +265,7 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 
 - [Architecture](./docs/architecture.md)
 - [Order lifecycle](./docs/order-lifecycle.md)
+- [Order references](./docs/order-references.md)
 - [ADR 0001: Wallet-less MVP](./docs/adr/0001-walletless-mvp.md)
 
 ## Implementation phases
@@ -281,3 +286,4 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)
 - **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)
 - **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)
+- **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)

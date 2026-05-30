@@ -19,6 +19,7 @@ export type CustomerOrderStatusMerchant = z.infer<
 
 export const customerOrderStatusResponseSchema = z.object({
   id: z.string().uuid(),
+  reference: z.string().min(1),
   status: orderStatusSchema,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

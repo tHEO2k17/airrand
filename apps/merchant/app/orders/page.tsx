@@ -28,6 +28,8 @@ function OrdersContent() {
   const [success, setSuccess] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [referenceQuery, setReferenceQuery] = useState("");
+  const [activeReferenceFilter, setActiveReferenceFilter] = useState("");
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!merchantId) {
@@ -40,7 +42,9 @@ function OrdersContent() {
     }
     setError(null);
     try {
-      const list = await fetchOrders(merchantId);
+      const list = await fetchOrders(merchantId, {
+        reference: activeReferenceFilter || undefined,
+      });
       setOrders(
         [...list].sort(
           (a, b) =>
@@ -57,7 +61,7 @@ function OrdersContent() {
         setLoading(false);
       }
     }
-  }, [merchantId]);
+  }, [merchantId, activeReferenceFilter]);
 
   useEffect(() => {
     void load();
@@ -104,6 +108,44 @@ function OrdersContent() {
       />
 
       <Surface>
+        <form
+          className="pos-form-grid"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setActiveReferenceFilter(referenceQuery.trim());
+          }}
+        >
+          <label className="pos-field">
+            <span>Search by order reference</span>
+            <input
+              type="search"
+              placeholder="ORD-1001 or 1001"
+              value={referenceQuery}
+              onChange={(event) => setReferenceQuery(event.target.value)}
+            />
+          </label>
+          <div className="pos-form-actions">
+            <Button type="submit" variant="secondary" size="sm">
+              Search
+            </Button>
+            {activeReferenceFilter ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setReferenceQuery("");
+                  setActiveReferenceFilter("");
+                }}
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
+        </form>
+      </Surface>
+
+      <Surface>
         {loading ? <LoadingState /> : null}
         {!loading && orders.length === 0 ? (
           <p className="pos-muted">No orders yet.</p>
@@ -127,7 +169,7 @@ function OrdersContent() {
                   return (
                     <tr key={order.id}>
                       <td>
-                        <code className="pos-muted">{order.id.slice(0, 8)}…</code>
+                        <strong>{order.reference}</strong>
                       </td>
                       <td>
                         {order.customerName ?? "—"}

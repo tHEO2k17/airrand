@@ -66,6 +66,7 @@ export function toOrderResponse(
 ): OrderResponse {
   return {
     id: order.id,
+    reference: order.reference,
     merchantId: order.merchantId,
     status: order.status,
     customerName: order.customerName,

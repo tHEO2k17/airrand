@@ -13,6 +13,7 @@ describe("toCustomerOrderStatusResponse", () => {
     const result = toCustomerOrderStatusResponse(
       {
         id: "order-1",
+        reference: "ORD-1001",
         merchantId: "merchant-1",
         status: "ready",
         customerName: "Secret Name",
@@ -46,6 +47,7 @@ describe("toCustomerOrderStatusResponse", () => {
 
     expect(result).toEqual({
       id: "order-1",
+      reference: "ORD-1001",
       status: "ready",
       createdAt: createdAt.toISOString(),
       updatedAt: updatedAt.toISOString(),

@@ -46,7 +46,7 @@ export function OrderLineCards({
             >
               <div className="pos-order-card__top">
                 <span className="pos-order-card__id">
-                  #{order.id.slice(0, 8).toUpperCase()}
+                  {order.reference}
                 </span>
                 <StatusBadge status={order.status} />
               </div>

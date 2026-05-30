@@ -4,6 +4,7 @@ import { merchants } from "./merchants.js";
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
+  reference: text("reference").notNull().unique(),
   merchantId: uuid("merchant_id")
     .notNull()
     .references(() => merchants.id, { onDelete: "cascade" }),

@@ -19,7 +19,7 @@ function PickupContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [verifiedOrder, setVerifiedOrder] = useState<{
-    id: string;
+    reference: string;
     status: string;
     verifiedAt: string;
   } | null>(null);
@@ -41,7 +41,7 @@ function PickupContent() {
       if (result.ok) {
         setSuccess("Pickup verified successfully.");
         setVerifiedOrder({
-          id: result.data.orderId,
+          reference: result.data.reference,
           status: result.data.status,
           verifiedAt: result.data.verifiedAt,
         });
@@ -121,7 +121,7 @@ function PickupContent() {
         <Surface>
           <h2 className="pos-section-title">Last verified order</h2>
           <p>
-            <code>{verifiedOrder.id}</code>
+            <strong>{verifiedOrder.reference}</strong>
           </p>
           <p>
             Status: <StatusBadge status={verifiedOrder.status as "picked_up"} />

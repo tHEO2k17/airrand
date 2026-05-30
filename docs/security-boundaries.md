@@ -72,6 +72,11 @@ Middleware enforces `session.merchantId === route :merchantId`.
 
 Returns `429` with `rate_limited` error code.
 
+## Order identifiers
+
+- **Internal:** UUID primary keys in routes and foreign keys (unchanged).
+- **Operational:** immutable `ORD-{n}` references on orders for merchant/customer UI and search. References do not encode payment or wallet semantics.
+
 ## Realtime streams (Phase 9C)
 
 - **Merchant SSE** (`GET /merchants/:merchantId/events`) requires staff auth. Payloads may include operational order/product data but never passwords, session tokens, pickup nonces, or QR signing material.

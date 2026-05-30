@@ -13,6 +13,7 @@ export const auditLogResponseSchema = z.object({
   id: z.string().uuid(),
   merchantId: z.string().uuid(),
   orderId: z.string().uuid().nullable(),
+  orderReference: z.string().nullable().optional(),
   actorType: auditActorTypeSchema,
   actorLabel: z.string().nullable(),
   action: z.string(),

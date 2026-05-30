@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import {
   createOrderSchema,
   createProductSchema,
+  listOrdersQuerySchema,
   listProductsQuerySchema,
   pickupVerifyRequestSchema,
   updateOrderStatusSchema,
@@ -9,10 +10,12 @@ import {
 } from "@airrand/contracts";
 import {
   assertCanTransitionOrderStatus,
+  normalizeOrderReferenceQuery,
   type OrderStatus,
 } from "@airrand/domain";
 import { createPickupToken, PICKUP_TOKEN_TTL_MS, verifyPickupToken } from "@airrand/qr";
 import {
+  allocateOrderReference,
   AUDIT_ACTIONS,
   auditLogs,
   insertAuditLog,
@@ -224,9 +227,11 @@ merchantsRoutes.post(
       const nonce = randomBytes(16).toString("hex");
 
       const result = await db.transaction(async (tx) => {
+        const reference = await allocateOrderReference(tx);
         const [order] = await tx
           .insert(orders)
           .values({
+            reference,
             merchantId,
             status: "placed",
             customerName: body.customerName,
@@ -316,10 +321,22 @@ merchantsRoutes.get(
       return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
     }
 
+    const query = listOrdersQuerySchema.safeParse(c.req.query());
+    if (!query.success) {
+      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
+    }
+
+    const conditions = [eq(orders.merchantId, merchantId)];
+    if (query.data.reference) {
+      conditions.push(
+        eq(orders.reference, normalizeOrderReferenceQuery(query.data.reference)),
+      );
+    }
+
     const orderRows = await db
       .select()
       .from(orders)
-      .where(eq(orders.merchantId, merchantId))
+      .where(and(...conditions))
       .orderBy(asc(orders.createdAt));
 
     const orderIds = orderRows.map((o) => o.id);
@@ -573,14 +590,20 @@ merchantsRoutes.get(
     }
 
     const rows = await db
-      .select()
+      .select({
+        log: auditLogs,
+        orderReference: orders.reference,
+      })
       .from(auditLogs)
+      .leftJoin(orders, eq(auditLogs.orderId, orders.id))
       .where(eq(auditLogs.merchantId, merchantId))
       .orderBy(desc(auditLogs.createdAt))
       .limit(100);
 
     return jsonOk(c, {
-      auditLogs: rows.map(toAuditLogResponse),
+      auditLogs: rows.map((row) =>
+        toAuditLogResponse(row.log, row.orderReference),
+      ),
     });
   } catch (error) {
     return handleRouteError(c, error);

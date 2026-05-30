@@ -92,9 +92,17 @@ export async function updateProduct(
   );
 }
 
-export async function fetchOrders(merchantId: string): Promise<OrderResponse[]> {
+export async function fetchOrders(
+  merchantId: string,
+  options?: { reference?: string },
+): Promise<OrderResponse[]> {
+  const params = new URLSearchParams();
+  if (options?.reference?.trim()) {
+    params.set("reference", options.reference.trim());
+  }
+  const query = params.toString();
   const data = await request<{ orders: OrderResponse[] }>(
-    `/merchants/${merchantId}/orders`,
+    `/merchants/${merchantId}/orders${query ? `?${query}` : ""}`,
   );
   return data.orders;
 }

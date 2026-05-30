@@ -7,6 +7,7 @@ describe("computePosDashboardStats", () => {
     const stats = computePosDashboardStats([
       {
         id: "1",
+        reference: "ORD-1001",
         merchantId: "m",
         status: "ready",
         customerName: "A",
@@ -27,6 +28,7 @@ describe("computePosDashboardStats", () => {
       },
       {
         id: "2",
+        reference: "ORD-1002",
         merchantId: "m",
         status: "placed",
         customerName: "B",
@@ -47,6 +49,7 @@ describe("computePosDashboardStats", () => {
       },
       {
         id: "3",
+        reference: "ORD-1003",
         merchantId: "m",
         status: "picked_up",
         customerName: "C",

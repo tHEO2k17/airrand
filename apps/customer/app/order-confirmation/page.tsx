@@ -66,7 +66,7 @@ export default function OrderConfirmationPage() {
         <h2 className="store-section-title">Order details</h2>
         <ul className="store-meta-list">
           <li>
-            <strong>Order ID:</strong> <code>{confirmation.orderId}</code>
+            <strong>Order reference:</strong> {confirmation.reference}
           </li>
           <li className="store-meta-list__status">
             <strong>Status:</strong> <StatusBadge status={confirmation.status} />

@@ -174,7 +174,7 @@ export default function OrderStatusPage() {
               <div>
                 <p className="store-total-hint">{status.merchant.name}</p>
                 <h2 className="store-section-title" style={{ marginBottom: "0.35rem" }}>
-                  Order <code>{status.id.slice(0, 8)}…</code>
+                  Order <strong>{status.reference}</strong>
                 </h2>
               </div>
               <StatusBadge status={status.status} />

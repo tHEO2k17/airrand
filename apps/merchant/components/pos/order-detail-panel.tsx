@@ -63,7 +63,7 @@ export function OrderDetailPanel({
         <div>
           <h2 className="pos-section-title">Current order</h2>
           <p className="pos-order-detail__id">
-            #{order.id.slice(0, 8).toUpperCase()}
+            {order.reference}
           </p>
           <p className="pos-muted">{formatDateTime(order.createdAt)}</p>
         </div>

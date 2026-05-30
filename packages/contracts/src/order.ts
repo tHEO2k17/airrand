@@ -34,6 +34,7 @@ export type OrderLineResponse = z.infer<typeof orderLineResponseSchema>;
 
 export const orderResponseSchema = z.object({
   id: z.string().uuid(),
+  reference: z.string().min(1),
   merchantId: z.string().uuid(),
   status: orderStatusSchema,
   customerName: z.string().nullable(),
@@ -54,3 +55,9 @@ export const listProductsResponseSchema = z.object({
 export const listOrdersResponseSchema = z.object({
   orders: z.array(orderResponseSchema),
 });
+
+export const listOrdersQuerySchema = z.object({
+  reference: z.string().trim().min(1).max(32).optional(),
+});
+
+export type ListOrdersQuery = z.infer<typeof listOrdersQuerySchema>;

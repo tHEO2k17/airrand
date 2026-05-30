@@ -223,6 +223,9 @@ importers:
       '@airrand/auth':
         specifier: workspace:*
         version: link:../auth
+      '@airrand/domain':
+        specifier: workspace:*
+        version: link:../domain
       drizzle-orm:
         specifier: ^0.44.2
         version: 0.44.7(postgres@3.4.9)

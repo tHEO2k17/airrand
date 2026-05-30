@@ -3,6 +3,7 @@ import { decodePickupTokenForRouting } from "./decode-pickup-token";
 
 export interface VerifyPickupSuccess {
   orderId: string;
+  reference: string;
   status: string;
   verifiedAt: string;
 }
@@ -38,6 +39,7 @@ export async function verifyPickupToken(
       ok: true,
       data: {
         orderId: result.order.id,
+        reference: result.order.reference,
         status: result.order.status,
         verifiedAt: result.verifiedAt,
       },

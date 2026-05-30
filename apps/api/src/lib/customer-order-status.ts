@@ -8,6 +8,7 @@ export function toCustomerOrderStatusResponse(
 ): CustomerOrderStatusResponse {
   return {
     id: order.id,
+    reference: order.reference,
     status: order.status,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),

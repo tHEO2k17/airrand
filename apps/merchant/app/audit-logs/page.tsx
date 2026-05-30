@@ -99,8 +99,10 @@ function AuditLogsContent() {
                     {log.actorLabel ? ` (${log.actorLabel})` : ""}
                   </td>
                   <td>
-                    {log.orderId ? (
-                      <code>{log.orderId.slice(0, 8)}…</code>
+                    {log.orderReference ? (
+                      <strong>{log.orderReference}</strong>
+                    ) : log.orderId ? (
+                      <span className="pos-muted">—</span>
                     ) : (
                       "—"
                     )}

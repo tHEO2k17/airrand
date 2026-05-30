@@ -1,27 +1,17 @@
+import type { ProductResponse } from "@airrand/contracts";
 import type { LucideIcon } from "lucide-react";
-import {
-  Coffee,
-  Cookie,
-  CupSoda,
-  GlassWater,
-  IceCreamCone,
-  Sandwich,
-  UtensilsCrossed,
-} from "lucide-react";
+import { getProductIconComponent } from "@airrand/product-icons/react";
 
-const PRODUCT_ICONS: LucideIcon[] = [
-  Coffee,
-  Cookie,
-  CupSoda,
-  Sandwich,
-  IceCreamCone,
-  GlassWater,
-  UtensilsCrossed,
-];
+export function getProductIcon(
+  product: Pick<ProductResponse, "name" | "category">,
+): LucideIcon {
+  return getProductIconComponent({
+    productName: product.name,
+    categoryName: product.category?.name,
+    categoryIconKey: product.category?.iconKey,
+  });
+}
 
-export function getProductIcon(name: string): LucideIcon {
-  const index =
-    [...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) %
-    PRODUCT_ICONS.length;
-  return PRODUCT_ICONS[index] ?? Coffee;
+export function getProductIconByName(name: string): LucideIcon {
+  return getProductIconComponent({ productName: name });
 }

@@ -1,58 +1,62 @@
+@import "@airrand/brand/tokens.css";
+
 :root {
-  --store-bg: #eceef2;
-  --store-surface: #ffffff;
-  --store-surface-muted: #f4f5f7;
-  --store-border: #e5e7eb;
-  --store-border-strong: #d1d5db;
+  --store-bg: var(--airrand-bg-page);
+  --store-surface: var(--airrand-surface);
+  --store-surface-muted: var(--airrand-surface-muted);
+  --store-border: var(--airrand-border);
+  --store-border-strong: var(--airrand-border-strong);
 
-  --store-accent: #f97316;
-  --store-accent-hover: #ea580c;
-  --store-accent-soft: #ffedd5;
-  --store-accent-muted: #fed7aa;
+  --store-accent: var(--airrand-accent);
+  --store-accent-hover: var(--airrand-accent-hover);
+  --store-accent-soft: var(--airrand-accent-soft);
+  --store-accent-muted: var(--airrand-accent-muted);
 
-  --store-text: #111827;
-  --store-text-secondary: #4b5563;
-  --store-text-muted: #6b7280;
+  --store-text: var(--airrand-text);
+  --store-text-secondary: var(--airrand-text-secondary);
+  --store-text-muted: var(--airrand-text-muted);
+  --store-muted: var(--airrand-text-muted);
 
-  --store-success: #059669;
-  --store-success-soft: #d1fae5;
-  --store-danger: #dc2626;
-  --store-danger-soft: #fee2e2;
-  --store-info: #2563eb;
-  --store-info-soft: #dbeafe;
-  --store-warning-soft: #fff7ed;
+  --store-success: var(--airrand-success);
+  --store-success-soft: var(--airrand-success-soft);
+  --store-danger: var(--airrand-danger);
+  --store-danger-soft: var(--airrand-danger-soft);
+  --store-info: var(--airrand-info);
+  --store-info-soft: var(--airrand-info-soft);
+  --store-warning-soft: var(--airrand-warning-soft);
 
-  --store-space-1: 0.25rem;
-  --store-space-2: 0.5rem;
-  --store-space-3: 0.75rem;
-  --store-space-4: 1rem;
-  --store-space-5: 1.25rem;
-  --store-space-6: 1.5rem;
-  --store-space-8: 2rem;
-  --store-space-10: 2.5rem;
+  --store-space-1: var(--airrand-space-1);
+  --store-space-2: var(--airrand-space-2);
+  --store-space-3: var(--airrand-space-3);
+  --store-space-4: var(--airrand-space-4);
+  --store-space-5: var(--airrand-space-5);
+  --store-space-6: var(--airrand-space-6);
+  --store-space-8: var(--airrand-space-8);
+  --store-space-10: var(--airrand-space-10);
 
-  --store-radius-sm: 10px;
-  --store-radius-md: 14px;
-  --store-radius-lg: 18px;
-  --store-radius-xl: 22px;
-  --store-radius-2xl: 28px;
-  --store-radius-full: 999px;
+  --store-radius-sm: var(--airrand-radius-sm);
+  --store-radius-md: var(--airrand-radius-md);
+  --store-radius-lg: var(--airrand-radius-lg);
+  --store-radius-xl: var(--airrand-radius-xl);
+  --store-radius-2xl: var(--airrand-radius-2xl);
+  --store-radius-full: var(--airrand-radius-full);
 
-  --store-shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06);
-  --store-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
-  --store-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.1);
+  --store-shadow-sm: var(--airrand-shadow-sm);
+  --store-shadow-md: var(--airrand-shadow-md);
+  --store-shadow-lg: var(--airrand-shadow-lg);
 
-  --store-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  --store-font-size-xs: 0.75rem;
-  --store-font-size-sm: 0.875rem;
-  --store-font-size-base: 1rem;
-  --store-font-size-lg: 1.125rem;
-  --store-font-size-xl: 1.35rem;
-  --store-font-size-2xl: 1.75rem;
+  --store-font: var(--airrand-font);
+  --store-font-size-xs: var(--airrand-font-size-xs);
+  --store-font-size-sm: var(--airrand-font-size-sm);
+  --store-font-size-base: var(--airrand-font-size-base);
+  --store-font-size-lg: var(--airrand-font-size-lg);
+  --store-font-size-xl: var(--airrand-font-size-xl);
+  --store-font-size-2xl: var(--airrand-font-size-2xl);
 
   --store-header-height: 64px;
   --store-sticky-cart-height: 76px;
   --store-content-max: 36rem;
+  --store-touch-min: var(--airrand-touch-min);
 }
 
 @media (min-width: 640px) {

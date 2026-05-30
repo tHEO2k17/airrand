@@ -10,7 +10,11 @@ const monorepoRoot = path.join(
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
-  transpilePackages: ["@airrand/contracts", "@airrand/domain"],
+  transpilePackages: [
+    "@airrand/contracts",
+    "@airrand/domain",
+    "@airrand/product-icons",
+  ],
 };
 
 export default nextConfig;

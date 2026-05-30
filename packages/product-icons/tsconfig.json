@@ -1,0 +1,9 @@
+{
+  "extends": "@airrand/config/typescript/node.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}

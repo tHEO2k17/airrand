@@ -1,78 +1,70 @@
+@import "@airrand/brand/tokens.css";
+
 :root {
-  /* Surfaces */
-  --pos-bg: #eceef2;
-  --pos-surface: #ffffff;
-  --pos-surface-muted: #f4f5f7;
-  --pos-surface-elevated: #ffffff;
-  --pos-border: #e5e7eb;
-  --pos-border-strong: #d1d5db;
+  --pos-bg: var(--airrand-bg-page);
+  --pos-surface: var(--airrand-surface);
+  --pos-surface-muted: var(--airrand-surface-muted);
+  --pos-surface-elevated: var(--airrand-surface-elevated);
+  --pos-border: var(--airrand-border);
+  --pos-border-strong: var(--airrand-border-strong);
 
-  /* Sidebar */
-  --pos-sidebar-bg: #111827;
-  --pos-sidebar-text: #9ca3af;
-  --pos-sidebar-text-active: #ffffff;
-  --pos-sidebar-hover: #1f2937;
+  --pos-sidebar-bg: var(--airrand-charcoal);
+  --pos-sidebar-text: var(--airrand-text-muted-on-dark);
+  --pos-sidebar-text-active: var(--airrand-text-on-dark);
+  --pos-sidebar-hover: var(--airrand-charcoal-elevated);
 
-  /* Brand / accent */
-  --pos-accent: #f97316;
-  --pos-accent-hover: #ea580c;
-  --pos-accent-soft: #ffedd5;
-  --pos-accent-muted: #fed7aa;
+  --pos-accent: var(--airrand-accent);
+  --pos-accent-hover: var(--airrand-accent-hover);
+  --pos-accent-soft: var(--airrand-accent-soft);
+  --pos-accent-muted: var(--airrand-accent-muted);
 
-  /* Text */
-  --pos-text: #111827;
-  --pos-text-secondary: #4b5563;
-  --pos-text-muted: #6b7280;
+  --pos-text: var(--airrand-text);
+  --pos-text-secondary: var(--airrand-text-secondary);
+  --pos-text-muted: var(--airrand-text-muted);
 
-  /* Semantic */
-  --pos-success: #059669;
-  --pos-success-soft: #d1fae5;
-  --pos-danger: #dc2626;
-  --pos-danger-soft: #fee2e2;
-  --pos-info: #2563eb;
-  --pos-info-soft: #dbeafe;
-  --pos-warning-soft: #fef3c7;
+  --pos-success: var(--airrand-success);
+  --pos-success-soft: var(--airrand-success-soft);
+  --pos-danger: var(--airrand-danger);
+  --pos-danger-soft: var(--airrand-danger-soft);
+  --pos-info: var(--airrand-info);
+  --pos-info-soft: var(--airrand-info-soft);
+  --pos-warning-soft: var(--airrand-warning-soft);
 
-  /* Spacing */
-  --pos-space-1: 0.25rem;
-  --pos-space-2: 0.5rem;
-  --pos-space-3: 0.75rem;
-  --pos-space-4: 1rem;
-  --pos-space-5: 1.25rem;
-  --pos-space-6: 1.5rem;
-  --pos-space-8: 2rem;
-  --pos-space-10: 2.5rem;
+  --pos-space-1: var(--airrand-space-1);
+  --pos-space-2: var(--airrand-space-2);
+  --pos-space-3: var(--airrand-space-3);
+  --pos-space-4: var(--airrand-space-4);
+  --pos-space-5: var(--airrand-space-5);
+  --pos-space-6: var(--airrand-space-6);
+  --pos-space-8: var(--airrand-space-8);
+  --pos-space-10: var(--airrand-space-10);
 
-  /* Radius — bold dashboard cards */
-  --pos-radius-sm: 10px;
-  --pos-radius-md: 14px;
-  --pos-radius-lg: 18px;
-  --pos-radius-xl: 22px;
-  --pos-radius-2xl: 28px;
-  --pos-radius-full: 999px;
+  --pos-radius-sm: var(--airrand-radius-sm);
+  --pos-radius-md: var(--airrand-radius-md);
+  --pos-radius-lg: var(--airrand-radius-lg);
+  --pos-radius-xl: var(--airrand-radius-xl);
+  --pos-radius-2xl: var(--airrand-radius-2xl);
+  --pos-radius-full: var(--airrand-radius-full);
 
-  /* Shadows */
-  --pos-shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06);
-  --pos-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
-  --pos-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.1);
+  --pos-shadow-sm: var(--airrand-shadow-sm);
+  --pos-shadow-md: var(--airrand-shadow-md);
+  --pos-shadow-lg: var(--airrand-shadow-lg);
 
-  /* Typography */
-  --pos-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  --pos-font-size-xs: 0.75rem;
-  --pos-font-size-sm: 0.875rem;
-  --pos-font-size-base: 1rem;
-  --pos-font-size-lg: 1.125rem;
-  --pos-font-size-xl: 1.35rem;
-  --pos-font-size-2xl: 1.75rem;
-  --pos-font-size-3xl: 2rem;
+  --pos-font: var(--airrand-font);
+  --pos-font-size-xs: var(--airrand-font-size-xs);
+  --pos-font-size-sm: var(--airrand-font-size-sm);
+  --pos-font-size-base: var(--airrand-font-size-base);
+  --pos-font-size-lg: var(--airrand-font-size-lg);
+  --pos-font-size-xl: var(--airrand-font-size-xl);
+  --pos-font-size-2xl: var(--airrand-font-size-2xl);
+  --pos-font-size-3xl: var(--airrand-font-size-3xl);
 
-  /* Layout */
   --pos-sidebar-width: 72px;
   --pos-sidebar-width-expanded: 248px;
   --pos-content-max: 100%;
   --pos-rail-width: min(380px, 100%);
+  --pos-touch-min: var(--airrand-touch-min);
 
-  /* Breakpoints (for reference in comments / custom props) */
   --pos-bp-tablet: 768px;
   --pos-bp-desktop: 1100px;
   --pos-bp-wide: 1400px;

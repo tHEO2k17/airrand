@@ -6,9 +6,11 @@ This document defines **who airRand serves**, **what problem it solves**, and **
 
 airRand is a **wallet-less commerce and pickup coordination platform**.
 
-It helps **customers** order ahead, reserve items, request pickup, and reduce waiting time.
+It helps **customers** discover products, order ahead, reserve items, and pick up with less waiting.
 
 It helps **merchants and verified vendors** manage incoming orders, availability, pickup verification, and operational flow.
+
+**Commerce philosophy (pilot):** the customer app is **product-first** — browse items and categories before choosing a shop. Merchant operations (POS, alerts, pickup verification) remain first-class; airRand is not a payments or delivery marketplace.
 
 Payment is arranged **outside** the platform. airRand coordinates fulfillment and pickup — not money movement, wallets, or financial custody.
 
@@ -33,7 +35,7 @@ Customer UX assumptions:
 
 Designed for low-friction commerce behavior (including mobile-first African markets): minimize steps, avoid account walls, preserve operational traceability for merchants.
 
-**UX consistency:** Customer and merchant apps share the orange accent (`#f97316`), neutral operational surfaces, and semantic alert colors. Operational notifications (Phase 10D) reuse this system — no separate notification brand. See [design-system.md](./design-system.md).
+**UX consistency:** Customer and merchant apps share the **Theo/airRand** token set (`@airrand/brand` — warm orange accent, charcoal merchant chrome, soft neutral canvas). Product icons are deterministic via `@airrand/product-icons` (category + keyword mapping, no uploads). See [design-system.md](./design-system.md).
 
 ## Target vendors
 
@@ -85,6 +87,8 @@ The current codebase focuses on **standard merchants** only:
 - Merchant staff authentication, RBAC, and lifecycle
 - Audit log and CSV export (background worker)
 - Realtime order updates (SSE + polling fallback)
+- **Product-first customer home** — browse catalog across shops; secondary Shops tab (no maps/ratings)
+- **Unified brand tokens** and shared product icon mapping
 - **Operational attention** on merchant POS (new-order sound, optional browser notifications, visual badges, focus mode) for pilot counter use — see [architecture.md](./architecture.md#merchant-operational-attention-phase-11b)
 
 **Pilot operating tip:** Run the Order Line on a dedicated device during service hours with sound or browser notifications enabled so new `placed` orders are not missed. This is operational alerting only — not payments, marketing push, or customer messaging.

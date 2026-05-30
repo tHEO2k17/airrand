@@ -11,8 +11,10 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
+    "@airrand/brand": "workspace:*",
     "@airrand/contracts": "workspace:*",
     "@airrand/domain": "workspace:*",
+    "@airrand/product-icons": "workspace:*",
     "@airrand/notifications": "workspace:*",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.17.0",

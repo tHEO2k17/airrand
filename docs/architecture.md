@@ -134,6 +134,21 @@ Pilot-facing alerts on the merchant **Order Line** reuse existing SSE — no Web
 
 **Orders list:** Client-side `filterOrdersByStatus` on `/orders` — API list unchanged.
 
+## Unified brand tokens (`@airrand/brand`)
+
+Canonical CSS variables (`--airrand-*`) live in `packages/brand/tokens/airrand-tokens.css`. Merchant and customer apps import and alias to `--pos-*` / `--store-*` so alerts, badges, chips, and onboarding surfaces stay visually aligned without duplicating hex values.
+
+## Product-first customer experience
+
+| Component | Role |
+|-----------|------|
+| `HomeBrowse` | Customer `/` — default **Browse** tab aggregates available products across merchants (client-side); **Shops** tab lists storefronts |
+| `catalog-discovery.ts` | Loads merchants + `fetchAvailableProductsBySlug` per shop; groups/filters by category |
+| `CatalogProductCard` | Commerce-oriented card — product name dominant; merchant link secondary |
+| `@airrand/product-icons` | Shared deterministic icon mapping (keyword → category iconKey → generic) |
+
+No new recommendation API; no multi-merchant cart on home (checkout remains per-store).
+
 ## Audit export storage (Phase 10E)
 
 | Component | Role |

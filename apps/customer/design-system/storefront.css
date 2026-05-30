@@ -409,10 +409,9 @@
   bottom: 0;
   z-index: 30;
   padding: var(--store-space-3) var(--store-space-5);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--store-surface);
   border-top: 1px solid var(--store-border);
-  box-shadow: 0 -4px 20px rgba(17, 24, 39, 0.08);
-  backdrop-filter: blur(8px);
+  box-shadow: var(--store-shadow-md);
 }
 
 .store-sticky-cart__inner {
@@ -776,4 +775,172 @@
 .store-muted {
   color: var(--store-muted);
   margin: var(--store-space-4) 0;
+}
+
+/* —— Product-first home —— */
+.store-home {
+  padding-bottom: var(--store-space-10);
+}
+
+.store-hero--product-first h1 {
+  font-size: var(--store-font-size-2xl);
+  letter-spacing: -0.03em;
+}
+
+.store-hero__lede {
+  margin: var(--store-space-2) 0 0;
+  color: var(--store-text-secondary);
+  line-height: 1.5;
+  max-width: 36ch;
+}
+
+.store-home-tabs {
+  display: flex;
+  gap: var(--store-space-2);
+  margin-bottom: var(--store-space-5);
+}
+
+.store-home-tab {
+  min-height: var(--store-touch-min);
+  padding: var(--store-space-2) var(--store-space-5);
+  border-radius: var(--store-radius-full);
+  border: 1px solid var(--store-border);
+  background: var(--store-surface);
+  color: var(--store-text-secondary);
+  font-weight: 600;
+  font-size: var(--store-font-size-sm);
+  cursor: pointer;
+}
+
+.store-home-tab--active {
+  border-color: var(--store-accent);
+  background: var(--store-accent-soft);
+  color: var(--store-accent-hover);
+}
+
+.store-home-section {
+  margin-bottom: var(--store-space-8);
+}
+
+.store-home-section--secondary {
+  padding-top: var(--store-space-4);
+  border-top: 1px solid var(--store-border);
+}
+
+.store-home-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--store-space-2);
+  margin-bottom: var(--store-space-4);
+}
+
+.store-category-chip__count {
+  margin-left: var(--store-space-1);
+  opacity: 0.75;
+  font-size: var(--store-font-size-xs);
+}
+
+.store-shop-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--store-space-2);
+}
+
+.store-shop-strip__link {
+  padding: var(--store-space-2) var(--store-space-4);
+  border-radius: var(--store-radius-full);
+  background: var(--store-surface);
+  border: 1px solid var(--store-border);
+  font-size: var(--store-font-size-sm);
+  font-weight: 600;
+}
+
+.store-shop-strip__link:hover {
+  border-color: var(--store-accent);
+  color: var(--store-accent-hover);
+}
+
+.store-shop-card__name {
+  margin: 0;
+  font-size: var(--store-font-size-lg);
+}
+
+.store-shop-card__desc {
+  margin: var(--store-space-2) 0 0;
+  color: var(--store-text-secondary);
+  font-size: var(--store-font-size-sm);
+  line-height: 1.45;
+}
+
+/* —— Commerce product cards —— */
+.store-product-card--commerce .store-product-card__name {
+  font-size: var(--store-font-size-lg);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.store-product-card--commerce .store-product-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--store-radius-lg);
+  box-shadow: var(--store-shadow-sm);
+}
+
+.store-product-card__merchant {
+  font-size: var(--store-font-size-xs);
+  color: var(--store-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.store-product-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--store-space-2);
+  margin-top: var(--store-space-2);
+}
+
+.store-product-card--commerce .store-product-card__price {
+  font-size: var(--store-font-size-lg);
+  color: var(--store-accent-hover);
+}
+
+.store-product-card--low-stock {
+  border: 1px solid var(--store-accent-muted);
+}
+
+.store-product-card--out-of-stock {
+  opacity: 0.72;
+}
+
+.store-product-card--out-of-stock .store-product-card__icon {
+  background: var(--store-surface-muted);
+  color: var(--store-text-muted);
+}
+
+.store-product-card__cta {
+  margin-top: auto;
+}
+
+.store-category-chip {
+  min-height: var(--store-touch-min);
+  padding: var(--store-space-2) var(--store-space-4);
+}
+
+.store-category-chips--home {
+  margin-bottom: var(--store-space-5);
+}
+
+@media (min-width: 900px) {
+  .store-hero--product-first h1 {
+    font-size: var(--store-font-size-3xl, 2rem);
+  }
+
+  .store-product-grid--commerce {
+    gap: var(--store-space-6);
+  }
 }

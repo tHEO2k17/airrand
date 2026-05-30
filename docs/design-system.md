@@ -1,80 +1,80 @@
 # airRand design system
 
-Shared visual language for the **merchant POS** (`apps/merchant`) and **customer storefront** (`apps/customer`). This is documentation only — tokens live in each app’s `design-system/` folder.
+Unified **Theo / airRand** visual language for the merchant POS (`apps/merchant`) and customer storefront (`apps/customer`). Tokens are canonical in `@airrand/brand`; each app aliases them to `--pos-*` or `--store-*`.
 
 ## Brand direction
 
-- **Primary accent:** orange `#f97316` (`--pos-accent` / `--store-accent`) for actions, highlights, and brand moments.
-- **Operational palette:** neutral grays on light surfaces (`#eceef2` page bg, `#ffffff` cards) with a **dark sidebar** on merchant (`#111827`).
-- **No new primary colors.** Extend the system with existing semantic tokens only.
-- **No gradients, neon, or unrelated accent colors.**
+- **Positioning:** product-first commerce with operational excellence — customers discover items; merchants run pickup reliably.
+- **Primary accent:** warm premium orange (`--airrand-accent` / `#ea6c1f`) for CTAs, chips, and brand moments.
+- **Surfaces:** soft neutral page canvas (`--airrand-bg-page`), white cards, **charcoal** merchant sidebar (`--airrand-charcoal`).
+- **Constraints:** no gradients, neon, or glassmorphism; subtle shadows only; strong contrast for tablet counters and outdoor glare.
+- **Feel:** modern African retail-tech — readable, calm, confident; not marketplace-noisy.
 
 ## Token locations
 
-| App | Tokens | Components |
-|-----|--------|------------|
-| Merchant | `apps/merchant/design-system/tokens.css` | `apps/merchant/design-system/pos.css` |
-| Customer | `apps/customer/design-system/tokens.css` | `apps/customer/design-system/storefront.css` |
+| Layer | Path |
+|-------|------|
+| Canonical | `packages/brand/tokens/airrand-tokens.css` (`--airrand-*`) |
+| Merchant aliases | `apps/merchant/design-system/tokens.css` (`--pos-*`) |
+| Customer aliases | `apps/customer/design-system/tokens.css` (`--store-*`) |
+| Merchant components | `apps/merchant/design-system/pos.css` |
+| Customer components | `apps/customer/design-system/storefront.css` |
 
-Both apps share the same accent orange, typography scale (Inter), spacing scale, and card radius language.
+Both apps share spacing scale, radius scale, typography (Inter), and semantic colors mapped from the same `--airrand-*` source.
 
 ## Semantic colors
 
-Use these for feedback states — including notification-related UI:
+| State | Token | Usage |
+|-------|-------|--------|
+| Success | `--airrand-success` / `-soft` | Completed actions, ready pickup |
+| Error | `--airrand-danger` / `-soft` | Failures, validation |
+| Info | `--airrand-info` / `-soft` | Queued jobs, neutral ops notes |
+| Warning | `--airrand-warning-soft` + accent text | Low stock, caution (orange family) |
 
-| State | Merchant token | Customer token | Usage |
-|-------|----------------|----------------|--------|
-| Success | `--pos-success` / `--pos-success-soft` | `--store-success` / `--store-success-soft` | Action completed (order updated, export ready) |
-| Error | `--pos-danger` / `--pos-danger-soft` | `--store-danger` / `--store-danger-soft` | Failures, validation, permission denied |
-| Info | `--pos-info` / `--pos-info-soft` | `--store-info` / `--store-info-soft` | Background jobs queued, neutral operational notes |
-| Warning | `--pos-accent-hover` on `--pos-accent-soft` | `--store-accent-hover` on `--store-accent-soft` | Caution without error (uses orange family, not a new hue) |
+CSS: `.pos-alert--*` (merchant), `.store-alert--*` (customer). Operational attention sounds/notifications use the same palette — no separate alert brand.
 
-CSS classes: `.pos-alert--*` (merchant), `.store-alert--*` (customer).
+## Product icons (`@airrand/product-icons`)
+
+Deterministic Lucide mapping — **no image uploads** in this phase.
+
+**Resolution order:**
+
+1. **Product name + category name keywords** (e.g. espresso → cup, pain relief → pill)
+2. **Category `iconKey`** from merchant catalog (e.g. `cup`, `shirt`, `heart-pulse` → pill)
+3. **Category name** (e.g. “Laundry” → shirt)
+4. **Fallback** → `generic` (shopping bag)
+
+Shared API:
+
+- `resolveProductIconKey({ productName, categoryName?, categoryIconKey? })` — pure, tested
+- `getProductIconComponent(input)` — React / Lucide
+
+Used on customer product cards, home browse, and merchant menu grid.
+
+## Customer UX philosophy
+
+- **Product-first landing:** default **Browse** tab shows categorized products across shops; **Shops** tab is secondary.
+- **Merchant visibility:** shop name is subtle on cards; storefront link for cart/checkout.
+- **No** recommendations, personalization, maps, or rankings.
 
 ## UI primitives
 
-| Component | Path | Notes |
-|-----------|------|--------|
-| `AlertMessage` | `components/ui/alert-message.tsx` | Base semantic banner; Lucide icon + text |
-| `NotificationFeedback` | `apps/merchant/components/ui/notification-feedback.tsx` | Maps notification UI **kinds** → `AlertMessage` variants |
+| Component | Merchant | Customer |
+|-----------|----------|----------|
+| Alerts | `AlertMessage`, `NotificationFeedback` | `AlertMessage` |
+| Badges / chips | `.pos-badge`, `.pos-category-chip` | `.store-badge`, `.store-category-chip` |
+| Buttons | `.pos-btn` | `.store-btn` |
+| Surfaces | `.pos-surface` | `.store-surface` |
 
-### NotificationFeedback kinds (merchant)
-
-| Kind | Variant | When |
-|------|---------|------|
-| `actionSuccess` | success | Primary action succeeded |
-| `notificationQueued` | info | Operational notification job enqueued (Phase 10D) |
-| `warning` | warning | Non-blocking caution |
-| `error` | error | Failure |
-| `info` | info | General operational info |
-
-**Do not** style notification states with custom one-off colors — always go through `AlertMessage` / `NotificationFeedback`.
-
-## Notification copy (SMS / email placeholders)
-
-Canonical template strings live in `@airrand/notifications/templates`:
-
-- **UI copy** (`NOTIFICATION_UI_COPY`) — short in-app banners
-- **Template copy** (`NOTIFICATION_TEMPLATE_COPY`, `renderNotificationTemplate`) — future SMS/email bodies
-
-Copy rules:
-
-- Operational clarity first — what happened and what to do next
-- Short, actionable sentences; no marketing fluff
-- Plain text; no HTML templates in MVP
-- No payment, wallet, balance, or promotional language
-- Merchant name + order reference where helpful (`ORD-1001`)
-
-Example SMS (order ready):
-
-> Demo Cafe: Order ORD-1001 is ready for pickup. Show your pickup code at the counter.
+Use semantic variants — avoid one-off hex values in feature code.
 
 ## Surfaces to preserve
 
-- **Merchant:** dark sidebar, Order Line cards, status badges, operational `Surface` panels — do not redesign for notification features.
-- **Customer:** mobile-first storefront, orange CTA, clean cart/checkout — notification UX stays server-side until OTP phase.
+- **Merchant:** dark sidebar, Order Line, status badges — refine tokens only; do not redesign layout.
+- **Customer:** mobile-first grid, sticky cart, orange primary CTA — improve hierarchy and product cards.
 
 ## Related docs
 
-- [Architecture — operational notifications](./architecture.md#operational-notifications-phase-10d)
-- [Customer data policy](./customer-data-policy.md)
+- [Architecture — product-first catalog](./architecture.md#product-first-customer-experience)
+- [Market scope](./market-scope.md)
+- [Operational notifications](./architecture.md#operational-notifications-phase-10d)

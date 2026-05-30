@@ -109,7 +109,7 @@ export function ProductGrid({
       ) : (
         <div className="pos-product-grid">
           {filtered.map((product) => {
-            const Icon = getProductIcon(product.name);
+            const Icon = getProductIcon(product);
             const disabled = isProductPosDisabled(product.stockState);
             return (
               <Surface

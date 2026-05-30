@@ -16,7 +16,7 @@ import {
   type CategoryFilter,
 } from "../../../lib/catalog-filter";
 import { formatMoney } from "../../../lib/format";
-import { getProductIcon } from "../../../lib/product-icon";
+import { getProductIconComponent } from "@airrand/product-icons/react";
 
 export default function StoreCatalogPage() {
   const { merchant, merchantSlug, loading: merchantLoading, error: merchantError } =
@@ -139,12 +139,17 @@ export default function StoreCatalogPage() {
       {!loading && filteredProducts.length > 0 ? (
         <div className="store-product-grid">
           {filteredProducts.map((product) => {
-            const Icon = getProductIcon(product.name);
+            const Icon = getProductIconComponent({
+              productName: product.name,
+              categoryName: product.category?.name,
+              categoryIconKey: product.category?.iconKey,
+            });
             const outOfStock = product.stockState === "out_of_stock";
+            const lowStock = product.stockState === "low_stock";
             return (
               <Surface
                 key={product.id}
-                className={`store-product-card${outOfStock ? " store-product-card--disabled" : ""}`}
+                className={`store-product-card store-product-card--commerce${outOfStock ? " store-product-card--out-of-stock" : ""}${lowStock ? " store-product-card--low-stock" : ""}`}
                 padding="lg"
               >
                 <div className="store-product-card__top">
@@ -152,35 +157,37 @@ export default function StoreCatalogPage() {
                     <Icon size={24} strokeWidth={1.75} />
                   </div>
                   <div className="store-product-card__body">
+                    <h2 className="store-product-card__name">{product.name}</h2>
                     <div className="store-product-card__meta">
                       {product.category ? (
                         <span className="store-product-card__category">
                           {product.category.name}
                         </span>
                       ) : null}
-                      {product.stockState === "low_stock" ? (
-                        <Badge tone="accent">Low stock</Badge>
-                      ) : null}
+                      {lowStock ? <Badge tone="accent">Low stock</Badge> : null}
+                      {outOfStock ? <Badge tone="neutral">Out of stock</Badge> : null}
                     </div>
-                    <h2 className="store-product-card__name">{product.name}</h2>
                     {product.description ? (
                       <p className="store-product-card__desc">
                         {product.description}
                       </p>
                     ) : null}
-                    <p className="store-product-card__price">
-                      {formatMoney(product.unitPriceCents)}
-                    </p>
+                    <div className="store-product-card__footer">
+                      <p className="store-product-card__price">
+                        {formatMoney(product.unitPriceCents)}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <Button
                   block
                   variant={addedId === product.id ? "secondary" : "primary"}
+                  className="store-product-card__cta"
                   disabled={outOfStock || !product.isAvailable}
                   onClick={() => handleAdd(product)}
                 >
                   {outOfStock
-                    ? "Out of stock"
+                    ? "Unavailable"
                     : addedId === product.id
                       ? "Added to cart"
                       : "Add to cart"}

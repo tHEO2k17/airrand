@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { OrderResponse } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
-import { Alert } from "../../components/alert";
-import { LoadingState } from "../../components/loading-state";
+import { AlertMessage } from "../../components/ui/alert-message";
+import { LoadingState } from "../../components/ui/loading-state";
+import { Button } from "../../components/ui/button";
+import { Surface } from "../../components/ui/surface";
+import { StatusBadge } from "../../components/ui/badge";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
-import { StatusPill } from "../../components/status-pill";
 import { useMerchant } from "../../components/merchant-context";
 import { fetchOrders, updateOrderStatus } from "../../lib/api";
 import { formatDateTime, formatMoney } from "../../lib/format";
@@ -69,16 +71,16 @@ function OrdersContent() {
       title="Orders"
       description="Review incoming orders and move them through fulfillment."
     >
-      {error ? <Alert variant="error" message={error} /> : null}
-      {success ? <Alert variant="success" message={success} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
+      {success ? <AlertMessage variant="success" message={success} /> : null}
 
-      <div className="card">
+      <Surface>
         {loading ? <LoadingState /> : null}
         {!loading && orders.length === 0 ? (
-          <p className="inline-muted">No orders yet.</p>
+          <p className="pos-muted">No orders yet.</p>
         ) : null}
         {!loading && orders.length > 0 ? (
-          <div className="table-wrap">
+          <div className="pos-table-wrap">
             <table>
               <thead>
                 <tr>
@@ -96,12 +98,12 @@ function OrdersContent() {
                   return (
                     <tr key={order.id}>
                       <td>
-                        <code className="inline-muted">{order.id.slice(0, 8)}…</code>
+                        <code className="pos-muted">{order.id.slice(0, 8)}…</code>
                       </td>
                       <td>
                         {order.customerName ?? "—"}
                         {order.customerContact ? (
-                          <p className="inline-muted">{order.customerContact}</p>
+                          <p className="pos-muted">{order.customerContact}</p>
                         ) : null}
                       </td>
                       <td>
@@ -115,30 +117,30 @@ function OrdersContent() {
                         </ul>
                       </td>
                       <td>
-                        <StatusPill status={order.status} />
+                        <StatusBadge status={order.status} />
                       </td>
                       <td>{formatDateTime(order.createdAt)}</td>
                       <td>
-                        <div className="btn-row">
+                        <div className="pos-action-row">
                           {actions.length === 0 ? (
-                            <span className="inline-muted">—</span>
+                            <span className="pos-muted">—</span>
                           ) : (
                             actions.map((action) => (
-                              <button
+                              <Button
                                 key={action.status}
-                                type="button"
-                                className={
+                                variant={
                                   action.status === "cancelled"
-                                    ? "btn btn-danger"
-                                    : "btn btn-secondary"
+                                    ? "danger"
+                                    : "secondary"
                                 }
+                                size="sm"
                                 disabled={saving}
                                 onClick={() =>
                                   void handleStatusChange(order.id, action.status)
                                 }
                               >
                                 {action.label}
-                              </button>
+                              </Button>
                             ))
                           )}
                         </div>
@@ -150,7 +152,7 @@ function OrdersContent() {
             </table>
           </div>
         ) : null}
-      </div>
+      </Surface>
     </PageShell>
   );
 }

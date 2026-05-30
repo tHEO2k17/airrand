@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppShell } from "../components/app-shell";
+import { MerchantRouteShell } from "../components/merchant-route-shell";
 import { AuthGate } from "../components/auth-gate";
 import { AuthProvider } from "../components/auth-context";
 import "./globals.css";
@@ -19,9 +19,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <AuthGate>
-            <div className="app-shell">
-              <AppShell>{children}</AppShell>
-            </div>
+            <MerchantRouteShell>{children}</MerchantRouteShell>
           </AuthGate>
         </AuthProvider>
       </body>

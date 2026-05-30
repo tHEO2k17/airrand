@@ -1,0 +1,65 @@
+:root {
+  /* Surfaces */
+  --pos-bg: #f3f4f6;
+  --pos-surface: #ffffff;
+  --pos-surface-muted: #f9fafb;
+  --pos-border: #e5e7eb;
+  --pos-border-strong: #d1d5db;
+
+  /* Sidebar */
+  --pos-sidebar-bg: #111827;
+  --pos-sidebar-text: #9ca3af;
+  --pos-sidebar-text-active: #ffffff;
+  --pos-sidebar-hover: #1f2937;
+
+  /* Brand / accent */
+  --pos-accent: #f97316;
+  --pos-accent-hover: #ea580c;
+  --pos-accent-soft: #ffedd5;
+  --pos-accent-muted: #fed7aa;
+
+  /* Text */
+  --pos-text: #111827;
+  --pos-text-secondary: #4b5563;
+  --pos-text-muted: #6b7280;
+
+  /* Semantic */
+  --pos-success: #059669;
+  --pos-success-soft: #d1fae5;
+  --pos-danger: #dc2626;
+  --pos-danger-soft: #fee2e2;
+  --pos-info: #2563eb;
+  --pos-info-soft: #dbeafe;
+  --pos-warning-soft: #fef3c7;
+
+  /* Spacing */
+  --pos-space-1: 0.25rem;
+  --pos-space-2: 0.5rem;
+  --pos-space-3: 0.75rem;
+  --pos-space-4: 1rem;
+  --pos-space-5: 1.25rem;
+  --pos-space-6: 1.5rem;
+  --pos-space-8: 2rem;
+
+  /* Radius */
+  --pos-radius-sm: 8px;
+  --pos-radius-md: 12px;
+  --pos-radius-lg: 16px;
+  --pos-radius-full: 999px;
+
+  /* Shadows */
+  --pos-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --pos-shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
+
+  /* Typography */
+  --pos-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --pos-font-size-xs: 0.75rem;
+  --pos-font-size-sm: 0.875rem;
+  --pos-font-size-base: 1rem;
+  --pos-font-size-lg: 1.125rem;
+  --pos-font-size-xl: 1.35rem;
+  --pos-font-size-2xl: 1.6rem;
+
+  /* Layout */
+  --pos-sidebar-width: 72px;
+}

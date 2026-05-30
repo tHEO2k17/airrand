@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { LoadingState } from "./loading-state";
+import { LoadingState } from "./ui/loading-state";
 import { useAuth } from "./auth-context";
 
 const PUBLIC_PATHS = ["/login"];

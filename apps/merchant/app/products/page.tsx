@@ -2,11 +2,13 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import type { ProductResponse } from "@airrand/contracts";
-import { Alert } from "../../components/alert";
-import { LoadingState } from "../../components/loading-state";
+import { AlertMessage } from "../../components/ui/alert-message";
+import { LoadingState } from "../../components/ui/loading-state";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
 import { useMerchant } from "../../components/merchant-context";
+import { Button } from "../../components/ui/button";
+import { Surface } from "../../components/ui/surface";
 import { createProduct, fetchProducts, updateProduct } from "../../lib/api";
 import { formatMoney } from "../../lib/format";
 
@@ -107,13 +109,13 @@ function ProductsContent() {
       title="Products"
       description="Manage catalog items for pickup orders."
     >
-      {error ? <Alert variant="error" message={error} /> : null}
-      {success ? <Alert variant="success" message={success} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
+      {success ? <AlertMessage variant="success" message={success} /> : null}
 
-      <div className="split-layout">
-        <div className="card">
-          <h2>Add product</h2>
-          <form className="form-grid" onSubmit={handleCreate}>
+      <div className="pos-split">
+        <Surface>
+          <h2 className="pos-section-title">Add product</h2>
+          <form className="pos-form-grid" onSubmit={handleCreate}>
             <label>
               Name
               <input
@@ -140,20 +142,20 @@ function ProductsContent() {
                 required
               />
             </label>
-            <button className="btn" type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Create product"}
-            </button>
+            </Button>
           </form>
-        </div>
+        </Surface>
 
-        <div className="card">
-          <h2>Catalog</h2>
+        <Surface>
+          <h2 className="pos-section-title">Catalog</h2>
           {loading ? <LoadingState /> : null}
           {!loading && products.length === 0 ? (
-            <p className="inline-muted">No products yet.</p>
+            <p className="pos-muted">No products yet.</p>
           ) : null}
           {!loading && products.length > 0 ? (
-            <div className="table-wrap">
+            <div className="pos-table-wrap">
               <table>
                 <thead>
                   <tr>
@@ -169,20 +171,20 @@ function ProductsContent() {
                       <td>
                         <strong>{product.name}</strong>
                         {product.description ? (
-                          <p className="inline-muted">{product.description}</p>
+                          <p className="pos-muted">{product.description}</p>
                         ) : null}
                       </td>
                       <td>{formatMoney(product.unitPriceCents)}</td>
                       <td>{product.isAvailable ? "Yes" : "No"}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           disabled={saving}
                           onClick={() => void toggleAvailability(product)}
                         >
                           {product.isAvailable ? "Mark unavailable" : "Mark available"}
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -190,7 +192,7 @@ function ProductsContent() {
               </table>
             </div>
           ) : null}
-        </div>
+        </Surface>
       </div>
     </PageShell>
   );

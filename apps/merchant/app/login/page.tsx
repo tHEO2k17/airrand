@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Alert } from "../../components/alert";
+import { AlertMessage } from "../../components/ui/alert-message";
+import { Button } from "../../components/ui/button";
+import { Surface } from "../../components/ui/surface";
 import { useAuth } from "../../components/auth-context";
 import { ApiError } from "../../lib/api";
 
@@ -31,15 +33,15 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="panel page-shell" style={{ maxWidth: 420, margin: "2rem auto" }}>
+    <Surface className="pos-login-panel">
       <h1>Merchant sign in</h1>
-      <p className="muted">
+      <p className="pos-muted">
         Local demo credentials only. Do not use in production.
       </p>
 
-      {error ? <Alert variant="error" message={error} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
 
-      <form className="form-grid" onSubmit={handleSubmit}>
+      <form className="pos-form-grid" onSubmit={handleSubmit}>
         <label>
           Email
           <input
@@ -62,10 +64,10 @@ export default function LoginPage() {
           />
         </label>
 
-        <button type="submit" className="btn" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Signing in…" : "Sign in"}
-        </button>
+        </Button>
       </form>
-    </section>
+    </Surface>
   );
 }

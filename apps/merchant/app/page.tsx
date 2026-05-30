@@ -1,30 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { OrderResponse } from "@airrand/contracts";
+import type { OrderResponse, ProductResponse } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
-import { Alert } from "../components/alert";
-import { LoadingState } from "../components/loading-state";
 import { MerchantGate } from "../components/merchant-gate";
-import { PageShell } from "../components/page-shell";
+import { OrderDetailPanel } from "../components/pos/order-detail-panel";
+import { OrderLineCards } from "../components/pos/order-line-cards";
+import { OrderSummaryCard } from "../components/pos/order-summary-card";
+import { PosHeader } from "../components/pos/pos-header";
+import { ProductGrid } from "../components/pos/product-grid";
+import { AlertMessage } from "../components/ui/alert-message";
+import { LoadingState } from "../components/ui/loading-state";
 import { useMerchant } from "../components/merchant-context";
-import { fetchOrders, fetchProducts } from "../lib/api";
+import {
+  fetchOrders,
+  fetchProducts,
+  updateOrderStatus,
+  updateProduct,
+} from "../lib/api";
+import { isActiveOrderStatus } from "../lib/order-progress";
 
-const STATUS_KEYS: OrderStatus[] = [
-  "placed",
-  "accepted",
-  "ready",
-  "picked_up",
-  "cancelled",
-];
-
-function DashboardContent() {
+function PosConsoleContent() {
   const { merchantId } = useMerchant();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
-  const [productCount, setProductCount] = useState(0);
-  const [availableCount, setAvailableCount] = useState(0);
+  const [products, setProducts] = useState<ProductResponse[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!merchantId) {
@@ -33,15 +37,25 @@ function DashboardContent() {
     setLoading(true);
     setError(null);
     try {
-      const [products, orderList] = await Promise.all([
+      const [productList, orderList] = await Promise.all([
         fetchProducts(merchantId),
         fetchOrders(merchantId),
       ]);
-      setProductCount(products.length);
-      setAvailableCount(products.filter((p) => p.isAvailable).length);
-      setOrders(orderList);
+      setProducts(productList);
+      const sorted = [...orderList].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      setOrders(sorted);
+      setSelectedOrderId((current) => {
+        if (current && sorted.some((o) => o.id === current)) {
+          return current;
+        }
+        const firstActive = sorted.find((o) => isActiveOrderStatus(o.status));
+        return firstActive?.id ?? sorted[0]?.id ?? null;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      setError(err instanceof Error ? err.message : "Failed to load console");
     } finally {
       setLoading(false);
     }
@@ -51,60 +65,105 @@ function DashboardContent() {
     void load();
   }, [load]);
 
-  const statusCounts = useMemo(() => {
-    const counts = Object.fromEntries(
-      STATUS_KEYS.map((s) => [s, 0]),
-    ) as Record<OrderStatus, number>;
-    for (const order of orders) {
-      counts[order.status] += 1;
+  const activeOrders = useMemo(
+    () => orders.filter((o) => isActiveOrderStatus(o.status)),
+    [orders],
+  );
+
+  const selectedOrder = useMemo(
+    () => orders.find((o) => o.id === selectedOrderId) ?? null,
+    [orders, selectedOrderId],
+  );
+
+  async function handleStatusChange(orderId: string, status: OrderStatus) {
+    if (!merchantId) {
+      return;
     }
-    return counts;
-  }, [orders]);
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateOrderStatus(merchantId, orderId, status);
+      setSuccess(`Order updated to ${status.replace("_", " ")}.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update order");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggleAvailability(product: ProductResponse) {
+    if (!merchantId) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateProduct(merchantId, product.id, {
+        isAvailable: !product.isAvailable,
+      });
+      setSuccess(
+        `"${product.name}" is now ${product.isAvailable ? "unavailable" : "available"}.`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update product");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
-    <PageShell
-      title="Dashboard"
-      description="Overview of your demo store activity."
-    >
-      {error ? <Alert variant="error" message={error} /> : null}
-      {loading ? <LoadingState /> : null}
-      {!loading && !error ? (
+    <div className="pos-console">
+      <PosHeader />
+
+      {error ? <AlertMessage variant="error" message={error} /> : null}
+      {success ? <AlertMessage variant="success" message={success} /> : null}
+
+      {loading ? (
+        <LoadingState label="Loading merchant console…" />
+      ) : (
         <>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <p className="stat-label">Products</p>
-              <p className="stat-value">{productCount}</p>
-            </div>
-            <div className="stat-card">
-              <p className="stat-label">Available</p>
-              <p className="stat-value">{availableCount}</p>
-            </div>
-            <div className="stat-card">
-              <p className="stat-label">Total orders</p>
-              <p className="stat-value">{orders.length}</p>
-            </div>
-          </div>
-          <div className="card">
-            <h2>Orders by status</h2>
-            <div className="stats-grid">
-              {STATUS_KEYS.map((status) => (
-                <div key={status} className="stat-card">
-                  <p className="stat-label">{status.replace("_", " ")}</p>
-                  <p className="stat-value">{statusCounts[status]}</p>
-                </div>
-              ))}
-            </div>
+          <section className="pos-section" aria-label="Order queue">
+            <h2 className="pos-section-title">Active order queue</h2>
+            <OrderLineCards
+              orders={activeOrders}
+              selectedOrderId={selectedOrderId}
+              onSelect={setSelectedOrderId}
+            />
+          </section>
+
+          <div className="pos-workspace-grid">
+            <section className="pos-section" aria-label="Menu">
+              <h2 className="pos-section-title">Menu</h2>
+              <ProductGrid
+                products={products}
+                saving={saving}
+                onToggleAvailability={handleToggleAvailability}
+              />
+            </section>
+
+            <aside className="pos-right-rail" aria-label="Order details">
+              <OrderDetailPanel
+                order={selectedOrder}
+                saving={saving}
+                onStatusChange={handleStatusChange}
+              />
+              <OrderSummaryCard order={selectedOrder} />
+            </aside>
           </div>
         </>
-      ) : null}
-    </PageShell>
+      )}
+    </div>
   );
 }
 
-export default function DashboardPage() {
+export default function PosDashboardPage() {
   return (
     <MerchantGate>
-      <DashboardContent />
+      <PosConsoleContent />
     </MerchantGate>
   );
 }

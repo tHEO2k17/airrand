@@ -8,12 +8,12 @@ export function PageShell({
   children: React.ReactNode;
 }) {
   return (
-    <section className="page-shell">
-      <header className="page-header">
+    <div className="pos-page">
+      <header className="pos-page__header">
         <h1>{title}</h1>
-        {description ? <p className="page-description">{description}</p> : null}
+        {description ? <p>{description}</p> : null}
       </header>
       {children}
-    </section>
+    </div>
   );
 }

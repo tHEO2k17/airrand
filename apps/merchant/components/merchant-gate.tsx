@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert } from "./alert";
-import { LoadingState } from "./loading-state";
+import { AlertMessage } from "./ui/alert-message";
+import { LoadingState } from "./ui/loading-state";
 import { useMerchant } from "./merchant-context";
 
 export function MerchantGate({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export function MerchantGate({ children }: { children: React.ReactNode }) {
 
   if (error || !merchantId) {
     return (
-      <Alert
+      <AlertMessage
         variant="error"
         message={error ?? "Merchant is not available."}
       />

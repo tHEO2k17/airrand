@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AuditLogResponse } from "@airrand/contracts";
-import { Alert } from "../../components/alert";
-import { LoadingState } from "../../components/loading-state";
+import { AlertMessage } from "../../components/ui/alert-message";
+import { LoadingState } from "../../components/ui/loading-state";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
+import { Surface } from "../../components/ui/surface";
 import { useMerchant } from "../../components/merchant-context";
 import { fetchAuditLogs } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
@@ -39,19 +40,19 @@ function AuditLogsContent() {
   return (
     <PageShell
       title="Audit log"
-      description="Recent order and pickup events for this merchant (demo visibility)."
+      description="Recent order and pickup events for this merchant."
     >
-      {error ? <Alert variant="error" message={error} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
       {loading ? <LoadingState /> : null}
 
       {!loading && logs.length === 0 ? (
-        <div className="card">
-          <p className="inline-muted">No audit events yet.</p>
-        </div>
+        <Surface>
+          <p className="pos-muted">No audit events yet.</p>
+        </Surface>
       ) : null}
 
       {!loading && logs.length > 0 ? (
-        <div className="card table-wrap">
+        <Surface padding="none" className="pos-table-wrap">
           <table>
             <thead>
               <tr>
@@ -69,7 +70,10 @@ function AuditLogsContent() {
                   <td>
                     <code>{log.action}</code>
                   </td>
-                  <td>{log.actorType}</td>
+                  <td>
+                    {log.actorType}
+                    {log.actorLabel ? ` (${log.actorLabel})` : ""}
+                  </td>
                   <td>
                     {log.orderId ? (
                       <code>{log.orderId.slice(0, 8)}…</code>
@@ -78,7 +82,7 @@ function AuditLogsContent() {
                     )}
                   </td>
                   <td>
-                    <pre className="audit-metadata">
+                    <pre className="pos-audit-metadata">
                       {JSON.stringify(log.metadata, null, 2)}
                     </pre>
                   </td>
@@ -86,7 +90,7 @@ function AuditLogsContent() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Surface>
       ) : null}
     </PageShell>
   );

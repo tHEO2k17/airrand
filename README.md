@@ -81,12 +81,16 @@ API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost
 
 Staging smoke test: `./scripts/smoke-staging.sh`
 
-Both web apps load the seeded **Demo Cafe** merchant (`demo-cafe`) automatically.
+Sign in to the merchant app with seeded demo staff credentials (see **Merchant authentication**).
+
+### Merchant POS (Phase 7A)
+
+The merchant home route **`/`** is the consolidated **Order Line** console: dark icon sidebar, active order queue, menu grid (Lucide icons, no product images), and a right-hand panel for order details plus catalog summary. Secondary routes (`/products`, `/orders`, `/pickup`, `/audit-logs`) share the same POS shell. Pickup verification stays on **`/pickup`** — the dashboard does not skip QR verification.
 
 ### End-to-end demo flow
 
 1. **Customer** (`:3002`): browse menu → add to cart → place pickup order → show QR/token on confirmation.
-2. **Merchant** (`:3001`): see order on Orders → Accept → Mark ready.
+2. **Merchant** (`:3001`): sign in → use Order Line (`/`) or Orders → Accept → Mark ready.
 3. **Merchant** Pickup screen: paste token (or scan later) → verify → order becomes `picked_up`.
 
 Payment happens outside airRand; the apps only coordinate reservation and pickup verification.
@@ -219,4 +223,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 5A**: CI + audit log
 - **Phase 5B**: Rate limiting + camera QR scan
 - **Phase 6A**: Merchant staff authentication
-- **Phase 6B** (current): Staging deployment docs, Docker, readiness, CORS env
+- **Phase 6B**: Staging deployment docs, Docker, readiness, CORS env
+- **Phase 7A** (current): Merchant POS UI refactor

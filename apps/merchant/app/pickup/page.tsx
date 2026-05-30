@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useCallback, useState } from "react";
-import { Alert } from "../../components/alert";
+import { AlertMessage } from "../../components/ui/alert-message";
 import { PickupScanner } from "../../components/pickup-scanner";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
-import { StatusPill } from "../../components/status-pill";
+import { StatusBadge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Surface } from "../../components/ui/surface";
 import { useMerchant } from "../../components/merchant-context";
 import { formatDateTime } from "../../lib/format";
 import { verifyPickupToken } from "../../lib/verify-pickup";
@@ -72,21 +74,21 @@ function PickupContent() {
       title="Pickup verification"
       description="Scan the customer QR code or paste the token manually. The server verifies the signature and order state."
     >
-      {error ? <Alert variant="error" message={error} /> : null}
-      {success ? <Alert variant="success" message={success} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
+      {success ? <AlertMessage variant="success" message={success} /> : null}
 
-      <div className="card">
-        <h2>Camera scan</h2>
-        <p className="inline-muted">
+      <Surface>
+        <h2 className="pos-section-title">Camera scan</h2>
+        <p className="pos-muted">
           Order ID is read from the token for routing only. Trust always comes from
           server verification.
         </p>
         {scannerEnabled && !saving && !verifiedOrder ? (
           <PickupScanner onScan={handleScan} disabled={saving} />
         ) : (
-          <button
+          <Button
             type="button"
-            className="btn btn-secondary"
+            variant="secondary"
             onClick={() => {
               setScannerEnabled(true);
               setError(null);
@@ -94,13 +96,13 @@ function PickupContent() {
             }}
           >
             Scan another code
-          </button>
+          </Button>
         )}
-      </div>
+      </Surface>
 
-      <div className="card">
-        <h2>Manual entry</h2>
-        <form className="form-grid" onSubmit={handleVerify}>
+      <Surface>
+        <h2 className="pos-section-title">Manual entry</h2>
+        <form className="pos-form-grid" onSubmit={handleVerify}>
           <label>
             Pickup token
             <textarea
@@ -109,25 +111,25 @@ function PickupContent() {
               placeholder="Paste token from customer QR…"
             />
           </label>
-          <button className="btn" type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {saving ? "Verifying…" : "Verify pickup"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Surface>
 
       {verifiedOrder ? (
-        <div className="card">
-          <h2>Last verified order</h2>
+        <Surface>
+          <h2 className="pos-section-title">Last verified order</h2>
           <p>
             <code>{verifiedOrder.id}</code>
           </p>
           <p>
-            Status: <StatusPill status={verifiedOrder.status as "picked_up"} />
+            Status: <StatusBadge status={verifiedOrder.status as "picked_up"} />
           </p>
-          <p className="inline-muted">
+          <p className="pos-muted">
             Verified at {formatDateTime(verifiedOrder.verifiedAt)}
           </p>
-        </div>
+        </Surface>
       ) : null}
     </PageShell>
   );

@@ -167,8 +167,23 @@ Staff sign in at the merchant app **/login**. Sessions use HMAC-signed tokens (A
 | Update order status | Yes | Yes | Yes |
 | Verify pickup | Yes | Yes | Yes |
 | View audit logs | Yes | Yes | No |
+| View staff list | Yes | Yes | No |
+| Create staff | Yes | Yes (staff only) | No |
+| Update staff roles | Yes | No | No |
+| Deactivate staff | Yes | No | No |
 
-The API returns `403` with `{ "error": { "code": "forbidden", "message": "You do not have permission to perform this action." } }` when a role is not allowed. The merchant UI hides or disables controls staff cannot use (for example, product edits and the Audit nav item).
+The API returns `403` with `{ "error": { "code": "forbidden", "message": "You do not have permission to perform this action." } }` when a role is not allowed. The merchant UI hides or disables controls staff cannot use (for example, product edits, Staff, and the Audit nav item).
+
+### Staff management (Phase 9B)
+
+Owners and managers can open **Staff** (`/staff`) to list accounts. Owners may create **manager** or **staff** users; managers may create **staff** only. New accounts receive a **temporary password** you must share out of band — there is no email invite or password-reset flow yet.
+
+- Owners can change roles (manager ↔ staff) and deactivate users.
+- Managers cannot change roles or deactivate users.
+- You cannot deactivate yourself or the last active **owner**.
+- Demo seed passwords remain for local use only; rotate or disable before shared staging.
+
+Protected API: `GET/POST /merchants/:merchantId/staff`, `PATCH .../role`, `POST .../deactivate`.
 
 The merchant app stores the session token in `localStorage` and sends `Authorization: Bearer …` on protected API calls. The API also sets an HttpOnly `airrand_session` cookie on login for same-site deployments.
 
@@ -177,7 +192,7 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 | Access | Routes |
 |--------|--------|
 | Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `POST /auth/merchant/login` |
-| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs` |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management |
 
 Customer guest ordering stays public on catalog and order create.
 
@@ -264,3 +279,4 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 7B**: Customer storefront polish
 - **Phase 8A–8C**: Order status polling, merchant RBAC, responsive layout
 - **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)
+- **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)

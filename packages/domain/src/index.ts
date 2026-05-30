@@ -11,3 +11,9 @@ export {
   type MerchantStaffRole,
   merchantRoleCan,
 } from "./merchant-permissions.js";
+export {
+  type AssignableStaffRole,
+  canCreateStaffWithRole,
+  canDeactivateMerchantUser,
+  canUpdateStaffRole,
+} from "./staff-lifecycle.js";

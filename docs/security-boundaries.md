@@ -72,9 +72,18 @@ Middleware enforces `session.merchantId === route :merchantId`.
 
 Returns `429` with `rate_limited` error code.
 
+## Staff lifecycle (Phase 9B)
+
+- Owners/managers can create staff with a **temporary password** (Argon2-hashed server-side). No email is sent — credentials must be shared manually.
+- No invite tokens, no password reset, no reactivation UI in this phase.
+- Managers cannot create owners, change roles, or deactivate users.
+- The last active **owner** cannot be deactivated; users cannot deactivate themselves.
+- `password_hash` is never returned from staff APIs; only safe profile fields are exposed.
+- Audit events: `staff.created`, `staff.role_updated`, `staff.deactivated`.
+
 ## Authentication limitations (Phase 6A)
 
-- No MFA, no account lockout beyond rate limits, no password reset flow.
+- No MFA, no account lockout beyond rate limits, no password reset flow (staff must change passwords manually when that feature exists).
 - Demo seed credentials (`owner@demo-cafe.test` / `ChangeMe123!`) are **local-only** — disable or rotate before any shared staging.
 - Session tokens are bearer-equivalent if leaked from `localStorage`.
 - Fine-grained RBAC (`owner` | `manager` | `staff`) is enforced on protected merchant routes (Phase 8B).
@@ -89,6 +98,7 @@ Returns `429` with `rate_limited` error code.
 | Risk | Mitigation path |
 |------|-----------------|
 | Guest order spam | Rate limits; future customer auth or CAPTCHA |
+| Temporary staff passwords leaked | Share out of band; rotate hash via DB or recreate user |
 | Shared demo password | Rotate seed; remove seed in prod |
 | IP spoofing behind proxy | Configure trusted proxy headers carefully |
 | Redis outage weakens rate limits | Monitor Redis; restore before multi-instance abuse |

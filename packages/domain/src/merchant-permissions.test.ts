@@ -13,9 +13,11 @@ describe("merchantRoleCan", () => {
     }
   });
 
-  it("allows manager every action", () => {
+  it("allows manager all actions except staff role updates and deactivation", () => {
     for (const action of allActions) {
-      expect(merchantRoleCan("manager", action)).toBe(true);
+      const expected =
+        action !== "staff:update_role" && action !== "staff:deactivate";
+      expect(merchantRoleCan("manager", action)).toBe(expected);
     }
   });
 
@@ -25,9 +27,11 @@ describe("merchantRoleCan", () => {
     expect(merchantRoleCan("staff", "pickup:verify")).toBe(true);
   });
 
-  it("denies staff catalog and audit actions", () => {
+  it("denies staff catalog, audit, and staff management actions", () => {
     expect(merchantRoleCan("staff", "product:create")).toBe(false);
     expect(merchantRoleCan("staff", "product:update")).toBe(false);
     expect(merchantRoleCan("staff", "audit_log:view")).toBe(false);
+    expect(merchantRoleCan("staff", "staff:view")).toBe(false);
+    expect(merchantRoleCan("staff", "staff:create")).toBe(false);
   });
 });

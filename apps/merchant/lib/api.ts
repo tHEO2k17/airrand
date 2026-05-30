@@ -1,10 +1,13 @@
 import type {
+  AssignableStaffRole,
   AuditLogResponse,
   CreateProductInput,
+  CreateStaffRequest,
   MerchantResponse,
   OrderResponse,
   PickupVerifyResponse,
   ProductResponse,
+  StaffMemberResponse,
   UpdateProductInput,
 } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
@@ -127,4 +130,53 @@ export async function fetchAuditLogs(
     `/merchants/${merchantId}/audit-logs`,
   );
   return data.auditLogs;
+}
+
+export async function fetchStaff(merchantId: string): Promise<StaffMemberResponse[]> {
+  const data = await request<{ staff: StaffMemberResponse[] }>(
+    `/merchants/${merchantId}/staff`,
+  );
+  return data.staff;
+}
+
+export async function createStaffMember(
+  merchantId: string,
+  input: CreateStaffRequest,
+): Promise<StaffMemberResponse> {
+  const data = await request<{ staff: StaffMemberResponse }>(
+    `/merchants/${merchantId}/staff`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+  return data.staff;
+}
+
+export async function updateStaffMemberRole(
+  merchantId: string,
+  merchantUserId: string,
+  role: AssignableStaffRole,
+): Promise<StaffMemberResponse> {
+  const data = await request<{ staff: StaffMemberResponse }>(
+    `/merchants/${merchantId}/staff/${merchantUserId}/role`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    },
+  );
+  return data.staff;
+}
+
+export async function deactivateStaffMember(
+  merchantId: string,
+  merchantUserId: string,
+): Promise<StaffMemberResponse> {
+  const data = await request<{ staff: StaffMemberResponse }>(
+    `/merchants/${merchantId}/staff/${merchantUserId}/deactivate`,
+    {
+      method: "POST",
+    },
+  );
+  return data.staff;
 }

@@ -6,6 +6,9 @@ export const AUDIT_ACTIONS = {
   ORDER_CREATED: "order.created",
   ORDER_STATUS_CHANGED: "order.status_changed",
   ORDER_PICKUP_VERIFIED: "order.pickup_verified",
+  STAFF_CREATED: "staff.created",
+  STAFF_ROLE_UPDATED: "staff.role_updated",
+  STAFF_DEACTIVATED: "staff.deactivated",
 } as const;
 
 export type AuditTx = Pick<Database, "insert">;

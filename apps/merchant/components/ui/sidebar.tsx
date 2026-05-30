@@ -7,6 +7,7 @@ import {
   Package,
   QrCode,
   ScrollText,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,14 +17,21 @@ import { formatRoleLabel } from "../../lib/permissions";
 import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
 
 const NAV_ITEMS = [
-  { href: "/", label: "POS", icon: LayoutDashboard, requiresAudit: false },
-  { href: "/products", label: "Products", icon: Package, requiresAudit: false },
-  { href: "/orders", label: "Orders", icon: ClipboardList, requiresAudit: false },
-  { href: "/pickup", label: "Pickup", icon: QrCode, requiresAudit: false },
+  { href: "/", label: "POS", icon: LayoutDashboard, requiresStaffView: false },
+  { href: "/products", label: "Products", icon: Package, requiresStaffView: false },
+  { href: "/orders", label: "Orders", icon: ClipboardList, requiresStaffView: false },
+  { href: "/pickup", label: "Pickup", icon: QrCode, requiresStaffView: false },
+  {
+    href: "/staff",
+    label: "Staff",
+    icon: Users,
+    requiresStaffView: true,
+  },
   {
     href: "/audit-logs",
     label: "Audit logs",
     icon: ScrollText,
+    requiresStaffView: false,
     requiresAudit: true,
   },
 ] as const;
@@ -32,11 +40,17 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { merchant } = useMerchant();
-  const { canViewAuditLogs, role } = useMerchantPermissions();
+  const { canViewAuditLogs, canViewStaff, role } = useMerchantPermissions();
 
-  const visibleNavItems = NAV_ITEMS.filter(
-    (item) => !item.requiresAudit || canViewAuditLogs,
-  );
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if ("requiresStaffView" in item && item.requiresStaffView && !canViewStaff) {
+      return false;
+    }
+    if ("requiresAudit" in item && item.requiresAudit && !canViewAuditLogs) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <aside className="pos-sidebar" aria-label="Merchant navigation">

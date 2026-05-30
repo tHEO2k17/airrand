@@ -39,8 +39,11 @@ import { getMerchantActor } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
+import { staffRoutes } from "./staff.js";
 
 export const merchantsRoutes = new Hono();
+
+merchantsRoutes.route("/", staffRoutes);
 
 merchantsRoutes.get("/", async (c) => {
   try {

@@ -11,5 +11,9 @@ export function useMerchantPermissions() {
     canCreateProduct: roleCan(role, "product:create"),
     canUpdateProduct: roleCan(role, "product:update"),
     canViewAuditLogs: roleCan(role, "audit_log:view"),
+    canViewStaff: roleCan(role, "staff:view"),
+    canCreateStaff: roleCan(role, "staff:create"),
+    canUpdateStaffRole: roleCan(role, "staff:update_role"),
+    canDeactivateStaff: roleCan(role, "staff:deactivate"),
   };
 }

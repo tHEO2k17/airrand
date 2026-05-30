@@ -77,7 +77,7 @@ Or all apps:
 pnpm dev
 ```
 
-API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB + secrets)
+API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`.
 
 Staging smoke test: `./scripts/smoke-staging.sh`
 
@@ -181,17 +181,18 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 
 Customer guest ordering stays public on catalog and order create.
 
-## Rate limiting (Phase 5B)
+## Rate limiting (Phase 5B / 9A)
 
-The API applies in-memory per-IP limits (no Redis):
+Distributed limits via **Redis** when `REDIS_URL` is set (`docker compose` provides Redis on port `6379`). If Redis is unavailable, the API falls back to **in-memory per-process** limits and logs a warning.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
+| `REDIS_URL` | `redis://localhost:6379` (example) | Redis for shared counters |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Fixed window length |
 | `RATE_LIMIT_MAX_READS` | `120` | GET (and other reads) per window |
 | `RATE_LIMIT_MAX_MUTATIONS` | `30` | POST/PATCH/PUT/DELETE per window |
 
-Returns `429` with `{ "error": { "code": "rate_limited", ... } }`.
+Returns `429` with `{ "error": { "code": "rate_limited", ... } }`. See [deployment.md](./docs/deployment.md) for fallback behavior and troubleshooting.
 
 ## Merchant pickup scan (Phase 5B)
 
@@ -202,7 +203,7 @@ On **Pickup** (`/pickup`), the merchant app can scan a customer QR with the devi
 PostgreSQL runs in Docker on host port **5433** (container `5432`) to avoid clashing with a system Postgres on `5432`. `DATABASE_URL` in `.env.example` matches this setup.
 
 ```bash
-# Start Postgres (detached)
+# Start Postgres + Redis (detached)
 docker compose up -d
 
 # Check status
@@ -260,4 +261,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 6A**: Merchant staff authentication
 - **Phase 6B**: Staging deployment docs, Docker, readiness, CORS env
 - **Phase 7A**: Merchant POS UI refactor
-- **Phase 7B** (current): Customer storefront polish
+- **Phase 7B**: Customer storefront polish
+- **Phase 8A–8C**: Order status polling, merchant RBAC, responsive layout
+- **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)

@@ -1,13 +1,6 @@
 import type { Context, MiddlewareHandler } from "hono";
-import {
-  InMemoryRateLimiter,
-  isMutationMethod,
-  parseRateLimitConfig,
-  type RateLimitBucket,
-} from "../lib/rate-limit.js";
-
-const limiter = new InMemoryRateLimiter();
-const config = parseRateLimitConfig();
+import { checkRateLimit, resetRateLimitServiceForTests } from "../lib/rate-limit-service.js";
+import { isMutationMethod, type RateLimitBucket } from "../lib/rate-limit.js";
 
 export function getClientIp(c: Context): string {
   const forwarded = c.req.header("x-forwarded-for");
@@ -37,8 +30,9 @@ export function rateLimitMiddleware(): MiddlewareHandler {
       ? "mutation"
       : "read";
     const ip = getClientIp(c);
+    const { allowed } = await checkRateLimit(ip, bucket);
 
-    if (!limiter.check(ip, bucket, config)) {
+    if (!allowed) {
       return c.json(
         {
           error: {
@@ -56,5 +50,5 @@ export function rateLimitMiddleware(): MiddlewareHandler {
 
 /** @internal Test-only reset */
 export function resetRateLimiterForTests(): void {
-  limiter.reset();
+  resetRateLimitServiceForTests();
 }

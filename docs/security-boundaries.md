@@ -63,11 +63,12 @@ Middleware enforces `session.merchantId === route :merchantId`.
 - Audit logs are **not authenticated for customers**; only merchant staff can read via protected API.
 - Logs are not tamper-evident (no hash chain) in MVP.
 
-## Rate limiting limitations
+## Rate limiting
 
-- **In-memory**, per API process, keyed by IP (with `x-forwarded-for` / `x-real-ip` when present).
-- Resets on process restart; not shared across replicas.
-- Appropriate for single-instance staging; **insufficient alone for high-traffic or multi-instance production** without Redis or edge rate limiting.
+- **Primary:** Redis fixed-window counters when `REDIS_URL` is configured (shared across API replicas).
+- **Fallback:** In-memory per process if Redis is unavailable — logs `rate_limit_fallback` once; limits reset on restart and are not shared across instances during fallback.
+- Keyed by client IP (`x-forwarded-for` / `x-real-ip` when present).
+- Edge or WAF rate limiting is still recommended for production abuse protection.
 
 Returns `429` with `rate_limited` error code.
 
@@ -76,7 +77,7 @@ Returns `429` with `rate_limited` error code.
 - No MFA, no account lockout beyond rate limits, no password reset flow.
 - Demo seed credentials (`owner@demo-cafe.test` / `ChangeMe123!`) are **local-only** — disable or rotate before any shared staging.
 - Session tokens are bearer-equivalent if leaked from `localStorage`.
-- Role field (`owner` | `manager` | `staff`) is stored but **not enforced** for fine-grained RBAC in MVP.
+- Fine-grained RBAC (`owner` | `manager` | `staff`) is enforced on protected merchant routes (Phase 8B).
 
 ## CORS
 
@@ -90,7 +91,7 @@ Returns `429` with `rate_limited` error code.
 | Guest order spam | Rate limits; future customer auth or CAPTCHA |
 | Shared demo password | Rotate seed; remove seed in prod |
 | IP spoofing behind proxy | Configure trusted proxy headers carefully |
-| Single-node rate limits | Redis / edge limits in later phase |
+| Redis outage weakens rate limits | Monitor Redis; restore before multi-instance abuse |
 | No encryption at rest for DB | Use managed Postgres with disk encryption |
 | Staff session theft (XSS) | CSP, HTTP-only cookie-only mode, short TTL |
 
@@ -98,7 +99,7 @@ Returns `429` with `rate_limited` error code.
 
 For staging handoff, verify:
 
-1. `GET /ready` — database + secrets
+1. `GET /ready` — database, redis (when configured), secrets
 2. `./scripts/smoke-staging.sh` — critical paths
 3. Secrets not in git; `.env.staging` gitignored
 

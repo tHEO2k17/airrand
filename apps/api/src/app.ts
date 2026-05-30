@@ -3,12 +3,16 @@ import { cors } from "hono/cors";
 import { getCorsAllowedOrigins } from "./lib/cors.js";
 import { getReadinessResult } from "./lib/readiness.js";
 import { rateLimitMiddleware } from "./middleware/rate-limit.js";
+import { requestIdMiddleware } from "./middleware/request-id.js";
+import { requestLoggingMiddleware } from "./middleware/request-logging.js";
 import { authRoutes } from "./routes/auth.js";
 import { merchantsRoutes } from "./routes/merchants.js";
 import { jsonOk } from "./lib/response.js";
 
 export const app = new Hono();
 
+app.use("*", requestIdMiddleware());
+app.use("*", requestLoggingMiddleware());
 app.use("*", rateLimitMiddleware());
 
 app.use(
@@ -16,8 +20,8 @@ app.use(
   cors({
     origin: getCorsAllowedOrigins(),
     allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
-    exposeHeaders: ["Set-Cookie"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+    exposeHeaders: ["Set-Cookie", "X-Request-Id"],
   }),
 );
 
@@ -30,6 +34,13 @@ app.get("/health", (c) =>
 
 app.get("/ready", async (c) => {
   const result = await getReadinessResult();
+  const payload = {
+    status: result.ready ? "ready" : "not_ready",
+    service: "airrand-api",
+    checks: result.checks,
+    ...(Object.keys(result.details).length > 0 ? { details: result.details } : {}),
+  };
+
   if (!result.ready) {
     return c.json(
       {
@@ -37,17 +48,13 @@ app.get("/ready", async (c) => {
           code: "NOT_READY",
           message: "One or more readiness checks failed",
         },
-        data: { checks: result.checks },
+        data: payload,
       },
       503,
     );
   }
 
-  return jsonOk(c, {
-    status: "ready",
-    service: "airrand-api",
-    checks: result.checks,
-  });
+  return jsonOk(c, payload);
 });
 
 app.route("/auth", authRoutes);
@@ -58,7 +65,15 @@ app.notFound((c) =>
 );
 
 app.onError((error, c) => {
-  console.error(error);
+  console.error(
+    JSON.stringify({
+      level: "error",
+      type: "unhandled_error",
+      requestId: c.get("requestId"),
+      message: error instanceof Error ? error.message : "Unknown error",
+      timestamp: new Date().toISOString(),
+    }),
+  );
   return c.json(
     { error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" } },
     500,

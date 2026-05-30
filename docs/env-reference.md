@@ -13,11 +13,12 @@ Used by `apps/api`, `pnpm db:*`, and Docker API containers.
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `DATABASE_URL` | Yes | `postgresql://postgres:postgres@localhost:5433/airrand` | PostgreSQL connection string |
+| `REDIS_URL` | Staging/prod recommended | — | Redis connection URL for distributed rate limits (`redis://host:6379`). Omit locally to skip Redis readiness and use in-memory limits only |
 | `PORT` | No | `3003` | API listen port |
 | `AUTH_SESSION_SECRET` | Yes | — | HMAC secret for merchant session tokens (≥32 chars) |
 | `AUTH_SESSION_TTL_MS` | No | `604800000` (7 days) | Merchant session lifetime in milliseconds |
 | `QR_SIGNING_SECRET` | Yes | — | HMAC secret for pickup QR tokens (≥32 chars) |
-| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit window (ms), in-memory per API process |
+| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit fixed window (ms) |
 | `RATE_LIMIT_MAX_READS` | No | `120` | Max GET (read) requests per IP per window |
 | `RATE_LIMIT_MAX_MUTATIONS` | No | `30` | Max POST/PATCH/etc. per IP per window |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3001,http://localhost:3002` | Comma-separated browser origins allowed to call the API |
@@ -71,7 +72,7 @@ Configured on the **API** only:
 | `AUTH_SESSION_SECRET` | Signs session tokens returned from `POST /auth/merchant/login` |
 | `AUTH_SESSION_TTL_MS` | Token expiry |
 
-Readiness (`GET /ready`) verifies both auth and QR secrets are set and long enough.
+Readiness (`GET /ready`) verifies database connectivity, Redis when `REDIS_URL` is set, and that auth/QR secrets are set and long enough.
 
 ---
 
@@ -87,11 +88,11 @@ Readiness (`GET /ready`) verifies both auth and QR secrets are set and long enou
 
 | Variable | Purpose |
 |----------|---------|
-| `RATE_LIMIT_WINDOW_MS` | Fixed window length |
+| `RATE_LIMIT_WINDOW_MS` | Fixed window length (Redis `INCR` + `PEXPIRE` per window when Redis is available) |
 | `RATE_LIMIT_MAX_READS` | Permissive bucket (GET, etc.) |
 | `RATE_LIMIT_MAX_MUTATIONS` | Stricter bucket (POST, PATCH, …) |
 
-Limits are **per API process** (in-memory). Not shared across replicas until Redis is added in a later phase.
+When `REDIS_URL` is set, counters are shared across API replicas via keys `airrand:rl:{bucket}:{ip}:{windowId}`. On Redis errors or connection failure, the API **falls back to in-memory limits per process** (fail-open for availability, weaker cross-instance enforcement until Redis recovers). A one-time warning is logged to stdout.
 
 ---
 
@@ -110,6 +111,7 @@ Must include every deployed Next.js origin that calls the API from the browser. 
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `API_URL` | `http://localhost:3003` | API base URL |
+| `REDIS_URL` | — | Optional direct Redis PING when `redis-cli` is installed |
 | `SMOKE_MERCHANT_EMAIL` | `owner@demo-cafe.test` | Demo staff login |
 | `SMOKE_MERCHANT_PASSWORD` | `ChangeMe123!` | Demo staff password (local seed only) |
 

@@ -7,6 +7,7 @@ This document describes how to run airRand in a **staging-style** environment us
 | Service | Port (example) | Dockerfile |
 |---------|----------------|------------|
 | PostgreSQL | 5432 (internal) | `postgres:16-alpine` (compose) |
+| Redis | 6379 (internal / host in dev) | `redis:7-alpine` (compose) |
 | API (Hono) | 3003 | `apps/api/Dockerfile` |
 | Merchant UI (Next.js) | 3001 | `apps/merchant/Dockerfile` |
 | Customer UI (Next.js) | 3002 | `apps/customer/Dockerfile` |
@@ -22,8 +23,8 @@ See [env-reference.md](./env-reference.md) for the full variable list.
 ## Local development (unchanged)
 
 ```bash
-docker compose up -d          # Postgres on host port 5433
-cp .env.example .env          # set secrets
+docker compose up -d          # Postgres (5433) + Redis (6379)
+cp .env.example .env          # set secrets; REDIS_URL=redis://localhost:6379
 pnpm install && pnpm db:migrate && pnpm db:seed
 pnpm dev
 ```
@@ -73,14 +74,37 @@ Sign in to merchant with demo credentials from seed (local/staging only): see RE
 | Endpoint | Purpose | Success |
 |----------|---------|---------|
 | `GET /health` | Liveness — process is up | `200` `{ "data": { "status": "ok", ... } }` |
-| `GET /ready` | Readiness — DB + secrets | `200` when DB reachable and secrets valid; `503` otherwise |
+| `GET /ready` | Readiness — DB, Redis, secrets | `200` when checks pass; `503` otherwise |
 
 Orchestrators should use `/health` for liveness and `/ready` for traffic routing after deploy.
+
+Readiness response shape:
+
+```json
+{
+  "data": {
+    "status": "ready",
+    "service": "airrand-api",
+    "checks": {
+      "database": "ok",
+      "redis": "ok",
+      "secrets": "ok"
+    }
+  }
+}
+```
+
+Check values: `ok` | `failed` | `skipped`. **redis** is `skipped` when `REDIS_URL` is unset (local dev without Redis). When `REDIS_URL` is set (staging/production), **redis** must be `ok` or the API is not ready.
 
 Readiness checks:
 
 - **database** — `SELECT 1` via Drizzle
+- **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
+
+### Request IDs and logging
+
+Every API response includes `X-Request-Id`. Clients may send `X-Request-Id` to correlate logs. Structured JSON request logs include method, path, status, duration, request id, and timestamp (stdout only — no external APM in this phase).
 
 ## Building images individually
 
@@ -103,15 +127,26 @@ docker build -f apps/customer/Dockerfile \
 - [ ] Postgres reachable; migrations applied
 - [ ] Secrets rotated from demo defaults; not committed
 - [ ] `CORS_ALLOWED_ORIGINS` lists production/staging browser origins
-- [ ] `GET /ready` returns 200
+- [ ] Redis reachable when `REDIS_URL` is set
+- [ ] `GET /ready` returns 200 with `checks.database`, `checks.redis`, `checks.secrets` all `ok` (or `redis: skipped` only when Redis is intentionally omitted)
 - [ ] `./scripts/smoke-staging.sh` passes
 - [ ] Demo password changed or demo seed disabled for non-dev environments
 
 ## Operational notes
 
-- **Rate limits** are in-memory per API instance; scale-out does not share counters yet.
+- **Rate limits** use Redis fixed-window counters when `REDIS_URL` is set. If Redis is down or unreachable, the API **falls back to in-memory limits per process** and logs a one-time JSON warning (`rate_limit_fallback`). Limits are not shared across replicas during fallback.
 - **Sessions** are stateless signed tokens; logout clears client storage/cookie but does not require server session store.
-- **No Redis** in this phase — add in a later phase for shared rate limits if needed.
+- **Redis** is used for distributed rate limiting only (no job queues in this phase).
+
+### Troubleshooting
+
+| Symptom | Likely cause | Action |
+|---------|----------------|--------|
+| `/ready` → `redis: failed` | Redis down or wrong `REDIS_URL` | `docker compose ps`, verify `redis-cli -u $REDIS_URL ping` |
+| `/ready` → `redis: skipped` | `REDIS_URL` unset | Set `REDIS_URL` in staging/production |
+| `rate_limit_fallback` in logs | Redis unreachable at request time | Restore Redis; limits are per-instance until then |
+| `429 rate_limited` under load | Legitimate or abusive traffic | Tune `RATE_LIMIT_*` env vars; scale API with Redis healthy |
+| Missing `X-Request-Id` | Old proxy stripping headers | Allow `X-Request-Id` through load balancer |
 
 ## Related docs
 

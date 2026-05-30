@@ -112,6 +112,9 @@ importers:
       '@airrand/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@airrand/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       next:
         specifier: ^15.3.3
         version: 15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -140,6 +143,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@22.19.19)(tsx@4.22.3)
 
   packages/config:
     devDependencies:

@@ -51,23 +51,36 @@ pnpm test
 
 ## Development
 
-Run all apps in parallel:
+### Environment
+
+Root `.env` powers the API and database scripts. The merchant app needs its own env file:
+
+```bash
+cp apps/merchant/.env.example apps/merchant/.env.local
+# NEXT_PUBLIC_API_BASE_URL=http://localhost:3003
+```
+
+### Run services
+
+Start Postgres if needed (`docker compose up -d`), then:
+
+```bash
+# API + merchant UI (recommended for Phase 3)
+pnpm --filter @airrand/api dev        # http://localhost:3003
+pnpm --filter @airrand/merchant dev   # http://localhost:3001
+```
+
+Or all apps:
 
 ```bash
 pnpm dev
 ```
 
-Or run individually:
-
-```bash
-pnpm --filter @airrand/merchant dev   # http://localhost:3001
-pnpm --filter @airrand/customer dev   # http://localhost:3002
-pnpm --filter @airrand/api dev        # http://localhost:3003
-```
-
 API health check: `GET http://localhost:3003/health`
 
-Pickup flow (Phase 2): create an order to receive `data.pickup.token`, mark the order `ready`, then `POST /merchants/:merchantId/orders/:orderId/pickup/verify` with `{ "token": "..." }`.
+The merchant UI loads the seeded **Demo Cafe** merchant (`demo-cafe`) automatically.
+
+Pickup flow: mark an order **ready** on the Orders screen, paste the customer's pickup token on **Pickup**, or use the API directly.
 
 ## Local database (Docker)
 
@@ -124,6 +137,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 0**: Repo scaffold
 - **Phase 1**: Database schema, contracts, domain rules, API
 - **Phase 1.5**: Local Docker PostgreSQL
-- **Phase 2** (current): QR pickup token issue/verify
-- **Phase 3**: Merchant UI
+- **Phase 2**: QR pickup token issue/verify
+- **Phase 3** (current): Merchant UI
 - **Phase 4**: Customer UI

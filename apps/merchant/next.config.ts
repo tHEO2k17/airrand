@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@airrand/contracts"],
+  transpilePackages: ["@airrand/contracts", "@airrand/domain"],
 };
 
 export default nextConfig;

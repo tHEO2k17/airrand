@@ -21,7 +21,7 @@ See [docs/market-scope.md](./docs/market-scope.md) for target vendors and users.
 | `packages/storage` | Provider-agnostic object storage (MinIO first; S3-compatible) |
 | `packages/config` | Shared TypeScript and ESLint config |
 
-See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), [docs/market-scope.md](./docs/market-scope.md), [docs/customer-data-policy.md](./docs/customer-data-policy.md), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
+See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), [docs/market-scope.md](./docs/market-scope.md), [docs/customer-data-policy.md](./docs/customer-data-policy.md), [docs/pilot-operations.md](./docs/pilot-operations.md) (storefront links and order tracking for pilots), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
 
 ## Prerequisites
 

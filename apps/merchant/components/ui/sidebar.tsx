@@ -8,6 +8,7 @@ import {
   Package,
   QrCode,
   ScrollText,
+  ExternalLink,
   Settings,
   Users,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { useAuth } from "../auth-context";
 import { useMerchant } from "../merchant-context";
 import { formatRoleLabel } from "../../lib/permissions";
 import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
+import { getMerchantStorefrontUrl } from "../../lib/storefront";
 
 const NAV_ITEMS = [
   { href: "/", label: "POS", icon: LayoutDashboard, requiresStaffView: false },
@@ -74,7 +76,22 @@ export function Sidebar() {
           <span className="pos-sidebar__brand-name">airRand</span>
         </div>
         <p className="pos-sidebar__merchant">{merchant?.name ?? "Merchant"}</p>
+        {merchant?.slug ? (
+          <p className="pos-sidebar__merchant-slug">/{merchant.slug}</p>
+        ) : null}
       </div>
+
+      {merchant?.slug ? (
+        <a
+          href={getMerchantStorefrontUrl(merchant.slug)}
+          target="_blank"
+          rel="noreferrer"
+          className="pos-sidebar__storefront-link"
+        >
+          <ExternalLink size={16} strokeWidth={1.75} aria-hidden />
+          Open storefront
+        </a>
+      ) : null}
 
       {user ? (
         <div className="pos-sidebar__profile">

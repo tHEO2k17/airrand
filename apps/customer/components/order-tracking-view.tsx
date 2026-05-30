@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CustomerOrderStatusResponse } from "@airrand/contracts";
 import { PickupQr } from "./pickup-qr";
 import { CopyReference } from "./copy-reference";
+import { CopyTrackingLink } from "./copy-tracking-link";
 import { ShareTrackingLink } from "./share-tracking-link";
 import { OrderStatusTimeline } from "./order-status-timeline";
 import { AlertMessage } from "./ui/alert-message";
@@ -177,6 +178,10 @@ export function OrderTrackingView({
         </div>
         <div className="store-tracking-actions">
           <CopyReference reference={status.reference} />
+          <CopyTrackingLink
+            merchantSlug={merchantSlug}
+            reference={status.reference}
+          />
           <ShareTrackingLink
             merchantSlug={merchantSlug}
             reference={status.reference}

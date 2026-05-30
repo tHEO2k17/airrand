@@ -9,7 +9,7 @@ import { PickupDisclaimer } from "../../../../components/pickup-disclaimer";
 import { Button } from "../../../../components/ui/button";
 import { EmptyState } from "../../../../components/ui/empty-state";
 import { LoadingState } from "../../../../components/ui/loading-state";
-import { StatusBadge } from "../../../../components/ui/badge";
+import { OrderConfirmationLiveStatus } from "../../../../components/order-confirmation-live";
 import { Surface } from "../../../../components/ui/surface";
 import { useMerchant } from "../../../../components/merchant-context";
 import {
@@ -82,7 +82,8 @@ export default function StoreOrderConfirmationPage() {
             <strong>Order reference:</strong> {confirmation.reference}
           </li>
           <li className="store-meta-list__status">
-            <strong>Status:</strong> <StatusBadge status={confirmation.status} />
+            <strong>Status:</strong>{" "}
+            <OrderConfirmationLiveStatus confirmation={confirmation} />
           </li>
           <li>
             <strong>Pickup code expires:</strong>{" "}

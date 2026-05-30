@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { EmptyState } from "../components/ui/empty-state";
 import { LoadingState } from "../components/ui/loading-state";
 import { Surface } from "../components/ui/surface";
+import { TrackOrderLookupForm } from "../components/track-order-lookup-form";
 import { fetchMerchants } from "../lib/api";
 import { buildStorePath } from "../lib/store-paths";
 
@@ -49,6 +50,8 @@ export default function HomePage() {
           />
         </Surface>
       ) : null}
+
+      <TrackOrderLookupForm />
 
       {!loading && merchants.length > 0 ? (
         <div className="store-store-list">

@@ -92,6 +92,50 @@
   font-weight: 600;
 }
 
+.pos-sidebar__merchant-slug,
+.pos-sidebar__storefront-link {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .pos-sidebar__merchant-slug,
+  .pos-sidebar__storefront-link {
+    display: block;
+  }
+}
+
+.pos-sidebar__merchant-slug {
+  margin: var(--pos-space-1) 0 0;
+  padding: 0 var(--pos-space-3);
+  color: var(--pos-sidebar-text-muted);
+  font-size: var(--pos-font-size-xs);
+  font-family: var(--pos-font-mono, ui-monospace, monospace);
+}
+
+.pos-sidebar__storefront-link {
+  display: none;
+  align-items: center;
+  gap: var(--pos-space-2);
+  margin: var(--pos-space-2) var(--pos-space-2) 0;
+  padding: var(--pos-space-2) var(--pos-space-3);
+  border-radius: var(--pos-radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--pos-sidebar-text-active);
+  font-size: var(--pos-font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (min-width: 1024px) {
+  .pos-sidebar__storefront-link {
+    display: inline-flex;
+  }
+}
+
+.pos-sidebar__storefront-link:hover {
+  background: var(--pos-sidebar-hover);
+}
+
 .pos-sidebar__profile {
   padding: var(--pos-space-3);
   background: var(--pos-sidebar-hover);

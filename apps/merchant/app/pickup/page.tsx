@@ -80,7 +80,7 @@ function PickupContent() {
       <Surface>
         <h2 className="pos-section-title">Camera scan</h2>
         <p className="pos-muted">
-          Order ID is read from the token for routing only. Trust always comes from
+          The order reference is shown after verification. Trust always comes from
           server verification.
         </p>
         {scannerEnabled && !saving && !verifiedOrder ? (

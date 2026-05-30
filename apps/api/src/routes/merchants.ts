@@ -366,6 +366,42 @@ merchantsRoutes.get(
   },
 );
 
+merchantsRoutes.get(
+  "/:merchantId/orders/by-reference/:reference/status",
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const reference = normalizeOrderReferenceQuery(c.req.param("reference"));
+
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const [order] = await db
+        .select()
+        .from(orders)
+        .where(
+          and(eq(orders.merchantId, merchantId), eq(orders.reference, reference)),
+        )
+        .limit(1);
+
+      if (!order) {
+        return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      const lines = await db
+        .select()
+        .from(orderLines)
+        .where(eq(orderLines.orderId, order.id));
+
+      return jsonOk(c, toCustomerOrderStatusResponse(order, lines, merchant));
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
 merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
   try {
     const merchantId = c.req.param("merchantId");

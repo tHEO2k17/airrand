@@ -18,11 +18,14 @@ airRand uses two identifiers for orders:
 
 - All order responses include `reference`.
 - `GET /merchants/:merchantId/orders?reference=ORD-1001` (numeric `1001` is normalized).
-- Routes continue to use UUID path parameters.
+- `GET /merchants/:merchantId/orders/by-reference/:reference/status` — public customer status lookup by reference (UUID path still supported).
+- Routes continue to use UUID path parameters for mutations and realtime.
 
 ## UI
 
-Merchant and customer surfaces show `reference` instead of truncated UUIDs. Audit logs join orders to display `orderReference` when available.
+Merchant and customer surfaces show `reference` instead of truncated UUIDs. The customer order-status page looks up by reference; UUIDs stay in session storage for API/SSE only. Audit logs join orders to display `orderReference` when available.
+
+References are operational labels, not authentication secrets.
 
 ## Multi-instance
 

@@ -71,3 +71,13 @@ export async function fetchOrderStatus(
     `/merchants/${merchantId}/orders/${orderId}/status`,
   );
 }
+
+export async function fetchOrderStatusByReference(
+  merchantId: string,
+  reference: string,
+): Promise<CustomerOrderStatusResponse> {
+  const encoded = encodeURIComponent(reference.trim());
+  return request<CustomerOrderStatusResponse>(
+    `/merchants/${merchantId}/orders/by-reference/${encoded}/status`,
+  );
+}

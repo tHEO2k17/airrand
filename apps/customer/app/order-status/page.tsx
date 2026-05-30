@@ -10,7 +10,11 @@ import { LoadingState } from "../../components/ui/loading-state";
 import { StatusBadge } from "../../components/ui/badge";
 import { Surface } from "../../components/ui/surface";
 import { OrderStatusTimeline } from "../../components/order-status-timeline";
-import { ApiError, fetchOrderStatus } from "../../lib/api";
+import {
+  ApiError,
+  fetchOrderStatus,
+  fetchOrderStatusByReference,
+} from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
 import { readOrderConfirmation } from "../../lib/order-confirmation";
 import {
@@ -26,26 +30,26 @@ const CONNECTION_LABELS: Record<OrderRealtimeConnectionStatus, string> = {
   polling: "Polling every 12 seconds",
 };
 
-function pickupInstructions(status: string): string {
+function pickupInstructions(status: string, reference: string): string {
   switch (status) {
     case "placed":
-      return "Your order was sent to the merchant. They will confirm it shortly.";
+      return `Order ${reference} was sent to the merchant. They will confirm it shortly.`;
     case "accepted":
-      return "The merchant is preparing your order.";
+      return `The merchant is preparing order ${reference}.`;
     case "ready":
-      return "Your order is ready. Go to the counter and show your pickup code from the confirmation page.";
+      return `Order ${reference} is ready. Go to the counter and show your pickup code from the confirmation page.`;
     case "picked_up":
-      return "This order has been collected. Thanks for visiting!";
+      return `Order ${reference} has been collected. Thanks for visiting!`;
     case "cancelled":
-      return "This order was cancelled. Contact the merchant if you have questions.";
+      return `Order ${reference} was cancelled. Contact the merchant if you have questions.`;
     default:
-      return "Check back here for updates on your pickup order.";
+      return `Check back here for updates on order ${reference}.`;
   }
 }
 
 export default function OrderStatusPage() {
-  const [merchantId, setMerchantId] = useState("");
-  const [orderId, setOrderId] = useState("");
+  const [merchantIdInput, setMerchantIdInput] = useState("");
+  const [referenceInput, setReferenceInput] = useState("");
   const [lookupMerchantId, setLookupMerchantId] = useState("");
   const [lookupOrderId, setLookupOrderId] = useState("");
   const [status, setStatus] = useState<CustomerOrderStatusResponse | null>(null);
@@ -56,17 +60,15 @@ export default function OrderStatusPage() {
   useEffect(() => {
     const stored = readOrderConfirmation();
     if (stored) {
-      setMerchantId(stored.merchantId);
-      setOrderId(stored.orderId);
+      setMerchantIdInput(stored.merchantId);
+      setReferenceInput(stored.reference);
       setLookupMerchantId(stored.merchantId);
       setLookupOrderId(stored.orderId);
     }
     setHydrated(true);
   }, []);
 
-  const activeMerchantId = lookupMerchantId.trim();
-  const activeOrderId = lookupOrderId.trim();
-  const canFetch = activeMerchantId.length > 0 && activeOrderId.length > 0;
+  const canFetch = lookupMerchantId.length > 0 && lookupOrderId.length > 0;
 
   const loadStatus = useCallback(async () => {
     if (!canFetch) {
@@ -74,7 +76,7 @@ export default function OrderStatusPage() {
     }
     setError(null);
     try {
-      const data = await fetchOrderStatus(activeMerchantId, activeOrderId);
+      const data = await fetchOrderStatus(lookupMerchantId, lookupOrderId);
       setStatus(data);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -84,7 +86,7 @@ export default function OrderStatusPage() {
       }
       setStatus(null);
     }
-  }, [activeMerchantId, activeOrderId, canFetch]);
+  }, [lookupMerchantId, lookupOrderId, canFetch]);
 
   useEffect(() => {
     if (!hydrated || !canFetch) {
@@ -98,10 +100,14 @@ export default function OrderStatusPage() {
     canFetch && (status === null || !isTerminalOrderStatus(status.status));
 
   const { connectionStatus } = useOrderRealtime({
-    merchantId: activeMerchantId,
-    orderId: activeOrderId,
+    merchantId: lookupMerchantId,
+    orderId: lookupOrderId,
     enabled: realtimeEnabled,
-    onStatus: (next) => setStatus(next),
+    onStatus: (next) => {
+      setStatus(next);
+      setReferenceInput(next.reference);
+      setLookupOrderId(next.id);
+    },
     onPoll: () => loadStatus(),
   });
 
@@ -110,10 +116,32 @@ export default function OrderStatusPage() {
     [status?.status],
   );
 
-  function handleLookup(event: FormEvent) {
+  async function handleLookup(event: FormEvent) {
     event.preventDefault();
-    setLookupMerchantId(merchantId.trim());
-    setLookupOrderId(orderId.trim());
+    const merchant = merchantIdInput.trim();
+    const reference = referenceInput.trim();
+    if (!merchant || !reference) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchOrderStatusByReference(merchant, reference);
+      setLookupMerchantId(merchant);
+      setLookupOrderId(data.id);
+      setStatus(data);
+      setReferenceInput(data.reference);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to load order status");
+      }
+      setStatus(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (!hydrated) {
@@ -129,26 +157,35 @@ export default function OrderStatusPage() {
 
       <Surface>
         <h2 className="store-section-title">Find your order</h2>
-        <form className="store-form" onSubmit={handleLookup}>
+        <p className="store-total-hint" style={{ marginBottom: "1rem" }}>
+          Use the order reference from your confirmation (for example{" "}
+          <strong>ORD-1001</strong>). Merchant ID is only needed if you are
+          looking up manually.
+        </p>
+        <form className="store-form" onSubmit={(event) => void handleLookup(event)}>
+          <label>
+            <span>Order reference</span>
+            <input
+              value={referenceInput}
+              onChange={(e) => setReferenceInput(e.target.value)}
+              placeholder="ORD-1001"
+              autoComplete="off"
+            />
+          </label>
           <label>
             <span>Merchant ID</span>
             <input
-              value={merchantId}
-              onChange={(e) => setMerchantId(e.target.value)}
-              placeholder="Merchant UUID"
+              value={merchantIdInput}
+              onChange={(e) => setMerchantIdInput(e.target.value)}
+              placeholder="From your receipt (if required)"
               autoComplete="off"
             />
           </label>
-          <label>
-            <span>Order ID</span>
-            <input
-              value={orderId}
-              onChange={(e) => setOrderId(e.target.value)}
-              placeholder="Order UUID"
-              autoComplete="off"
-            />
-          </label>
-          <Button type="submit" block disabled={!merchantId.trim() || !orderId.trim()}>
+          <Button
+            type="submit"
+            block
+            disabled={!merchantIdInput.trim() || !referenceInput.trim()}
+          >
             Load status
           </Button>
         </form>
@@ -158,59 +195,27 @@ export default function OrderStatusPage() {
 
       {loading && !status ? <LoadingState label="Loading order status…" /> : null}
 
-      {!loading && canFetch && !status && !error ? (
-        <Surface>
-          <EmptyState
-            title="No status yet"
-            description="Enter merchant and order IDs, then load status."
-          />
-        </Surface>
-      ) : null}
-
-      {status ? (
+      {!loading && status ? (
         <>
           <Surface>
             <div className="store-status-header">
               <div>
-                <p className="store-total-hint">{status.merchant.name}</p>
-                <h2 className="store-section-title" style={{ marginBottom: "0.35rem" }}>
-                  Order <strong>{status.reference}</strong>
-                </h2>
+                <p className="store-total-hint">Order</p>
+                <p className="store-status-ref">{status.reference}</p>
               </div>
               <StatusBadge status={status.status} />
             </div>
-            <ul className="store-meta-list">
-              <li>
-                <strong>Placed:</strong> {formatDateTime(status.createdAt)}
-              </li>
-              <li>
-                <strong>Last updated:</strong> {formatDateTime(status.updatedAt)}
-              </li>
-              {status.pickedUpAt ? (
-                <li>
-                  <strong>Picked up:</strong> {formatDateTime(status.pickedUpAt)}
-                </li>
-              ) : null}
-            </ul>
-          </Surface>
-
-          <Surface>
-            <h2 className="store-section-title">Progress</h2>
-            {status.status === "cancelled" ? (
-              <p className="store-total-hint" role="status">
-                This order was cancelled.
-              </p>
-            ) : null}
             <OrderStatusTimeline steps={timelineSteps} />
           </Surface>
 
           <Surface>
             <h2 className="store-section-title">Items</h2>
             <ul className="store-line-list">
-              {status.lines.map((line, index) => (
-                <li key={`${line.productName}-${index}`}>
-                  <span>{line.productName}</span>
-                  <span>× {line.quantity}</span>
+              {status.lines.map((line) => (
+                <li key={`${line.productName}-${line.quantity}`}>
+                  <span>
+                    {line.quantity}× {line.productName}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -218,7 +223,7 @@ export default function OrderStatusPage() {
 
           <Surface>
             <h2 className="store-section-title">Pickup instructions</h2>
-            <p>{pickupInstructions(status.status)}</p>
+            <p>{pickupInstructions(status.status, status.reference)}</p>
             {status.status === "ready" && status.pickupTokenExpiresAt ? (
               <p className="store-total-hint" style={{ marginTop: "0.75rem" }}>
                 Pickup code valid until {formatDateTime(status.pickupTokenExpiresAt)}.
@@ -238,6 +243,13 @@ export default function OrderStatusPage() {
             </p>
           ) : null}
         </>
+      ) : null}
+
+      {!loading && !status && !error && canFetch ? (
+        <EmptyState
+          title="No status yet"
+          description="We could not load status for this order."
+        />
       ) : null}
 
       <Link href="/">

@@ -590,6 +590,14 @@
   flex-wrap: wrap;
 }
 
+.store-status-ref {
+  margin: 0;
+  font-size: var(--store-font-size-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .store-line-list {
   display: grid;
   gap: var(--store-space-2);

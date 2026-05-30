@@ -4,6 +4,11 @@ import type { Database } from "./client.js";
 
 type DbExecutor = Pick<Database, "execute">;
 
+/** Allocates the next ORD-{n} reference from the database sequence. */
+export async function generateOrderReference(dbOrTx: DbExecutor): Promise<string> {
+  return allocateOrderReference(dbOrTx);
+}
+
 export async function allocateOrderReference(dbOrTx: DbExecutor): Promise<string> {
   const result = await dbOrTx.execute<{ value: string }>(
     sql`SELECT nextval('order_reference_seq')::text AS value`,

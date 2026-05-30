@@ -1,5 +1,8 @@
 export { createDb, type Database } from "./client.js";
-export { allocateOrderReference } from "./order-reference.js";
+export {
+  allocateOrderReference,
+  generateOrderReference,
+} from "./order-reference.js";
 export {
   AUDIT_ACTIONS,
   insertAuditLog,

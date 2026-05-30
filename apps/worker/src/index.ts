@@ -2,6 +2,7 @@ import { QUEUE_NAMES } from "@airrand/jobs";
 import { loadWorkerEnv } from "./load-env.js";
 import { logWorkerEvent } from "./logger.js";
 import { verifyRedisReachable } from "./redis.js";
+import { verifyStorageReachable } from "./lib/storage.js";
 import { closeWorkers, createWorkers } from "./workers.js";
 
 loadWorkerEnv();
@@ -9,6 +10,7 @@ loadWorkerEnv();
 async function main(): Promise<void> {
   try {
     await verifyRedisReachable();
+    await verifyStorageReachable();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Redis check failed";
     logWorkerEvent("error", {

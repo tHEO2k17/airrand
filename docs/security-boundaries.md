@@ -80,14 +80,15 @@ Middleware enforces `session.merchantId === route :merchantId`.
 - Audit logs are **not authenticated for customers**; only merchant staff can read via protected API.
 - Logs are not tamper-evident (no hash chain) in MVP.
 
-### Audit export (Phase 10C)
+### Audit export (Phase 10E)
 
 - Staff with `audit_log:view` can request CSV exports (`POST .../audit-logs/export`).
-- Export jobs are tracked in `audit_export_jobs`; files are written to **`EXPORT_STORAGE_DIR`** (local disk in MVP).
-- Download requires merchant auth (`GET .../exports/:exportJobId/download`); **no public or unauthenticated file URLs**.
+- Export jobs are tracked in `audit_export_jobs`; completed CSVs are stored in **private object storage** (`object_key` like `audit-exports/{merchantId}/{exportJobId}.csv`).
+- Download requires merchant auth (`GET .../exports/:exportJobId/download`); the API streams from storage — **no public bucket URLs, no signed public URLs, no storage credentials exposed to clients**.
+- Bucket names, endpoints, and object keys are server-side only; the UI receives an API-relative `downloadUrl`.
 - CSV includes operational fields only (`created_at`, `action`, `actor_type`, `actor_label`, `order_reference`, `metadata_json`). Sensitive keys (passwords, tokens, secrets) are stripped from metadata before export.
 - **No email delivery** — staff download from the merchant UI when status is `completed`.
-- Production should use durable object storage with short-lived signed URLs; local paths must not be exposed outside the API process.
+- Future: optional short-lived signed URLs for CDN offload; not in Phase 10E.
 
 ### Operational notifications (Phase 10D)
 

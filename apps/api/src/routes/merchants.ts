@@ -52,8 +52,7 @@ import { toAuditExportJobResponse } from "../lib/audit-export.js";
 import {
   ExportDownloadError,
   getExportDownloadFilename,
-  openExportFileStream,
-  resolveCompletedExportFilePath,
+  openCompletedExportReadStream,
 } from "../lib/audit-export-download.js";
 import { getMerchantActor, getMerchantAuth } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
@@ -817,8 +816,7 @@ merchantsRoutes.get(
         return jsonError(c, "EXPORT_NOT_FOUND", "Export job not found", 404);
       }
 
-      const absolutePath = await resolveCompletedExportFilePath(job);
-      const readStream = openExportFileStream(absolutePath);
+      const readStream = await openCompletedExportReadStream(job);
       const webStream = Readable.toWeb(readStream) as ReadableStream;
 
       return c.newResponse(webStream, {

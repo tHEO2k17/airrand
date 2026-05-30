@@ -1,26 +1,21 @@
-export const DEFAULT_EXPORT_STORAGE_DIR = "./storage/exports";
+export const AUDIT_EXPORT_OBJECT_KEY_PREFIX = "audit-exports";
 
-export function getExportStorageDir(
-  env: NodeJS.ProcessEnv = process.env,
-): string {
-  return env.EXPORT_STORAGE_DIR?.trim() || DEFAULT_EXPORT_STORAGE_DIR;
-}
-
-export function buildRelativeExportFilePath(
+export function buildAuditExportObjectKey(
   merchantId: string,
   exportJobId: string,
 ): string {
-  return `${merchantId}/${exportJobId}.csv`;
+  return `${AUDIT_EXPORT_OBJECT_KEY_PREFIX}/${merchantId}/${exportJobId}.csv`;
 }
 
-export function assertSafeRelativeExportPath(relativeFilePath: string): void {
-  const normalized = relativeFilePath.replace(/\\/g, "/");
+export function assertSafeObjectKey(objectKey: string): void {
+  const normalized = objectKey.replace(/\\/g, "/");
   if (
     normalized.startsWith("/") ||
     normalized.includes("..") ||
-    normalized.includes("\0")
+    normalized.includes("\0") ||
+    !normalized.startsWith(`${AUDIT_EXPORT_OBJECT_KEY_PREFIX}/`)
   ) {
-    throw new Error("Invalid export file path");
+    throw new Error("Invalid export object key");
   }
 }
 

@@ -18,7 +18,7 @@ import type { Job } from "bullmq";
 import { asc, eq } from "drizzle-orm";
 import { logWorkerEvent } from "../logger.js";
 import { db } from "../lib/db.js";
-import { writeAuditExportFile } from "../lib/export-storage.js";
+import { uploadAuditExportCsv } from "../lib/export-object-storage.js";
 import { enqueueWorkerNotification } from "../lib/notification-queue.js";
 
 const SAFE_FAILURE_MESSAGE = "Audit export failed";
@@ -68,7 +68,7 @@ export async function processAuditExportRequested(
     }));
 
     const csvContent = buildAuditExportCsv(csvRows);
-    const filePath = await writeAuditExportFile(
+    const objectKey = await uploadAuditExportCsv(
       payload.merchantId,
       payload.exportJobId,
       csvContent,
@@ -78,7 +78,7 @@ export async function processAuditExportRequested(
       .update(auditExportJobs)
       .set({
         status: "completed",
-        filePath,
+        objectKey,
         completedAt: new Date(),
         errorMessage: null,
       })
@@ -92,7 +92,7 @@ export async function processAuditExportRequested(
       exportJobId: payload.exportJobId,
       merchantId: payload.merchantId,
       rowCount: csvRows.length,
-      filePath,
+      objectKey,
     });
 
     const [requester] = await db

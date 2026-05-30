@@ -101,6 +101,17 @@ Provider-agnostic **operational** messaging only — not marketing, analytics, p
 
 **Brand alignment:** In-app notification feedback uses existing `AlertMessage` / `NotificationFeedback` primitives and semantic tokens (success for actions, info for queued jobs). Placeholder SMS/email copy lives in `@airrand/notifications/templates` — operational tone, orange-accent merchant UI unchanged. See [design-system.md](./design-system.md).
 
+## Audit export storage (Phase 10E)
+
+| Component | Role |
+|-----------|------|
+| `@airrand/storage` | Provider-agnostic object storage boundary (`StorageProvider`, MinIO via AWS S3 SDK) |
+| Worker | Builds CSV in memory, `uploadObject` to `audit-exports/{merchantId}/{exportJobId}.csv`, persists `object_key` |
+| API | Authenticated `GET .../download` streams via `getObjectStream` — no public bucket URLs |
+| `audit_export_jobs` | `object_key` references stored object (replaces local `file_path`) |
+
+**MinIO** is the first implementation (local `docker compose`). Production can point the same SDK at any S3-compatible endpoint without changing export flow. Bucket access is private; credentials stay server-side. `/ready` includes a storage bucket check.
+
 ## Packages
 
 | Package | Responsibility |
@@ -110,6 +121,7 @@ Provider-agnostic **operational** messaging only — not marketing, analytics, p
 | `@airrand/database` | Drizzle schema + migrations + client (Phase 1) |
 | `@airrand/jobs` | BullMQ queue names and job payload schemas |
 | `@airrand/notifications` | Operational notification contracts and enqueue |
+| `@airrand/storage` | Object storage adapter (audit exports only; MinIO / S3-compatible) |
 | `@airrand/qr` | HMAC-SHA256 pickup tokens (`QR_SIGNING_SECRET`); payload: orderId, merchantId, issuedAt, expiresAt, nonce |
 | `@airrand/config` | Shared TS/ESLint presets |
 

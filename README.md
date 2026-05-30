@@ -18,6 +18,7 @@ See [docs/market-scope.md](./docs/market-scope.md) for target vendors and users.
 | `packages/domain` | Order status rules and invariants |
 | `packages/database` | Schema, migrations, DB client |
 | `packages/qr` | Pickup token sign/verify |
+| `packages/storage` | Provider-agnostic object storage (MinIO first; S3-compatible) |
 | `packages/config` | Shared TypeScript and ESLint config |
 
 See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), [docs/market-scope.md](./docs/market-scope.md), [docs/customer-data-policy.md](./docs/customer-data-policy.md), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
@@ -38,7 +39,7 @@ pnpm install
 # Copy environment template (set QR_SIGNING_SECRET to at least 32 characters)
 cp .env.example .env
 
-# Start local PostgreSQL (port 5433 on host)
+# Start local PostgreSQL, Redis, and MinIO
 docker compose up -d
 
 # Wait until healthy, then migrate and seed
@@ -84,7 +85,7 @@ pnpm dev
 
 ### Background worker (Phase 10A–10D)
 
-Requires Redis (`REDIS_URL`) and PostgreSQL (`DATABASE_URL` for the worker). The worker has **no HTTP API** — it consumes BullMQ queues and writes export files to disk.
+Requires Redis (`REDIS_URL`), PostgreSQL (`DATABASE_URL`), and object storage (`STORAGE_*` — MinIO via `docker compose`). The worker has **no HTTP API** — it consumes BullMQ queues and uploads audit exports to private object storage.
 
 ```bash
 pnpm worker:dev    # watch mode
@@ -94,11 +95,11 @@ pnpm worker:start
 
 Queues: `audit.export.requested`, `notification.requested`.
 
-**Audit export (Phase 10C):** Merchant staff with `audit_log:view` can request a CSV export from **Audit log** (`/audit-logs`). The API creates an `audit_export_jobs` row, enqueues BullMQ work, and returns `{ exportJobId, jobId, status: "queued" }`. The worker generates a CSV under `EXPORT_STORAGE_DIR` (default `./storage/exports`). The UI polls status and offers **Download CSV** when complete. **No email delivery** — staff download from the UI.
+**Audit export (Phase 10E):** Merchant staff with `audit_log:view` can request a CSV export from **Audit log** (`/audit-logs`). The API creates an `audit_export_jobs` row, enqueues BullMQ work, and returns `{ exportJobId, jobId, status: "queued" }`. The worker generates a CSV and uploads it to private object storage (`audit-exports/{merchantId}/{exportJobId}.csv` via `@airrand/storage`). The UI polls status and offers **Download CSV** (authenticated API stream) when complete. **No email delivery** — staff download from the UI. MinIO console: http://localhost:9001 (local defaults in `.env.example`).
 
 **Operational notifications (Phase 10D):** Provider-agnostic notification jobs (`notification_jobs` table + `@airrand/notifications`). The API enqueues jobs when an order becomes `ready`, when staff passwords are reset, and the worker enqueues when an audit export completes. Channels are placeholders (`sms_placeholder`, `email_placeholder`, `internal`) — the worker validates payloads, logs structured events, and marks jobs `sent` without calling Twilio, Hubtel, or SMTP. **No marketing, no OTP, no customer-facing notification APIs yet.**
 
-API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`. The worker does not expose `/health` or `/ready`; see [docs/deployment.md](./docs/deployment.md).
+API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets, object storage). Responses include `X-Request-Id`. The worker verifies Redis and storage on startup but does not expose HTTP probes; see [docs/deployment.md](./docs/deployment.md).
 
 Staging smoke test: `./scripts/smoke-staging.sh`
 

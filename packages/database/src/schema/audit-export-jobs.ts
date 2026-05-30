@@ -28,7 +28,7 @@ export const auditExportJobs = pgTable("audit_export_jobs", {
   bullJobId: text("bull_job_id"),
   status: auditExportJobStatusEnum("status").notNull().default("queued"),
   format: auditExportFormatEnum("format").notNull().default("csv"),
-  filePath: text("file_path"),
+  objectKey: text("object_key"),
   errorMessage: text("error_message"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

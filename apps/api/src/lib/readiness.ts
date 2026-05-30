@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { checkStorageReadiness } from "@airrand/storage";
 import { db } from "./db.js";
 import { validateRequiredSecrets } from "./config-validation.js";
 import { getRedisUrl, pingRedis, getRedisClient } from "./redis-client.js";
@@ -9,6 +10,7 @@ export interface ReadinessChecksMap {
   database: ReadinessCheckStatus;
   redis: ReadinessCheckStatus;
   secrets: ReadinessCheckStatus;
+  storage: ReadinessCheckStatus;
 }
 
 export interface ReadinessResult {
@@ -61,12 +63,23 @@ export async function checkRedisConnectivity(
   };
 }
 
+export async function checkStorageConnectivity(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<{ status: ReadinessCheckStatus; detail?: string }> {
+  const result = await checkStorageReadiness(env);
+  return {
+    status: result.ok ? "ok" : "failed",
+    detail: result.detail,
+  };
+}
+
 export function aggregateReadiness(
   database: ReadinessCheckStatus,
   redis: ReadinessCheckStatus,
   secrets: ReadinessCheckStatus,
+  storage: ReadinessCheckStatus,
 ): boolean {
-  if (secrets !== "ok" || database !== "ok") {
+  if (secrets !== "ok" || database !== "ok" || storage !== "ok") {
     return false;
   }
 
@@ -83,11 +96,13 @@ export async function getReadinessResult(
   const databaseResult = await checkDatabaseConnectivity();
   const secretsResult = checkRequiredSecretsReadiness();
   const redisResult = await checkRedisConnectivity(env);
+  const storageResult = await checkStorageConnectivity(env);
 
   const checks: ReadinessChecksMap = {
     database: databaseResult.status,
     redis: redisResult.status,
     secrets: secretsResult.status,
+    storage: storageResult.status,
   };
 
   const details: ReadinessResult["details"] = {};
@@ -100,9 +115,17 @@ export async function getReadinessResult(
   if (secretsResult.detail) {
     details.secrets = secretsResult.detail;
   }
+  if (storageResult.detail) {
+    details.storage = storageResult.detail;
+  }
 
   return {
-    ready: aggregateReadiness(checks.database, checks.redis, checks.secrets),
+    ready: aggregateReadiness(
+      checks.database,
+      checks.redis,
+      checks.secrets,
+      checks.storage,
+    ),
     checks,
     details,
   };

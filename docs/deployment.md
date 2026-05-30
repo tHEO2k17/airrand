@@ -102,6 +102,7 @@ Readiness checks:
 - **database** — `SELECT 1` via Drizzle
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
+- **storage** — bucket reachable via configured object storage provider (MinIO locally)
 
 ### Background worker (Phase 10A–10D)
 
@@ -111,16 +112,16 @@ Readiness checks:
 | HTTP | **None** — do not route traffic to the worker |
 | Redis | **Required** — same `REDIS_URL` as the API |
 | Database | **Required** — same `DATABASE_URL` as the API (audit export + notification jobs) |
-| Storage | **Local filesystem** — `EXPORT_STORAGE_DIR` (default `./storage/exports`); mount shared volume if API and worker are separate containers |
+| Storage | **Object storage** — `@airrand/storage` (MinIO locally via `docker compose`; S3-compatible in production). Private bucket; API streams authenticated downloads |
 | Queues | `audit.export.requested` (CSV generation), `notification.requested` (operational notifications, placeholder delivery) |
 
 **Audit export:** `POST /merchants/:merchantId/audit-logs/export` creates an `audit_export_jobs` row and enqueues BullMQ work. The worker generates a CSV and the merchant downloads it via authenticated `GET .../exports/:exportJobId/download`. **No email** for the CSV file itself. When export completes, a **notification job** is queued for the requester (placeholder email channel — no SMTP yet).
 
 **Operational notifications:** API enqueues on order `ready` and staff password reset; worker enqueues on export complete. All jobs are processed by the notification worker with placeholder channels only. See [architecture.md](./architecture.md#operational-notifications-phase-10d).
 
-**Readiness:** The API `GET /ready` checks Redis for the API process. The worker has no `/ready` endpoint. For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
+**Readiness:** The API `GET /ready` checks database, secrets, Redis (when configured), and object storage. The worker verifies Redis and storage on startup (no HTTP `/ready`). For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
 
-**Local dev:** With `docker compose up -d` (Redis on 6379), run `pnpm worker:dev` in a second terminal.
+**Local dev:** With `docker compose up -d` (Postgres, Redis, MinIO), set storage env vars from `.env.example`, then run `pnpm dev` or `pnpm worker:dev` in a separate terminal.
 
 ### Merchant auth hardening (Phase 9F)
 

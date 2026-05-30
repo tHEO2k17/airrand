@@ -25,7 +25,14 @@ Used by `apps/api`, `pnpm db:*`, and Docker API containers.
 | `RATE_LIMIT_MAX_READS` | No | `120` | Max GET (read) requests per IP per window |
 | `RATE_LIMIT_MAX_MUTATIONS` | No | `30` | Max POST/PATCH/etc. per IP per window |
 | `WORKER_CONCURRENCY` | No | `5` | BullMQ job concurrency per queue (`apps/worker`) |
-| `EXPORT_STORAGE_DIR` | No | `./storage/exports` | Local directory for generated audit export CSV files (API download + worker write) |
+| `STORAGE_PROVIDER` | Yes | — | Object storage backend (`minio` for local/staging; future S3-compatible providers use the same SDK) |
+| `STORAGE_ENDPOINT` | Yes | — | Storage host (e.g. `localhost` for MinIO) |
+| `STORAGE_PORT` | No | `9000` | Storage API port |
+| `STORAGE_USE_SSL` | No | `false` | Use HTTPS for storage API |
+| `STORAGE_ACCESS_KEY` | Yes | — | Storage access key |
+| `STORAGE_SECRET_KEY` | Yes | — | Storage secret key |
+| `STORAGE_BUCKET` | Yes | — | Private bucket for audit export objects |
+| `STORAGE_AUTO_CREATE_BUCKET` | No | `true` in dev, `false` in production | Create bucket on startup if missing (local/staging only) |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3001,http://localhost:3002` | Comma-separated browser origins allowed to call the API |
 
 ### Deprecated / optional (documentation only)
@@ -108,9 +115,16 @@ When `REDIS_URL` is set, counters are shared across API replicas via keys `airra
 | `REDIS_URL` | Yes (worker) | — | BullMQ connection; worker exits on startup if unset |
 | `DATABASE_URL` | Yes (worker) | — | PostgreSQL for audit export job status and CSV source data |
 | `WORKER_CONCURRENCY` | No | `5` | Concurrent jobs per queue |
-| `EXPORT_STORAGE_DIR` | No | `./storage/exports` | Local directory where completed CSV exports are written |
+| `STORAGE_PROVIDER` | Yes | — | Same as API — worker uploads completed exports |
+| `STORAGE_ENDPOINT` | Yes | — | Same as API |
+| `STORAGE_PORT` | No | `9000` | Same as API |
+| `STORAGE_USE_SSL` | No | `false` | Same as API |
+| `STORAGE_ACCESS_KEY` | Yes | — | Same as API |
+| `STORAGE_SECRET_KEY` | Yes | — | Same as API |
+| `STORAGE_BUCKET` | Yes | — | Same as API |
+| `STORAGE_AUTO_CREATE_BUCKET` | No | `true` in dev | Same as API |
 
-Queue names and payload schemas live in `@airrand/jobs`. The worker reads audit logs, writes CSV files under `EXPORT_STORAGE_DIR/{merchantId}/{exportJobId}.csv`, and updates `audit_export_jobs` status. **Use durable object storage (S3/MinIO) in production** — local disk is MVP-only and must be shared/mounted if API and worker run on different hosts.
+Queue names and payload schemas live in `@airrand/jobs`. The worker reads audit logs, uploads CSV objects to `audit-exports/{merchantId}/{exportJobId}.csv` via `@airrand/storage`, and stores `object_key` on `audit_export_jobs`. The API streams downloads through authenticated routes — **no public bucket URLs**.
 
 ---
 

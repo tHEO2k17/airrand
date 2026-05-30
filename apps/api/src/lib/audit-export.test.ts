@@ -9,7 +9,7 @@ describe("toAuditExportJobResponse", () => {
     requestedByMerchantUserId: "33333333-3333-3333-3333-333333333333",
     bullJobId: "bull-1",
     format: "csv",
-    filePath: null,
+    objectKey: null,
     errorMessage: null,
     createdAt: new Date("2026-01-01T12:00:00.000Z"),
     startedAt: null,
@@ -21,7 +21,8 @@ describe("toAuditExportJobResponse", () => {
       {
         ...baseJob,
         status: "completed",
-        filePath: "11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222.csv",
+        objectKey:
+          "audit-exports/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222.csv",
         completedAt: new Date("2026-01-01T12:05:00.000Z"),
       },
       baseJob.merchantId,

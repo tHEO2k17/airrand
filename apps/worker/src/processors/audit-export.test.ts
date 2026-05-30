@@ -21,9 +21,11 @@ vi.mock("../lib/db.js", () => ({
   },
 }));
 
-vi.mock("../lib/export-storage.js", () => ({
-  writeAuditExportFile: vi.fn(() =>
-    Promise.resolve("11111111-1111-1111-1111-111111111111/job.csv"),
+vi.mock("../lib/export-object-storage.js", () => ({
+  uploadAuditExportCsv: vi.fn(() =>
+    Promise.resolve(
+      "audit-exports/11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222.csv",
+    ),
   ),
 }));
 
@@ -41,9 +43,9 @@ describe("processAuditExportRequested", () => {
     ).rejects.toThrow();
   });
 
-  it("marks export failed when file write throws", async () => {
-    const { writeAuditExportFile } = await import("../lib/export-storage.js");
-    vi.mocked(writeAuditExportFile).mockRejectedValueOnce(new Error("disk full"));
+  it("marks export failed when upload throws", async () => {
+    const { uploadAuditExportCsv } = await import("../lib/export-object-storage.js");
+    vi.mocked(uploadAuditExportCsv).mockRejectedValueOnce(new Error("storage unavailable"));
 
     const spy = vi.spyOn(logger, "logWorkerEvent").mockImplementation(() => {});
 
@@ -58,7 +60,7 @@ describe("processAuditExportRequested", () => {
           format: "csv",
         },
       } as Parameters<typeof processAuditExportRequested>[0]),
-    ).rejects.toThrow("disk full");
+    ).rejects.toThrow("storage unavailable");
 
     const failedEvent = spy.mock.calls.find(
       ([, event]) =>

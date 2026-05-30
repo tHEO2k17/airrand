@@ -35,10 +35,9 @@ export {
   type AuditExportCsvRow,
 } from "./audit-export-csv.js";
 export {
-  DEFAULT_EXPORT_STORAGE_DIR,
+  AUDIT_EXPORT_OBJECT_KEY_PREFIX,
   buildAuditExportDownloadFilename,
-  buildRelativeExportFilePath,
-  assertSafeRelativeExportPath,
-  getExportStorageDir,
+  buildAuditExportObjectKey,
+  assertSafeObjectKey,
 } from "./audit-export-storage.js";
 export { isValidCustomerPhone } from "./customer-contact.js";

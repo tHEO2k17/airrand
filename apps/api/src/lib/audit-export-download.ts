@@ -1,20 +1,15 @@
-import { createReadStream } from "node:fs";
-import { access } from "node:fs/promises";
+import { Readable } from "node:stream";
 import {
+  assertSafeObjectKey,
   buildAuditExportDownloadFilename,
-  getExportStorageDir,
 } from "@airrand/domain";
 import type { AuditExportJob } from "@airrand/database";
-import { resolveExportAbsolutePath } from "./audit-export-storage.js";
+import { getStorageProvider } from "./storage.js";
 
-export function getApiExportStorageDir(): string {
-  return getExportStorageDir();
-}
-
-export async function resolveCompletedExportFilePath(
+export async function openCompletedExportReadStream(
   job: AuditExportJob,
-): Promise<string> {
-  if (job.status !== "completed" || !job.filePath) {
+): Promise<Readable> {
+  if (job.status !== "completed" || !job.objectKey) {
     throw new ExportDownloadError(
       "EXPORT_NOT_READY",
       "Export is not ready for download",
@@ -22,12 +17,8 @@ export async function resolveCompletedExportFilePath(
     );
   }
 
-  let absolutePath: string;
   try {
-    absolutePath = resolveExportAbsolutePath(
-      getApiExportStorageDir(),
-      job.filePath,
-    );
+    assertSafeObjectKey(job.objectKey);
   } catch {
     throw new ExportDownloadError(
       "EXPORT_FILE_INVALID",
@@ -36,9 +27,9 @@ export async function resolveCompletedExportFilePath(
     );
   }
 
-  try {
-    await access(absolutePath);
-  } catch {
+  const storage = await getStorageProvider();
+  const exists = await storage.objectExists({ key: job.objectKey });
+  if (!exists) {
     throw new ExportDownloadError(
       "EXPORT_FILE_MISSING",
       "Export file is not available",
@@ -46,11 +37,7 @@ export async function resolveCompletedExportFilePath(
     );
   }
 
-  return absolutePath;
-}
-
-export function openExportFileStream(absolutePath: string) {
-  return createReadStream(absolutePath);
+  return storage.getObjectStream({ key: job.objectKey });
 }
 
 export function getExportDownloadFilename(exportJobId: string): string {

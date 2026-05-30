@@ -102,16 +102,16 @@ See [architecture.md](./architecture.md) and [security-boundaries.md](./security
 | **Multi-merchant cart** | One merchant per checkout |
 | **Marketplace discovery / ratings** | No plug or merchant reputation system yet |
 | **Email / SMS notifications** | Operational placeholder jobs only (Phase 10D); no providers yet |
-| **Durable object storage for exports** | Local filesystem in Phase 10C |
+| **Durable object storage for exports** | Shipped in Phase 10E (MinIO local; S3-compatible in production) |
 
 ## Roadmap alignment (product phases)
 
-Phases already shipped (0–10C) built the **standard merchant pickup stack**. Upcoming product directions (documentation only — not committed scope):
+Phases already shipped (0–10E) built the **standard merchant pickup stack**. Upcoming product directions (documentation only — not committed scope):
 
 | Phase (conceptual) | Focus |
 |--------------------|--------|
 | **10D** | Operational notification jobs (placeholder SMS/email; no providers) |
-| **10E+** | Durable export storage (S3/MinIO) |
+| **10E** | Durable export storage (MinIO / S3-compatible via `@airrand/storage`) |
 | **11+** | Optional customer OTP; optional accounts (guest remains default); improved discovery |
 | **12+** | **Plug vendor type** — verification, onboarding, plug-specific policies |
 | **13+** | Delivery or errand logistics (only after pickup MVP is stable) |

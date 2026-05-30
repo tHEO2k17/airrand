@@ -35,6 +35,9 @@ importers:
       '@airrand/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@airrand/jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
       '@airrand/qr':
         specifier: workspace:*
         version: link:../../packages/qr
@@ -44,6 +47,9 @@ importers:
       '@hono/zod-validator':
         specifier: ^0.7.0
         version: 0.7.6(hono@4.12.23)(zod@3.25.76)
+      bullmq:
+        specifier: ^5.53.0
+        version: 5.77.6
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -251,6 +257,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@22.19.19)(tsx@4.22.3)
 
   packages/database:
     dependencies:

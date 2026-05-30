@@ -26,13 +26,16 @@ export async function processAuditExportRequested(
   });
 
   logWorkerEvent("info", {
-    type: "job_placeholder",
+    type: "audit_export_requested",
     queue: QUEUE_NAMES.AUDIT_EXPORT_REQUESTED,
+    jobName: JOB_NAMES.AUDIT_EXPORT_REQUESTED,
     jobId: job.id,
-    message:
-      "Audit export is not implemented yet; job acknowledged without side effects.",
     merchantId: payload.merchantId,
     requestedByMerchantUserId: payload.requestedByMerchantUserId,
+    requestedAt: payload.requestedAt,
+    format: payload.format,
+    message:
+      "Audit export job received; file generation and delivery are not implemented yet.",
   });
 
   logWorkerEvent("info", {

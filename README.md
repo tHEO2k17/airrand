@@ -79,7 +79,7 @@ Or all apps:
 pnpm dev
 ```
 
-### Background worker (Phase 10A)
+### Background worker (Phase 10A–10B)
 
 Requires Redis (`REDIS_URL` in root `.env`). The worker has **no HTTP API** — it only consumes BullMQ queues.
 
@@ -89,7 +89,9 @@ pnpm worker:dev    # watch mode
 pnpm worker:start
 ```
 
-Queues (placeholders in this phase): `audit.export.requested`, `notification.placeholder`. Producers are not wired from the API yet.
+Queues: `audit.export.requested`, `notification.placeholder`.
+
+**Audit export (Phase 10B):** Merchant staff with `audit_log:view` can request an export from **Audit log** (`/audit-logs`) or `POST /merchants/:merchantId/audit-logs/export`. The API enqueues a job and returns `{ jobId, status: "queued" }`. The worker validates the payload and logs `audit_export_requested` — **no CSV file is generated yet** and **no email is sent**. Keep the worker running so queued jobs are processed.
 
 API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`. The worker does not expose `/health` or `/ready`; see [docs/deployment.md](./docs/deployment.md).
 
@@ -155,7 +157,7 @@ Order lifecycle events are recorded in `audit_logs`:
 - `order.status_changed`
 - `order.pickup_verified`
 
-Merchant UI: **Audit log** screen (`/audit-logs`) or `GET /merchants/:merchantId/audit-logs`.
+Merchant UI: **Audit log** screen (`/audit-logs`) or `GET /merchants/:merchantId/audit-logs`. Staff with permission can **Request Export** (`POST /merchants/:merchantId/audit-logs/export`) to queue a background job; file download is not available yet (Phase 10B).
 
 Merchant staff actions record `merchant_staff` with the staff email as `actor_label`.
 
@@ -219,7 +221,7 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 | Access | Routes |
 |--------|--------|
 | Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
-| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management, `GET /merchants/:merchantId/events` (SSE) |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, `POST /audit-logs/export`, staff management, `GET /merchants/:merchantId/events` (SSE) |
 
 Customer guest ordering stays public on catalog and order create.
 

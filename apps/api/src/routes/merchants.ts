@@ -4,6 +4,8 @@ import {
   createProductSchema,
   listOrdersQuerySchema,
   listProductsQuerySchema,
+  auditExportQueuedResponseSchema,
+  auditExportRequestSchema,
   pickupVerifyRequestSchema,
   updateOrderStatusSchema,
   updateProductSchema,
@@ -38,7 +40,8 @@ import {
 } from "../lib/mappers.js";
 import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
-import { getMerchantActor } from "../lib/merchant-auth.js";
+import { enqueueAuditExportRequested } from "../lib/audit-export-queue.js";
+import { getMerchantActor, getMerchantAuth } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
@@ -651,6 +654,47 @@ merchantsRoutes.get(
   } catch (error) {
     return handleRouteError(c, error);
   }
+  },
+);
+
+merchantsRoutes.post(
+  "/:merchantId/audit-logs/export",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("audit_log:view"),
+  zValidator("json", auditExportRequestSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const body = c.req.valid("json");
+      const auth = getMerchantAuth(c)!;
+
+      const { jobId } = await enqueueAuditExportRequested({
+        merchantId,
+        requestedByMerchantUserId: auth.merchantUserId,
+        format: body.format,
+      });
+
+      const response = auditExportQueuedResponseSchema.parse({
+        jobId,
+        status: "queued",
+      });
+
+      return jsonOk(c, response);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("REDIS_URL is required")
+      ) {
+        return jsonError(
+          c,
+          "SERVICE_UNAVAILABLE",
+          "Background job queue is not available",
+          503,
+        );
+      }
+      return handleRouteError(c, error);
+    }
   },
 );
 

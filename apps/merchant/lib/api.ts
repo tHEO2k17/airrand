@@ -1,5 +1,6 @@
 import type {
   AssignableStaffRole,
+  AuditExportQueuedResponse,
   AuditLogResponse,
   CreateProductInput,
   CreateStaffRequest,
@@ -148,6 +149,19 @@ export async function fetchAuditLogs(
     `/merchants/${merchantId}/audit-logs`,
   );
   return data.auditLogs;
+}
+
+export async function requestAuditExport(
+  merchantId: string,
+  input?: { format?: "csv" },
+): Promise<AuditExportQueuedResponse> {
+  return request<AuditExportQueuedResponse>(
+    `/merchants/${merchantId}/audit-logs/export`,
+    {
+      method: "POST",
+      body: JSON.stringify(input ?? {}),
+    },
+  );
 }
 
 export async function fetchStaff(merchantId: string): Promise<StaffMemberResponse[]> {

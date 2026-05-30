@@ -26,3 +26,18 @@ export type AuditLogResponse = z.infer<typeof auditLogResponseSchema>;
 export const listAuditLogsResponseSchema = z.object({
   auditLogs: z.array(auditLogResponseSchema),
 });
+
+export const auditExportRequestSchema = z.object({
+  format: z.enum(["csv"]).default("csv"),
+});
+
+export type AuditExportRequest = z.infer<typeof auditExportRequestSchema>;
+
+export const auditExportQueuedResponseSchema = z.object({
+  jobId: z.string().min(1),
+  status: z.literal("queued"),
+});
+
+export type AuditExportQueuedResponse = z.infer<
+  typeof auditExportQueuedResponseSchema
+>;

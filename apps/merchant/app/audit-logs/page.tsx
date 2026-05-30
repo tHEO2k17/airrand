@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AuditLogResponse } from "@airrand/contracts";
 import { AlertMessage } from "../../components/ui/alert-message";
+import { Button } from "../../components/ui/button";
 import { LoadingState } from "../../components/ui/loading-state";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
 import { Surface } from "../../components/ui/surface";
 import { useMerchant } from "../../components/merchant-context";
-import { ApiError, fetchAuditLogs } from "../../lib/api";
+import { ApiError, fetchAuditLogs, requestAuditExport } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
 import { isForbiddenApiError } from "../../lib/permissions";
 import { useMerchantPermissions } from "../../lib/use-merchant-permissions";
@@ -19,6 +20,8 @@ function AuditLogsContent() {
   const [logs, setLogs] = useState<AuditLogResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!merchantId || !canViewAuditLogs) {
@@ -45,6 +48,31 @@ function AuditLogsContent() {
     void load();
   }, [load]);
 
+  async function handleRequestExport() {
+    if (!merchantId) {
+      return;
+    }
+    setExporting(true);
+    setError(null);
+    setExportSuccess(null);
+    try {
+      const result = await requestAuditExport(merchantId);
+      setExportSuccess(`Export queued (job ${result.jobId}).`);
+    } catch (err) {
+      if (err instanceof ApiError && isForbiddenApiError(err)) {
+        setError("You do not have permission to export audit logs.");
+      } else if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Failed to request audit export",
+        );
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (!canViewAuditLogs) {
     return (
       <PageShell
@@ -66,6 +94,20 @@ function AuditLogsContent() {
       title="Audit log"
       description="Recent order and pickup events for this merchant."
     >
+      <Surface className="audit-export-toolbar">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => void handleRequestExport()}
+          disabled={exporting}
+        >
+          {exporting ? "Requesting…" : "Request Export"}
+        </Button>
+      </Surface>
+      {exportSuccess ? (
+        <AlertMessage variant="success" message={exportSuccess} />
+      ) : null}
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {loading ? <LoadingState /> : null}
 

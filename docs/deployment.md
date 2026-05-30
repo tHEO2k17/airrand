@@ -103,14 +103,16 @@ Readiness checks:
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
 
-### Background worker (Phase 10A)
+### Background worker (Phase 10A–10B)
 
 | Property | Detail |
 |----------|--------|
 | Process | `apps/worker` — BullMQ consumers only |
 | HTTP | **None** — do not route traffic to the worker |
 | Redis | **Required** — same `REDIS_URL` as the API |
-| Queues | `audit.export.requested`, `notification.placeholder` (placeholder processors) |
+| Queues | `audit.export.requested` (API producer wired in 10B), `notification.placeholder` (placeholder) |
+
+**Audit export:** `POST /merchants/:merchantId/audit-logs/export` enqueues `audit.export.requested`. The worker validates the job and logs `audit_export_requested`. There is **no file output or email** in this phase — jobs are acknowledged only. If the worker is not running, jobs accumulate in Redis until a worker starts.
 
 **Readiness:** The API `GET /ready` checks Redis for the API process. The worker has no `/ready` endpoint. For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
 

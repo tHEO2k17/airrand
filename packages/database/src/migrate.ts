@@ -10,7 +10,7 @@ config();
 
 const connectionString =
   process.env.DATABASE_URL ??
-  "postgresql://postgres:postgres@localhost:5432/airrand";
+  "postgresql://postgres:postgres@localhost:5433/airrand";
 
 const migrationsFolder = path.join(
   path.dirname(fileURLToPath(import.meta.url)),

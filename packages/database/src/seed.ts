@@ -9,7 +9,7 @@ config();
 
 const connectionString =
   process.env.DATABASE_URL ??
-  "postgresql://postgres:postgres@localhost:5432/airrand";
+  "postgresql://postgres:postgres@localhost:5433/airrand";
 
 const SEED_MERCHANT_SLUG = "demo-cafe";
 

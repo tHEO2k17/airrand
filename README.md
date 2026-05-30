@@ -21,6 +21,7 @@ See [docs/architecture.md](./docs/architecture.md) and [docs/adr/0001-walletless
 
 - Node.js 20+
 - [pnpm](https://pnpm.io/) 9+
+- [Docker](https://www.docker.com/) (for local PostgreSQL)
 
 ## Setup
 
@@ -32,7 +33,10 @@ pnpm install
 # Copy environment template
 cp .env.example .env
 
-# PostgreSQL required — update DATABASE_URL in .env
+# Start local PostgreSQL (port 5433 on host)
+docker compose up -d
+
+# Wait until healthy, then migrate and seed
 pnpm db:migrate
 pnpm db:seed
 
@@ -63,6 +67,30 @@ pnpm --filter @airrand/api dev        # http://localhost:3003
 
 API health check: `GET http://localhost:3003/health`
 
+## Local database (Docker)
+
+PostgreSQL runs in Docker on host port **5433** (container `5432`) to avoid clashing with a system Postgres on `5432`. `DATABASE_URL` in `.env.example` matches this setup.
+
+```bash
+# Start Postgres (detached)
+docker compose up -d
+
+# Check status
+docker compose ps
+
+# Apply schema and seed demo data
+pnpm db:migrate
+pnpm db:seed
+
+# Stop Postgres (keeps data in the named volume)
+docker compose down
+
+# Stop and remove data volume (full reset)
+docker compose down -v
+```
+
+If you change `DATABASE_URL`, ensure it matches the Docker port (`5433`) unless you use your own Postgres instance.
+
 ## Scripts
 
 | Command | Description |
@@ -92,7 +120,8 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 ## Implementation phases
 
 - **Phase 0**: Repo scaffold
-- **Phase 1** (current): Database schema, contracts, domain rules, API
+- **Phase 1**: Database schema, contracts, domain rules, API
+- **Phase 1.5** (current): Local Docker PostgreSQL
 - **Phase 2**: QR pickup token issue/verify
 - **Phase 3**: Merchant UI
 - **Phase 4**: Customer UI

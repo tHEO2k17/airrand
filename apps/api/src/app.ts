@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { getCorsAllowedOrigins } from "./lib/cors.js";
+import { getReadinessResult } from "./lib/readiness.js";
 import { rateLimitMiddleware } from "./middleware/rate-limit.js";
 import { authRoutes } from "./routes/auth.js";
 import { merchantsRoutes } from "./routes/merchants.js";
@@ -12,12 +14,7 @@ app.use("*", rateLimitMiddleware());
 app.use(
   "*",
   cors({
-    origin: [
-      "http://localhost:3001",
-      "http://localhost:3002",
-      process.env.MERCHANT_APP_URL ?? "",
-      process.env.CUSTOMER_APP_URL ?? "",
-    ].filter(Boolean),
+    origin: getCorsAllowedOrigins(),
     allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     exposeHeaders: ["Set-Cookie"],
@@ -30,6 +27,28 @@ app.get("/health", (c) =>
     service: "airrand-api",
   }),
 );
+
+app.get("/ready", async (c) => {
+  const result = await getReadinessResult();
+  if (!result.ready) {
+    return c.json(
+      {
+        error: {
+          code: "NOT_READY",
+          message: "One or more readiness checks failed",
+        },
+        data: { checks: result.checks },
+      },
+      503,
+    );
+  }
+
+  return jsonOk(c, {
+    status: "ready",
+    service: "airrand-api",
+    checks: result.checks,
+  });
+});
 
 app.route("/auth", authRoutes);
 app.route("/merchants", merchantsRoutes);

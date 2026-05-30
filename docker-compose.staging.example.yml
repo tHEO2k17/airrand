@@ -1,0 +1,62 @@
+# Staging-style stack for local or pre-production validation.
+# Copy .env.staging.example → .env.staging, set secrets, then:
+#   docker compose -f docker-compose.staging.example.yml --env-file .env.staging up --build
+#
+# After Postgres is healthy, run migrations once:
+#   docker compose -f docker-compose.staging.example.yml --env-file .env.staging run --rm api \
+#     sh -c "cd /app && pnpm --filter @airrand/database db:migrate && pnpm --filter @airrand/database db:seed"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: airrand
+    volumes:
+      - airrand_staging_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d airrand"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "3003:3003"
+    env_file:
+      - .env.staging
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/airrand
+      PORT: "3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  merchant:
+    build:
+      context: .
+      dockerfile: apps/merchant/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3003}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+
+  customer:
+    build:
+      context: .
+      dockerfile: apps/customer/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3003}
+    ports:
+      - "3002:3002"
+    depends_on:
+      - api
+
+volumes:
+  airrand_staging_pg_data:

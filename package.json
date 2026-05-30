@@ -10,7 +10,8 @@
     "clean": "turbo clean",
     "db:generate": "pnpm --filter @airrand/database db:generate",
     "db:migrate": "pnpm --filter @airrand/database db:migrate",
-    "db:seed": "pnpm --filter @airrand/database db:seed"
+    "db:seed": "pnpm --filter @airrand/database db:seed",
+    "smoke": "bash scripts/smoke-staging.sh"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",

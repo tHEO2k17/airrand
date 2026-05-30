@@ -1,6 +1,5 @@
 import { DEFAULT_SESSION_TTL_MS } from "@airrand/auth";
-
-const MIN_SECRET_LENGTH = 32;
+import { MIN_SECRET_LENGTH } from "./config-validation.js";
 
 export function getAuthSessionSecret(): string {
   const secret = process.env.AUTH_SESSION_SECRET;

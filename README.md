@@ -15,7 +15,7 @@ Wallet-less commerce orchestration MVP. Merchants manage products and orders; cu
 | `packages/qr` | Pickup token sign/verify |
 | `packages/config` | Shared TypeScript and ESLint config |
 
-See [docs/architecture.md](./docs/architecture.md) and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
+See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
 
 ## Prerequisites
 
@@ -77,7 +77,9 @@ Or all apps:
 pnpm dev
 ```
 
-API health check: `GET http://localhost:3003/health`
+API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB + secrets)
+
+Staging smoke test: `./scripts/smoke-staging.sh`
 
 Both web apps load the seeded **Demo Cafe** merchant (`demo-cafe`) automatically.
 
@@ -216,4 +218,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 4**: Customer UI
 - **Phase 5A**: CI + audit log
 - **Phase 5B**: Rate limiting + camera QR scan
-- **Phase 6A** (current): Merchant staff authentication
+- **Phase 6A**: Merchant staff authentication
+- **Phase 6B** (current): Staging deployment docs, Docker, readiness, CORS env

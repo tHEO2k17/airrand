@@ -89,6 +89,30 @@ Both web apps load the seeded **Demo Cafe** merchant (`demo-cafe`) automatically
 
 Payment happens outside airRand; the apps only coordinate reservation and pickup verification.
 
+## CI
+
+GitHub Actions runs on every push to `main` and on pull requests:
+
+- `pnpm install --frozen-lockfile`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm test`
+- `pnpm build`
+
+Workflow: [.github/workflows/ci.yml](./.github/workflows/ci.yml)
+
+## Audit log (Phase 5A)
+
+Order lifecycle events are recorded in `audit_logs`:
+
+- `order.created` (customer actor when name provided)
+- `order.status_changed`
+- `order.pickup_verified`
+
+Merchant UI: **Audit log** screen (`/audit-logs`) or `GET /merchants/:merchantId/audit-logs`.
+
+No authentication yet — actor is `customer` or `unknown` as appropriate.
+
 ## Local database (Docker)
 
 PostgreSQL runs in Docker on host port **5433** (container `5432`) to avoid clashing with a system Postgres on `5432`. `DATABASE_URL` in `.env.example` matches this setup.
@@ -146,4 +170,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 1.5**: Local Docker PostgreSQL
 - **Phase 2**: QR pickup token issue/verify
 - **Phase 3**: Merchant UI
-- **Phase 4** (current): Customer UI
+- **Phase 4**: Customer UI
+- **Phase 5A** (current): CI + audit log

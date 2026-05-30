@@ -9,6 +9,7 @@ const links = [
   { href: "/products", label: "Products" },
   { href: "/orders", label: "Orders" },
   { href: "/pickup", label: "Pickup" },
+  { href: "/audit-logs", label: "Audit log" },
 ];
 
 export function SiteNav() {

@@ -1,4 +1,5 @@
 import type {
+  AuditLogResponse,
   CreateProductInput,
   MerchantResponse,
   OrderResponse,
@@ -110,4 +111,13 @@ export async function verifyPickup(
       body: JSON.stringify({ token }),
     },
   );
+}
+
+export async function fetchAuditLogs(
+  merchantId: string,
+): Promise<AuditLogResponse[]> {
+  const data = await request<{ auditLogs: AuditLogResponse[] }>(
+    `/merchants/${merchantId}/audit-logs`,
+  );
+  return data.auditLogs;
 }

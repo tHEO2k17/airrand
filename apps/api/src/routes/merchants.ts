@@ -13,16 +13,20 @@ import {
 } from "@airrand/domain";
 import { createPickupToken, PICKUP_TOKEN_TTL_MS, verifyPickupToken } from "@airrand/qr";
 import {
+  AUDIT_ACTIONS,
+  auditLogs,
+  insertAuditLog,
   merchants,
   orderLines,
   orders,
   products,
 } from "@airrand/database";
 import { zValidator } from "@hono/zod-validator";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../lib/db.js";
 import { handleRouteError } from "../lib/errors.js";
+import { toAuditLogResponse } from "../lib/audit.js";
 import {
   toMerchantResponse,
   toOrderResponse,
@@ -225,6 +229,18 @@ merchantsRoutes.post(
           .values(lineValues)
           .returning();
 
+        await insertAuditLog(tx, {
+          merchantId,
+          orderId: order.id,
+          actorType: "customer",
+          actorLabel: body.customerName ?? null,
+          action: AUDIT_ACTIONS.ORDER_CREATED,
+          metadata: {
+            lineCount: insertedLines.length,
+            status: order.status,
+          },
+        });
+
         return { order, lines: insertedLines };
       });
 
@@ -321,24 +337,46 @@ merchantsRoutes.post(
       assertCanTransitionOrderStatus(existing!.status, "picked_up");
 
       const verifiedAt = new Date();
-      const [order] = await db
-        .update(orders)
-        .set({
-          status: "picked_up",
-          pickedUpAt: verifiedAt,
-          updatedAt: verifiedAt,
-        })
-        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
-        .returning();
+      const result = await db.transaction(async (tx) => {
+        const [order] = await tx
+          .update(orders)
+          .set({
+            status: "picked_up",
+            pickedUpAt: verifiedAt,
+            updatedAt: verifiedAt,
+          })
+          .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+          .returning();
 
-      if (!order) {
+        if (!order) {
+          return null;
+        }
+
+        await insertAuditLog(tx, {
+          merchantId,
+          orderId: order.id,
+          actorType: "unknown",
+          action: AUDIT_ACTIONS.ORDER_PICKUP_VERIFIED,
+          metadata: {
+            fromStatus: existing!.status,
+            toStatus: "picked_up",
+            verifiedAt: verifiedAt.toISOString(),
+          },
+        });
+
+        const lines = await tx
+          .select()
+          .from(orderLines)
+          .where(eq(orderLines.orderId, orderId));
+
+        return { order, lines };
+      });
+
+      if (!result) {
         return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
       }
 
-      const lines = await db
-        .select()
-        .from(orderLines)
-        .where(eq(orderLines.orderId, orderId));
+      const { order, lines } = result;
 
       return jsonOk(c, {
         order: toOrderResponse(order, lines),
@@ -378,27 +416,71 @@ merchantsRoutes.patch(
         assertCanTransitionOrderStatus(existing.status, nextStatus);
       }
 
-      const [order] = await db
-        .update(orders)
-        .set({ status: nextStatus, updatedAt: new Date() })
-        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
-        .returning();
+      const result = await db.transaction(async (tx) => {
+        const [order] = await tx
+          .update(orders)
+          .set({ status: nextStatus, updatedAt: new Date() })
+          .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+          .returning();
 
-      if (!order) {
+        if (!order) {
+          return null;
+        }
+
+        if (existing.status !== nextStatus) {
+          await insertAuditLog(tx, {
+            merchantId,
+            orderId: order.id,
+            actorType: "unknown",
+            action: AUDIT_ACTIONS.ORDER_STATUS_CHANGED,
+            metadata: {
+              fromStatus: existing.status,
+              toStatus: nextStatus,
+            },
+          });
+        }
+
+        const lines = await tx
+          .select()
+          .from(orderLines)
+          .where(eq(orderLines.orderId, orderId));
+
+        return { order, lines };
+      });
+
+      if (!result) {
         return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
       }
 
-      const lines = await db
-        .select()
-        .from(orderLines)
-        .where(eq(orderLines.orderId, orderId));
-
-      return jsonOk(c, toOrderResponse(order, lines));
+      return jsonOk(c, toOrderResponse(result.order, result.lines));
     } catch (error) {
       return handleRouteError(c, error);
     }
   },
 );
+
+merchantsRoutes.get("/:merchantId/audit-logs", async (c) => {
+  try {
+    const merchantId = c.req.param("merchantId");
+    const merchant = await findMerchant(merchantId);
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    const rows = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.merchantId, merchantId))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(100);
+
+    return jsonOk(c, {
+      auditLogs: rows.map(toAuditLogResponse),
+    });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
 
 async function findMerchant(merchantId: string) {
   const [merchant] = await db

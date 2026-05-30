@@ -15,6 +15,13 @@
       "when": 1780128061558,
       "tag": "0001_wealthy_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780130417206,
+      "tag": "0002_loose_namor",
+      "breakpoints": true
     }
   ]
 }

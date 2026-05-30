@@ -16,11 +16,15 @@ export function OrderLineCards({
   selectedOrderId,
   onSelect,
   onVerifyPickup,
+  isOrderUnread,
+  isOrderNew,
 }: {
   orders: OrderResponse[];
   selectedOrderId: string | null;
   onSelect: (orderId: string) => void;
   onVerifyPickup?: (order: OrderResponse) => void;
+  isOrderUnread?: (orderId: string) => boolean;
+  isOrderNew?: (order: OrderResponse) => boolean;
 }) {
   if (orders.length === 0) {
     return (
@@ -35,10 +39,19 @@ export function OrderLineCards({
       {orders.map((order) => {
         const progress = getOrderProgressPercent(order.status);
         const selected = order.id === selectedOrderId;
+        const unread = isOrderUnread?.(order.id) ?? false;
+        const isNew = isOrderNew?.(order) ?? false;
         return (
           <div
             key={order.id}
-            className={`pos-order-card ${selected ? "is-selected" : ""}`}
+            className={[
+              "pos-order-card",
+              selected ? "is-selected" : "",
+              unread ? "pos-order-card--unread" : "",
+              isNew ? "pos-order-card--new" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
             <button
               type="button"
@@ -48,6 +61,7 @@ export function OrderLineCards({
               <div className="pos-order-card__top">
                 <span className="pos-order-card__id">
                   {order.reference}
+                  {isNew ? <span className="pos-order-card__new-badge">New</span> : null}
                 </span>
                 <StatusBadge status={order.status} />
               </div>

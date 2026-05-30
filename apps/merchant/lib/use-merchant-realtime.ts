@@ -4,6 +4,10 @@ import type { RealtimeEventType } from "@airrand/contracts";
 import { useEffect, useRef, useState } from "react";
 import { getApiBaseUrl } from "./config";
 import { getAuthToken } from "./api";
+import {
+  parseRealtimeEventMessage,
+  type ParsedRealtimeEvent,
+} from "./operational-attention/parse-realtime-event";
 import { consumeSseStream } from "./sse-client";
 import { usePollingRefresh } from "./use-polling-refresh";
 
@@ -31,6 +35,8 @@ export function useMerchantRealtime(options: {
   token: string | null;
   enabled: boolean;
   onRefresh: () => void | Promise<void>;
+  onRealtimeEvent?: (event: ParsedRealtimeEvent) => void;
+  onConnectionOpen?: (info: { reconnect: boolean }) => void;
   pollIntervalMs?: number;
 }): { connectionStatus: RealtimeConnectionStatus } {
   const {
@@ -38,13 +44,20 @@ export function useMerchantRealtime(options: {
     token,
     enabled,
     onRefresh,
+    onRealtimeEvent,
+    onConnectionOpen,
     pollIntervalMs = 10_000,
   } = options;
 
   const [connectionStatus, setConnectionStatus] =
     useState<RealtimeConnectionStatus>("reconnecting");
   const onRefreshRef = useRef(onRefresh);
+  const onRealtimeEventRef = useRef(onRealtimeEvent);
+  const onConnectionOpenRef = useRef(onConnectionOpen);
+  const hasConnectedBeforeRef = useRef(false);
   onRefreshRef.current = onRefresh;
+  onRealtimeEventRef.current = onRealtimeEvent;
+  onConnectionOpenRef.current = onConnectionOpen;
 
   const pollingEnabled =
     enabled && Boolean(merchantId) && connectionStatus === "polling";
@@ -80,8 +93,11 @@ export function useMerchantRealtime(options: {
           headers: { Authorization: `Bearer ${getAuthToken() ?? token}` },
           signal: abort.signal,
           onOpen: () => {
+            const reconnect = hasConnectedBeforeRef.current;
+            hasConnectedBeforeRef.current = true;
             attempt = 0;
             setConnectionStatus("live");
+            onConnectionOpenRef.current?.({ reconnect });
           },
           onEvent: (event, data) => {
             if (event === "heartbeat" || event === "connected") {
@@ -89,8 +105,12 @@ export function useMerchantRealtime(options: {
             }
 
             try {
-              const envelope = JSON.parse(data) as { type?: RealtimeEventType };
-              const type = envelope.type;
+              const parsed = parseRealtimeEventMessage(data);
+              if (parsed) {
+                onRealtimeEventRef.current?.(parsed);
+              }
+
+              const type = parsed?.type ?? (JSON.parse(data) as { type?: RealtimeEventType }).type;
               if (
                 type &&
                 (ORDER_EVENTS.has(type) || PRODUCT_EVENTS.has(type))

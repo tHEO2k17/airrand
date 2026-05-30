@@ -21,6 +21,7 @@ import { useAuth } from "../components/auth-context";
 import { useMerchant } from "../components/merchant-context";
 import { useMerchantPermissions } from "../lib/use-merchant-permissions";
 import { useMerchantRealtime } from "../lib/use-merchant-realtime";
+import { useOperationalAttention } from "../lib/use-operational-attention";
 import {
   fetchCategories,
   fetchOrders,
@@ -50,47 +51,75 @@ function PosConsoleContent() {
     null,
   );
 
-  const load = useCallback(async (options?: { silent?: boolean }) => {
-    if (!merchantId) {
-      return;
-    }
-    if (options?.silent) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-    try {
-      const [productList, categoryList, orderList] = await Promise.all([
-        fetchProducts(merchantId),
-        fetchCategories(merchantId),
-        fetchOrders(merchantId),
-      ]);
-      setProducts(productList);
-      setCategories(categoryList);
-      const sorted = [...orderList].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-      setOrders(sorted);
-      setSelectedOrderId((current) => {
-        if (current && sorted.some((o) => o.id === current)) {
-          return current;
-        }
-        const firstActive = sorted.find((o) => isActiveOrderStatus(o.status));
-        return firstActive?.id ?? sorted[0]?.id ?? null;
-      });
-      setLastUpdated(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load console");
-    } finally {
-      if (options?.silent) {
-        setRefreshing(false);
-      } else {
-        setLoading(false);
+  const {
+    muted,
+    toggleMuted,
+    hasUnreadOrders,
+    notificationPermission,
+    requestNotifications,
+    unlockAudio,
+    focusMode,
+    toggleFocusMode,
+    handleRealtimeEvent,
+    syncOrdersAfterLoad,
+    beginReconnectReconcile,
+    endReconnectReconcile,
+    markOrderRead,
+    isOrderUnread,
+    isOrderNew,
+  } = useOperationalAttention({ notifyOnReady: true });
+
+  const load = useCallback(
+    async (options?: {
+      silent?: boolean;
+      syncReason?: "initial" | "refresh" | "reconnect";
+    }) => {
+      if (!merchantId) {
+        return;
       }
-    }
-  }, [merchantId]);
+      if (options?.silent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      try {
+        const [productList, categoryList, orderList] = await Promise.all([
+          fetchProducts(merchantId),
+          fetchCategories(merchantId),
+          fetchOrders(merchantId),
+        ]);
+        setProducts(productList);
+        setCategories(categoryList);
+        const sorted = [...orderList].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setOrders(sorted);
+        setSelectedOrderId((current) => {
+          if (current && sorted.some((o) => o.id === current)) {
+            return current;
+          }
+          const firstActive = sorted.find((o) => isActiveOrderStatus(o.status));
+          return firstActive?.id ?? sorted[0]?.id ?? null;
+        });
+        await syncOrdersAfterLoad(sorted, {
+          reason: options?.syncReason ?? (options?.silent ? "refresh" : "initial"),
+          allowPollAlerts: options?.syncReason === "refresh" || options?.silent === true,
+        });
+        setLastUpdated(new Date());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load console");
+      } finally {
+        if (options?.silent) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [merchantId, syncOrdersAfterLoad],
+  );
 
   useEffect(() => {
     void load();
@@ -100,11 +129,29 @@ function PosConsoleContent() {
     merchantId,
     token,
     enabled: Boolean(merchantId) && !loading && !saving,
-    onRefresh: () => load({ silent: true }),
+    onRealtimeEvent: (event) => {
+      void handleRealtimeEvent(event);
+    },
+    onConnectionOpen: ({ reconnect }) => {
+      if (!reconnect) {
+        return;
+      }
+      beginReconnectReconcile();
+      void load({ silent: true, syncReason: "reconnect" }).finally(() => {
+        endReconnectReconcile();
+      });
+    },
+    onRefresh: () => load({ silent: true, syncReason: "refresh" }),
   });
 
   const activeOrders = useMemo(
-    () => orders.filter((o) => isActiveOrderStatus(o.status)),
+    () =>
+      orders
+        .filter((o) => isActiveOrderStatus(o.status))
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
     [orders],
   );
 
@@ -188,8 +235,19 @@ function PosConsoleContent() {
     setPickupModalOrder(null);
   }
 
+  function handleSelectOrder(orderId: string) {
+    setSelectedOrderId(orderId);
+    markOrderRead(orderId);
+    void unlockAudio();
+  }
+
   return (
-    <div className="pos-console">
+    <div
+      className={`pos-console${focusMode ? " pos-console--focus" : ""}`}
+      onPointerDown={() => {
+        void unlockAudio();
+      }}
+    >
       {error ? <NotificationFeedback kind="error" message={error} /> : null}
       {success ? <NotificationFeedback kind="actionSuccess" message={success} /> : null}
       {notificationInfo ? (
@@ -203,35 +261,52 @@ function PosConsoleContent() {
           <div className="pos-dashboard__main">
             <PosHeader
               lastUpdated={lastUpdated}
-              onRefresh={() => void load({ silent: true })}
+              onRefresh={() => void load({ silent: true, syncReason: "refresh" })}
               refreshing={refreshing}
               connectionStatus={connectionStatus}
+              muted={muted}
+              onToggleMuted={toggleMuted}
+              notificationPermission={notificationPermission}
+              onRequestNotifications={requestNotifications}
+              focusMode={focusMode}
+              onToggleFocusMode={toggleFocusMode}
+              hasUnreadOrders={hasUnreadOrders}
             />
 
-            <section className="pos-section" aria-label="Order line">
+            <section
+              className={`pos-section${hasUnreadOrders ? " pos-section--pulse" : ""}`}
+              aria-label="Order line"
+            >
               <OrderLineStats orders={orders} />
               <h2 className="pos-section-title pos-section-title--inline">
                 Active order queue
+                {hasUnreadOrders ? (
+                  <span className="pos-queue-pulse pos-queue-pulse--inline" aria-hidden />
+                ) : null}
               </h2>
               <OrderLineCards
                 orders={activeOrders}
                 selectedOrderId={selectedOrderId}
-                onSelect={setSelectedOrderId}
+                onSelect={handleSelectOrder}
                 onVerifyPickup={openPickupModal}
+                isOrderUnread={isOrderUnread}
+                isOrderNew={isOrderNew}
               />
             </section>
 
-            <section className="pos-section" aria-label="Menu">
-              <h2 className="pos-section-title">Menu</h2>
-              <ProductGrid
-                products={products}
-                categories={categories}
-                saving={saving}
-                canManageProducts={canUpdateProduct}
-                onToggleAvailability={handleToggleAvailability}
-                onStockStateChange={handleStockStateChange}
-              />
-            </section>
+            {!focusMode ? (
+              <section className="pos-section" aria-label="Menu">
+                <h2 className="pos-section-title">Menu</h2>
+                <ProductGrid
+                  products={products}
+                  categories={categories}
+                  saving={saving}
+                  canManageProducts={canUpdateProduct}
+                  onToggleAvailability={handleToggleAvailability}
+                  onStockStateChange={handleStockStateChange}
+                />
+              </section>
+            ) : null}
           </div>
 
           <aside className="pos-dashboard__rail" aria-label="Current order">
@@ -239,6 +314,7 @@ function PosConsoleContent() {
               order={selectedOrder}
               saving={saving}
               onStatusChange={handleStatusChange}
+              onVerifyPickup={openPickupModal}
             />
           </aside>
         </div>

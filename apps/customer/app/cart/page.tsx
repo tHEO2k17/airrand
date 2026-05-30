@@ -116,7 +116,8 @@ export default function CartPage() {
         </Surface>
       ) : (
         <>
-          <Surface>
+          <div className="store-cart-layout">
+          <Surface padding="lg">
             <div className="store-cart-list">
               {items.map((item) => (
                 <div key={item.productId} className="store-cart-row">
@@ -173,7 +174,7 @@ export default function CartPage() {
             </div>
           </Surface>
 
-          <Surface>
+          <Surface padding="lg">
             <h2 className="store-section-title">Pickup details</h2>
             <form className="store-form" onSubmit={handleSubmit}>
               <label>
@@ -203,6 +204,7 @@ export default function CartPage() {
               </Button>
             </form>
           </Surface>
+          </div>
         </>
       )}
     </div>

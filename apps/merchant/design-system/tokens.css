@@ -1,8 +1,9 @@
 :root {
   /* Surfaces */
-  --pos-bg: #f3f4f6;
+  --pos-bg: #eceef2;
   --pos-surface: #ffffff;
-  --pos-surface-muted: #f9fafb;
+  --pos-surface-muted: #f4f5f7;
+  --pos-surface-elevated: #ffffff;
   --pos-border: #e5e7eb;
   --pos-border-strong: #d1d5db;
 
@@ -40,16 +41,20 @@
   --pos-space-5: 1.25rem;
   --pos-space-6: 1.5rem;
   --pos-space-8: 2rem;
+  --pos-space-10: 2.5rem;
 
-  /* Radius */
-  --pos-radius-sm: 8px;
-  --pos-radius-md: 12px;
-  --pos-radius-lg: 16px;
+  /* Radius — bold dashboard cards */
+  --pos-radius-sm: 10px;
+  --pos-radius-md: 14px;
+  --pos-radius-lg: 18px;
+  --pos-radius-xl: 22px;
+  --pos-radius-2xl: 28px;
   --pos-radius-full: 999px;
 
   /* Shadows */
-  --pos-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
-  --pos-shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
+  --pos-shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06);
+  --pos-shadow-md: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --pos-shadow-lg: 0 16px 40px rgba(17, 24, 39, 0.1);
 
   /* Typography */
   --pos-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -58,8 +63,23 @@
   --pos-font-size-base: 1rem;
   --pos-font-size-lg: 1.125rem;
   --pos-font-size-xl: 1.35rem;
-  --pos-font-size-2xl: 1.6rem;
+  --pos-font-size-2xl: 1.75rem;
+  --pos-font-size-3xl: 2rem;
 
   /* Layout */
   --pos-sidebar-width: 72px;
+  --pos-content-max: 100%;
+  --pos-rail-width: min(380px, 100%);
+
+  /* Breakpoints (for reference in comments / custom props) */
+  --pos-bp-tablet: 768px;
+  --pos-bp-desktop: 1100px;
+  --pos-bp-wide: 1400px;
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --pos-content-max: 1600px;
+    --pos-rail-width: 400px;
+  }
 }

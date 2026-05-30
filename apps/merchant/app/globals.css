@@ -8,6 +8,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   font-family: var(--pos-font);
   color: var(--pos-text);
   background: var(--pos-bg);

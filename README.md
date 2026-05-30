@@ -100,6 +100,15 @@ Wording avoids payment processing: catalog prices and **estimated order value** 
 
 **Polling (no WebSockets):** Customer order status and merchant Order Line / Orders screens refresh on a timer (HTTP polling only). Real-time push is not implemented yet.
 
+### Responsive layout (Phase 8C)
+
+Design tokens and CSS use a dashboard-inspired card layout (large rounded surfaces, generous spacing, orange accent). No API changes.
+
+| App | Breakpoints |
+|-----|-------------|
+| **Merchant** (`:3001`) | Tablet+ sidebar stays fixed. Order Line: stacked cards on phone, grid on tablet, horizontal queue on wide desktop; menu + **Current order** rail side-by-side from 1100px. |
+| **Customer** (`:3002`) | Mobile-first. Product grid: 1 → 2 → 3 → 4 columns. Cart splits into two columns on desktop. Confirmation and order-status pages use a centered flow layout on large screens. |
+
 ### End-to-end demo flow
 
 1. **Customer** (`:3002`): browse menu → add to cart → **Place Order for Pickup** → **Show Pickup Code** on confirmation → **Track order status** to watch progress.

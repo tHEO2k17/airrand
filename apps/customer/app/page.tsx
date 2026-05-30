@@ -76,7 +76,7 @@ export default function CatalogPage() {
           {products.map((product) => {
             const Icon = getProductIcon(product.name);
             return (
-              <Surface key={product.id} className="store-product-card">
+              <Surface key={product.id} className="store-product-card" padding="lg">
                 <div className="store-product-card__top">
                   <div className="store-product-card__icon" aria-hidden>
                     <Icon size={24} strokeWidth={1.75} />

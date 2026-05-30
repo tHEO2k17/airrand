@@ -117,7 +117,7 @@ export default function OrderStatusPage() {
   }
 
   return (
-    <div className="store-page">
+    <div className="store-page store-page--centered">
       <header className="store-hero">
         <h1>Order status</h1>
         <p>Track your pickup order without signing in.</p>

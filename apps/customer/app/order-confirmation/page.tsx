@@ -34,7 +34,7 @@ export default function OrderConfirmationPage() {
 
   if (!confirmation) {
     return (
-      <div className="store-page">
+      <div className="store-page store-page--centered">
         <Surface>
           <EmptyState
             title="No pickup code found"
@@ -49,7 +49,7 @@ export default function OrderConfirmationPage() {
   }
 
   return (
-    <div className="store-page">
+    <div className="store-page store-page--centered">
       <header className="store-hero">
         <div className="store-empty__icon" style={{ marginBottom: "0.75rem" }}>
           <CheckCircle2 size={32} strokeWidth={1.75} color="var(--store-accent)" />

@@ -16,6 +16,7 @@ import { ProductGrid } from "../components/pos/product-grid";
 import { NotificationFeedback } from "../components/ui/notification-feedback";
 import { NOTIFICATION_UI_COPY } from "@airrand/notifications/templates";
 import { LoadingState } from "../components/ui/loading-state";
+import { PickupVerificationModal } from "../components/pickup-verification-modal";
 import { useAuth } from "../components/auth-context";
 import { useMerchant } from "../components/merchant-context";
 import { useMerchantPermissions } from "../lib/use-merchant-permissions";
@@ -44,6 +45,10 @@ function PosConsoleContent() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [pickupModalOpen, setPickupModalOpen] = useState(false);
+  const [pickupModalOrder, setPickupModalOrder] = useState<OrderResponse | null>(
+    null,
+  );
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!merchantId) {
@@ -173,6 +178,16 @@ function PosConsoleContent() {
     }
   }
 
+  function openPickupModal(order?: OrderResponse) {
+    setPickupModalOrder(order ?? null);
+    setPickupModalOpen(true);
+  }
+
+  function closePickupModal() {
+    setPickupModalOpen(false);
+    setPickupModalOrder(null);
+  }
+
   return (
     <div className="pos-console">
       {error ? <NotificationFeedback kind="error" message={error} /> : null}
@@ -202,6 +217,7 @@ function PosConsoleContent() {
                 orders={activeOrders}
                 selectedOrderId={selectedOrderId}
                 onSelect={setSelectedOrderId}
+                onVerifyPickup={openPickupModal}
               />
             </section>
 
@@ -227,6 +243,16 @@ function PosConsoleContent() {
           </aside>
         </div>
       )}
+
+      <PickupVerificationModal
+        open={pickupModalOpen}
+        onClose={closePickupModal}
+        orderReference={pickupModalOrder?.reference ?? null}
+        onVerified={() => {
+          void load({ silent: true });
+          setSuccess("Pickup verified successfully.");
+        }}
+      />
     </div>
   );
 }

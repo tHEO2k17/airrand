@@ -769,15 +769,20 @@
 }
 
 .pos-order-card__pickup-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pos-space-1);
   margin-top: var(--pos-space-2);
   padding: 0.35rem 0.65rem;
+  border: none;
   border-radius: var(--pos-radius-sm);
   background: var(--pos-accent-soft);
   color: #c2410c;
   font-size: var(--pos-font-size-xs);
   font-weight: 600;
+  font-family: inherit;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .pos-order-card__pickup-link:hover {
@@ -955,13 +960,21 @@
   width: 100%;
   margin-top: var(--pos-space-4);
   padding: var(--pos-space-4);
+  border: none;
   border-radius: var(--pos-radius-lg);
   background: var(--pos-accent);
   color: #fff;
   font-weight: 700;
   font-size: var(--pos-font-size-sm);
+  font-family: inherit;
   text-decoration: none;
+  cursor: pointer;
   transition: background 0.15s;
+}
+
+.pos-verify-pickup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .pos-verify-pickup-btn:hover {
@@ -1255,6 +1268,65 @@
     grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr);
     align-items: start;
   }
+}
+
+.pos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pos-space-4);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.pos-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pos-space-4);
+  width: min(100%, 520px);
+  max-height: min(92vh, 900px);
+  overflow-y: auto;
+  padding: var(--pos-space-5);
+  border-radius: var(--pos-radius-lg);
+  border: 1px solid var(--pos-border);
+  background: var(--pos-surface);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+}
+
+.pos-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--pos-space-3);
+}
+
+.pos-modal__header .pos-section-title {
+  margin: 0;
+}
+
+.pos-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--pos-space-2);
+  border-top: 1px solid var(--pos-border);
+}
+
+.pickup-verification-panel {
+  display: grid;
+  gap: var(--pos-space-4);
+}
+
+.pickup-verification-panel__block {
+  margin: 0;
+}
+
+.pickup-verification-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pos-space-2);
+  margin-top: var(--pos-space-3);
 }
 
 .pickup-scanner {

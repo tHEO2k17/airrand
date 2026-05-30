@@ -2,7 +2,6 @@
 
 import type { OrderResponse } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
-import Link from "next/link";
 import { Check, QrCode } from "lucide-react";
 import { StatusBadge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -35,10 +34,12 @@ export function OrderDetailPanel({
   order,
   saving,
   onStatusChange,
+  onVerifyPickup,
 }: {
   order: OrderResponse | null;
   saving: boolean;
   onStatusChange: (orderId: string, status: OrderStatus) => void;
+  onVerifyPickup?: (order: OrderResponse) => void;
 }) {
   if (!order) {
     return (
@@ -158,11 +159,16 @@ export function OrderDetailPanel({
         </Button>
       ) : null}
 
-      {order.status === "ready" ? (
-        <Link href="/pickup" className="pos-verify-pickup-btn">
+      {order.status === "ready" && onVerifyPickup ? (
+        <button
+          type="button"
+          className="pos-verify-pickup-btn"
+          disabled={saving}
+          onClick={() => onVerifyPickup(order)}
+        >
           <QrCode size={20} aria-hidden />
           Verify pickup
-        </Link>
+        </button>
       ) : null}
     </Surface>
   );

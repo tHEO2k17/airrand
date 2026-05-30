@@ -1,8 +1,7 @@
 "use client";
 
 import type { OrderResponse } from "@airrand/contracts";
-import Link from "next/link";
-import { Clock, User } from "lucide-react";
+import { Clock, QrCode, User } from "lucide-react";
 import { StatusBadge } from "../ui/badge";
 import { Surface } from "../ui/surface";
 import { formatDateTime } from "../../lib/format";
@@ -16,10 +15,12 @@ export function OrderLineCards({
   orders,
   selectedOrderId,
   onSelect,
+  onVerifyPickup,
 }: {
   orders: OrderResponse[];
   selectedOrderId: string | null;
   onSelect: (orderId: string) => void;
+  onVerifyPickup?: (order: OrderResponse) => void;
 }) {
   if (orders.length === 0) {
     return (
@@ -69,10 +70,18 @@ export function OrderLineCards({
                 />
               </div>
             </button>
-            {order.status === "ready" ? (
-              <Link href="/pickup" className="pos-order-card__pickup-link">
-                Go to pickup
-              </Link>
+            {order.status === "ready" && onVerifyPickup ? (
+              <button
+                type="button"
+                className="pos-order-card__pickup-link"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onVerifyPickup(order);
+                }}
+              >
+                <QrCode size={14} aria-hidden />
+                Verify pickup
+              </button>
             ) : null}
           </div>
         );

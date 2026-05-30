@@ -13,11 +13,14 @@
   },
   "dependencies": {
     "@airrand/contracts": "workspace:*",
-    "@airrand/domain": "workspace:*",
     "@airrand/database": "workspace:*",
-    "@airrand/qr": "workspace:*",
+    "@airrand/domain": "workspace:*",
     "@hono/node-server": "^1.14.4",
-    "hono": "^4.7.11"
+    "@hono/zod-validator": "^0.7.0",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
+    "hono": "^4.7.11",
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",

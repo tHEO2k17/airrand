@@ -1,14 +1,15 @@
+import { config } from "dotenv";
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { app } from "./app.js";
 
-const app = new Hono();
-
-app.get("/health", (c) =>
-  c.json({
-    status: "ok",
-    service: "airrand-api",
-  }),
+const rootEnv = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../.env",
 );
+config({ path: rootEnv });
+config();
 
 const port = Number(process.env.PORT ?? 3003);
 

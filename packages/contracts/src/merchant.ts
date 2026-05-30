@@ -1,0 +1,15 @@
+import { z } from "zod";
+
+export const merchantResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  slug: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type MerchantResponse = z.infer<typeof merchantResponseSchema>;
+
+export const listMerchantsResponseSchema = z.object({
+  merchants: z.array(merchantResponseSchema),
+});

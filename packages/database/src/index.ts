@@ -1,5 +1,2 @@
-/**
- * Database schema, migrations, and client.
- * Implementation begins in Phase 1.
- */
-export {};
+export { createDb, type Database } from "./client.js";
+export * from "./schema/index.js";

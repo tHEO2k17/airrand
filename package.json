@@ -6,7 +6,11 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean"
+    "test": "turbo test",
+    "clean": "turbo clean",
+    "db:generate": "pnpm --filter @airrand/database db:generate",
+    "db:migrate": "pnpm --filter @airrand/database db:migrate",
+    "db:seed": "pnpm --filter @airrand/database db:seed"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",

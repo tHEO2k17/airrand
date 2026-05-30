@@ -29,7 +29,7 @@ stateDiagram-v2
   cancelled --> [*]
 ```
 
-Invalid transitions must be rejected by `@airrand/domain` and the API (Phase 1).
+Invalid transitions are rejected by `@airrand/domain` (`canTransitionOrderStatus`, `assertCanTransitionOrderStatus`) and enforced on `PATCH /merchants/:merchantId/orders/:orderId/status` (409 on invalid transition).
 
 ## Pickup verification (Phase 2+)
 

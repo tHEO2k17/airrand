@@ -1,0 +1,45 @@
+import { z } from "zod";
+
+export const createProductSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).optional(),
+  unitPriceCents: z.number().int().min(0),
+  isAvailable: z.boolean().optional().default(true),
+});
+
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+
+export const updateProductSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: z.string().trim().max(2000).nullable().optional(),
+    unitPriceCents: z.number().int().min(0).optional(),
+    isAvailable: z.boolean().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field is required",
+  });
+
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+export const listProductsQuerySchema = z.object({
+  availableOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
+});
+
+export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
+
+export const productResponseSchema = z.object({
+  id: z.string().uuid(),
+  merchantId: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable(),
+  unitPriceCents: z.number().int(),
+  isAvailable: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export type ProductResponse = z.infer<typeof productResponseSchema>;

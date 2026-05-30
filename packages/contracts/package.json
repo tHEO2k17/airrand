@@ -16,6 +16,9 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "zod": "^3.25.56"
+  },
   "devDependencies": {
     "@airrand/config": "workspace:*",
     "eslint": "^9.28.0",

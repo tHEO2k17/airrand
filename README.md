@@ -26,17 +26,23 @@ See [docs/architecture.md](./docs/architecture.md) and [docs/adr/0001-walletless
 
 ```bash
 # Install dependencies
+corepack enable && corepack prepare pnpm@9.15.9 --activate
 pnpm install
 
 # Copy environment template
 cp .env.example .env
 
+# PostgreSQL required — update DATABASE_URL in .env
+pnpm db:migrate
+pnpm db:seed
+
 # Build all packages and apps
 pnpm build
 
-# Run typecheck and lint
+# Verify
 pnpm typecheck
 pnpm lint
+pnpm test
 ```
 
 ## Development
@@ -65,6 +71,10 @@ API health check: `GET http://localhost:3003/health`
 | `pnpm dev` | Start dev servers |
 | `pnpm lint` | ESLint across workspaces |
 | `pnpm typecheck` | TypeScript check across workspaces |
+| `pnpm test` | Run unit tests |
+| `pnpm db:generate` | Generate Drizzle migrations from schema |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:seed` | Seed demo merchant and products |
 | `pnpm clean` | Remove build artifacts |
 
 ## MVP boundaries
@@ -81,8 +91,8 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 
 ## Implementation phases
 
-- **Phase 0** (current): Repo scaffold
-- **Phase 1**: Database schema, contracts, domain rules, API skeleton
+- **Phase 0**: Repo scaffold
+- **Phase 1** (current): Database schema, contracts, domain rules, API
 - **Phase 2**: QR pickup token issue/verify
 - **Phase 3**: Merchant UI
 - **Phase 4**: Customer UI

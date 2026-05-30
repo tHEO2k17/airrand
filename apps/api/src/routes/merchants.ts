@@ -1,0 +1,328 @@
+import {
+  createOrderSchema,
+  createProductSchema,
+  listProductsQuerySchema,
+  updateOrderStatusSchema,
+  updateProductSchema,
+} from "@airrand/contracts";
+import {
+  assertCanTransitionOrderStatus,
+  type OrderStatus,
+} from "@airrand/domain";
+import {
+  merchants,
+  orderLines,
+  orders,
+  products,
+} from "@airrand/database";
+import { zValidator } from "@hono/zod-validator";
+import { and, asc, eq, inArray } from "drizzle-orm";
+import { Hono } from "hono";
+import { db } from "../lib/db.js";
+import { handleRouteError } from "../lib/errors.js";
+import {
+  toMerchantResponse,
+  toOrderResponse,
+  toProductResponse,
+} from "../lib/mappers.js";
+import { jsonError, jsonOk } from "../lib/response.js";
+
+export const merchantsRoutes = new Hono();
+
+merchantsRoutes.get("/", async (c) => {
+  try {
+    const rows = await db.select().from(merchants).orderBy(asc(merchants.name));
+    return jsonOk(c, { merchants: rows.map(toMerchantResponse) });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.get("/:merchantId/products", async (c) => {
+  try {
+    const merchantId = c.req.param("merchantId");
+    const merchant = await findMerchant(merchantId);
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    const query = listProductsQuerySchema.safeParse(c.req.query());
+    if (!query.success) {
+      return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
+    }
+
+    const conditions = [eq(products.merchantId, merchantId)];
+    if (query.data.availableOnly) {
+      conditions.push(eq(products.isAvailable, true));
+    }
+
+    const rows = await db
+      .select()
+      .from(products)
+      .where(and(...conditions))
+      .orderBy(asc(products.name));
+
+    return jsonOk(c, { products: rows.map(toProductResponse) });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.post(
+  "/:merchantId/products",
+  zValidator("json", createProductSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const [product] = await db
+        .insert(products)
+        .values({
+          merchantId,
+          name: body.name,
+          description: body.description,
+          unitPriceCents: body.unitPriceCents,
+          isAvailable: body.isAvailable ?? true,
+        })
+        .returning();
+
+      if (!product) {
+        return jsonError(c, "CREATE_FAILED", "Failed to create product", 500);
+      }
+
+      return jsonOk(c, toProductResponse(product), 201);
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.patch(
+  "/:merchantId/products/:productId",
+  zValidator("json", updateProductSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const productId = c.req.param("productId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const [product] = await db
+        .update(products)
+        .set({
+          ...body,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(products.id, productId), eq(products.merchantId, merchantId)),
+        )
+        .returning();
+
+      if (!product) {
+        return jsonError(c, "PRODUCT_NOT_FOUND", "Product not found", 404);
+      }
+
+      return jsonOk(c, toProductResponse(product));
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.post(
+  "/:merchantId/orders",
+  zValidator("json", createOrderSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const productIds = body.lines.map((line) => line.productId);
+      const catalog = await db
+        .select()
+        .from(products)
+        .where(
+          and(
+            eq(products.merchantId, merchantId),
+            inArray(products.id, productIds),
+          ),
+        );
+
+      const catalogById = new Map(catalog.map((p) => [p.id, p]));
+
+      for (const line of body.lines) {
+        const product = catalogById.get(line.productId);
+        if (!product) {
+          return jsonError(
+            c,
+            "PRODUCT_NOT_FOUND",
+            `Product ${line.productId} not found for this merchant`,
+            400,
+          );
+        }
+        if (!product.isAvailable) {
+          return jsonError(
+            c,
+            "PRODUCT_UNAVAILABLE",
+            `Product "${product.name}" is not available`,
+            400,
+          );
+        }
+      }
+
+      const result = await db.transaction(async (tx) => {
+        const [order] = await tx
+          .insert(orders)
+          .values({
+            merchantId,
+            status: "placed",
+            customerName: body.customerName,
+            customerContact: body.customerContact,
+            notes: body.notes,
+          })
+          .returning();
+
+        if (!order) {
+          throw new Error("Failed to create order");
+        }
+
+        const lineValues = body.lines.map((line) => {
+          const product = catalogById.get(line.productId)!;
+          return {
+            orderId: order.id,
+            productId: product.id,
+            quantity: line.quantity,
+            productName: product.name,
+            unitPriceCents: product.unitPriceCents,
+          };
+        });
+
+        const insertedLines = await tx
+          .insert(orderLines)
+          .values(lineValues)
+          .returning();
+
+        return { order, lines: insertedLines };
+      });
+
+      return jsonOk(
+        c,
+        toOrderResponse(result.order, result.lines),
+        201,
+      );
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.get("/:merchantId/orders", async (c) => {
+  try {
+    const merchantId = c.req.param("merchantId");
+    const merchant = await findMerchant(merchantId);
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    const orderRows = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.merchantId, merchantId))
+      .orderBy(asc(orders.createdAt));
+
+    const orderIds = orderRows.map((o) => o.id);
+    const lines =
+      orderIds.length === 0
+        ? []
+        : await db
+            .select()
+            .from(orderLines)
+            .where(inArray(orderLines.orderId, orderIds));
+
+    const linesByOrderId = new Map<string, typeof lines>();
+    for (const line of lines) {
+      const existing = linesByOrderId.get(line.orderId) ?? [];
+      existing.push(line);
+      linesByOrderId.set(line.orderId, existing);
+    }
+
+    return jsonOk(c, {
+      orders: orderRows.map((order) =>
+        toOrderResponse(order, linesByOrderId.get(order.id) ?? []),
+      ),
+    });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.patch(
+  "/:merchantId/orders/:orderId/status",
+  zValidator("json", updateOrderStatusSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const orderId = c.req.param("orderId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const [existing] = await db
+        .select()
+        .from(orders)
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+        .limit(1);
+
+      if (!existing) {
+        return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      const nextStatus = body.status as OrderStatus;
+      if (existing.status !== nextStatus) {
+        assertCanTransitionOrderStatus(existing.status, nextStatus);
+      }
+
+      const [order] = await db
+        .update(orders)
+        .set({ status: nextStatus, updatedAt: new Date() })
+        .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+        .returning();
+
+      if (!order) {
+        return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      const lines = await db
+        .select()
+        .from(orderLines)
+        .where(eq(orderLines.orderId, orderId));
+
+      return jsonOk(c, toOrderResponse(order, lines));
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+async function findMerchant(merchantId: string) {
+  const [merchant] = await db
+    .select()
+    .from(merchants)
+    .where(eq(merchants.id, merchantId))
+    .limit(1);
+  return merchant;
+}

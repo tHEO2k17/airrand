@@ -12,15 +12,12 @@ export type AuditExportRequestedPayload = z.infer<
   typeof auditExportRequestedPayloadSchema
 >;
 
-export const notificationPlaceholderPayloadSchema = z.object({
-  merchantId: z.string().uuid(),
-  channel: z.literal("placeholder"),
-  template: z.string().min(1).max(120),
-  metadata: z.record(z.unknown()).optional(),
+export const notificationRequestedPayloadSchema = z.object({
+  notificationJobId: z.string().uuid(),
 });
 
-export type NotificationPlaceholderPayload = z.infer<
-  typeof notificationPlaceholderPayloadSchema
+export type NotificationRequestedPayload = z.infer<
+  typeof notificationRequestedPayloadSchema
 >;
 
 export function parseAuditExportRequestedPayload(
@@ -29,8 +26,8 @@ export function parseAuditExportRequestedPayload(
   return auditExportRequestedPayloadSchema.parse(data);
 }
 
-export function parseNotificationPlaceholderPayload(
+export function parseNotificationRequestedPayload(
   data: unknown,
-): NotificationPlaceholderPayload {
-  return notificationPlaceholderPayloadSchema.parse(data);
+): NotificationRequestedPayload {
+  return notificationRequestedPayloadSchema.parse(data);
 }

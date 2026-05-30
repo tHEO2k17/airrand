@@ -2,7 +2,7 @@ import { QUEUE_NAMES } from "@airrand/jobs";
 import { Worker, type WorkerOptions } from "bullmq";
 import { logWorkerEvent } from "./logger.js";
 import { processAuditExportRequested } from "./processors/audit-export.js";
-import { processNotificationPlaceholder } from "./processors/notification-placeholder.js";
+import { processNotificationRequested } from "./processors/notification.js";
 import { getBullMqConnectionOptions } from "./redis.js";
 
 function parseConcurrency(env: NodeJS.ProcessEnv = process.env): number {
@@ -32,8 +32,8 @@ export function createWorkers(): Worker[] {
   );
 
   const notificationWorker = new Worker(
-    QUEUE_NAMES.NOTIFICATION_PLACEHOLDER,
-    processNotificationPlaceholder,
+    QUEUE_NAMES.NOTIFICATION_REQUESTED,
+    processNotificationRequested,
     {
       connection,
       ...workerOptions(),

@@ -99,7 +99,7 @@ See [architecture.md](./architecture.md) and [security-boundaries.md](./security
 | **Loyalty, recommendations, customer analytics, advertising** | Explicitly deferred |
 | **Multi-merchant cart** | One merchant per checkout |
 | **Marketplace discovery / ratings** | No plug or merchant reputation system yet |
-| **Email / SMS notifications** | Placeholder queue only |
+| **Email / SMS notifications** | Operational placeholder jobs only (Phase 10D); no providers yet |
 | **Durable object storage for exports** | Local filesystem in Phase 10C |
 
 ## Roadmap alignment (product phases)
@@ -108,7 +108,7 @@ Phases already shipped (0–10C) built the **standard merchant pickup stack**. U
 
 | Phase (conceptual) | Focus |
 |--------------------|--------|
-| **10D+** | Notifications (export ready, order status) — no payments |
+| **10D** | Operational notification jobs (placeholder SMS/email; no providers) |
 | **10E+** | Durable export storage (S3/MinIO) |
 | **11+** | Optional customer OTP; optional accounts (guest remains default); improved discovery |
 | **12+** | **Plug vendor type** — verification, onboarding, plug-specific policies |

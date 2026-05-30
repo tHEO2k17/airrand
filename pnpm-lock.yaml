@@ -38,6 +38,9 @@ importers:
       '@airrand/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@airrand/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@airrand/qr':
         specifier: workspace:*
         version: link:../../packages/qr
@@ -185,6 +188,9 @@ importers:
       '@airrand/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
+      '@airrand/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       bullmq:
         specifier: ^5.53.0
         version: 5.77.6
@@ -327,6 +333,37 @@ importers:
 
   packages/jobs:
     dependencies:
+      zod:
+        specifier: ^3.25.56
+        version: 3.25.76
+    devDependencies:
+      '@airrand/config':
+        specifier: workspace:*
+        version: link:../config
+      eslint:
+        specifier: ^9.28.0
+        version: 9.39.4
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.3
+        version: 3.2.4(@types/node@22.19.19)(tsx@4.22.3)
+
+  packages/notifications:
+    dependencies:
+      '@airrand/database':
+        specifier: workspace:*
+        version: link:../database
+      '@airrand/jobs':
+        specifier: workspace:*
+        version: link:../jobs
+      bullmq:
+        specifier: ^5.53.0
+        version: 5.77.6
+      drizzle-orm:
+        specifier: ^0.44.2
+        version: 0.44.7(postgres@3.4.9)
       zod:
         specifier: ^3.25.56
         version: 3.25.76

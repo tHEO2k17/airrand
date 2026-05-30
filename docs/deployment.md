@@ -103,18 +103,20 @@ Readiness checks:
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
 
-### Background worker (Phase 10A–10C)
+### Background worker (Phase 10A–10D)
 
 | Property | Detail |
 |----------|--------|
 | Process | `apps/worker` — BullMQ consumers only |
 | HTTP | **None** — do not route traffic to the worker |
 | Redis | **Required** — same `REDIS_URL` as the API |
-| Database | **Required** — same `DATABASE_URL` as the API (audit export jobs + audit log reads) |
+| Database | **Required** — same `DATABASE_URL` as the API (audit export + notification jobs) |
 | Storage | **Local filesystem** — `EXPORT_STORAGE_DIR` (default `./storage/exports`); mount shared volume if API and worker are separate containers |
-| Queues | `audit.export.requested` (CSV generation), `notification.placeholder` (placeholder) |
+| Queues | `audit.export.requested` (CSV generation), `notification.requested` (operational notifications, placeholder delivery) |
 
-**Audit export:** `POST /merchants/:merchantId/audit-logs/export` creates an `audit_export_jobs` row and enqueues BullMQ work. The worker generates a CSV and the merchant downloads it via authenticated `GET .../exports/:exportJobId/download`. **No email** in this phase. For production, plan durable object storage instead of local disk.
+**Audit export:** `POST /merchants/:merchantId/audit-logs/export` creates an `audit_export_jobs` row and enqueues BullMQ work. The worker generates a CSV and the merchant downloads it via authenticated `GET .../exports/:exportJobId/download`. **No email** for the CSV file itself. When export completes, a **notification job** is queued for the requester (placeholder email channel — no SMTP yet).
+
+**Operational notifications:** API enqueues on order `ready` and staff password reset; worker enqueues on export complete. All jobs are processed by the notification worker with placeholder channels only. See [architecture.md](./architecture.md#operational-notifications-phase-10d).
 
 **Readiness:** The API `GET /ready` checks Redis for the API process. The worker has no `/ready` endpoint. For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
 

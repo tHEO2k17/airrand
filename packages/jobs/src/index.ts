@@ -9,10 +9,10 @@ export {
 } from "./queues.js";
 export {
   auditExportRequestedPayloadSchema,
-  notificationPlaceholderPayloadSchema,
+  notificationRequestedPayloadSchema,
   parseAuditExportRequestedPayload,
-  parseNotificationPlaceholderPayload,
+  parseNotificationRequestedPayload,
   type AuditExportRequestedPayload,
-  type NotificationPlaceholderPayload,
+  type NotificationRequestedPayload,
 } from "./payloads.js";
 export { getRequiredRedisUrl } from "./redis.js";

@@ -18,6 +18,7 @@
     "@airrand/database": "workspace:*",
     "@airrand/domain": "workspace:*",
     "@airrand/jobs": "workspace:*",
+    "@airrand/notifications": "workspace:*",
     "@airrand/qr": "workspace:*",
     "bullmq": "^5.53.0",
     "@hono/node-server": "^1.14.4",

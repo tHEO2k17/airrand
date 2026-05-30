@@ -89,6 +89,15 @@ Middleware enforces `session.merchantId === route :merchantId`.
 - **No email delivery** — staff download from the merchant UI when status is `completed`.
 - Production should use durable object storage with short-lived signed URLs; local paths must not be exposed outside the API process.
 
+### Operational notifications (Phase 10D)
+
+- **Operational only** — order ready for pickup (customer phone), audit export completed (requester email), staff password reset notice (staff email). **Not** marketing, loyalty, payment, or OTP flows.
+- Jobs stored in `notification_jobs`; BullMQ queue `notification.requested`.
+- Worker validates typed payloads (`@airrand/notifications`), logs structured placeholder dispatch, marks `sent` with `provider_message_id` like `placeholder:sms_placeholder:{id}`. **No real SMS/email providers** in this phase.
+- Enqueue is **server-side only** — no public customer or merchant notification APIs.
+- Audit: `notification.queued`, `notification.sent`, `notification.failed`.
+- Future: wire Hubtel/Twilio/SMTP behind the same channel abstractions; optional customer OTP as a new notification type on `sms_placeholder`.
+
 ## Rate limiting
 
 - **Primary:** Redis fixed-window counters when `REDIS_URL` is configured (shared across API replicas).

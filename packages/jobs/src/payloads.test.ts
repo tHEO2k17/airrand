@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseAuditExportRequestedPayload,
-  parseNotificationPlaceholderPayload,
+  parseNotificationRequestedPayload,
 } from "./payloads.js";
 
 describe("job payloads", () => {
@@ -16,23 +16,20 @@ describe("job payloads", () => {
     expect(payload.format).toBe("csv");
   });
 
-  it("parses notification placeholder payload", () => {
-    const payload = parseNotificationPlaceholderPayload({
-      merchantId: "11111111-1111-1111-1111-111111111111",
-      channel: "placeholder",
-      template: "staff.invited",
-      metadata: { note: "future email hook" },
+  it("parses notification requested payload", () => {
+    const payload = parseNotificationRequestedPayload({
+      notificationJobId: "44444444-4444-4444-4444-444444444444",
     });
 
-    expect(payload.template).toBe("staff.invited");
+    expect(payload.notificationJobId).toBe(
+      "44444444-4444-4444-4444-444444444444",
+    );
   });
 
-  it("rejects invalid notification placeholder channel", () => {
+  it("rejects invalid notification requested payload", () => {
     expect(() =>
-      parseNotificationPlaceholderPayload({
-        merchantId: "11111111-1111-1111-1111-111111111111",
-        channel: "email",
-        template: "x",
+      parseNotificationRequestedPayload({
+        notificationJobId: "not-a-uuid",
       }),
     ).toThrow();
   });

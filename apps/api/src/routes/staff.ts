@@ -16,6 +16,7 @@ import {
   canResetStaffPassword,
   canUpdateStaffRole,
 } from "@airrand/domain";
+import { buildStaffPasswordResetNotification } from "@airrand/notifications";
 import { zValidator } from "@hono/zod-validator";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -24,6 +25,7 @@ import { handleRouteError } from "../lib/errors.js";
 import { getMerchantActor, getMerchantAuth } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { toStaffMemberResponse } from "../lib/staff-mapper.js";
+import { enqueueOperationalNotificationBestEffort } from "../lib/notification-queue.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
 import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
@@ -455,6 +457,15 @@ staffRoutes.post(
           merchantUserId: updated.id,
           reason: "password_reset",
         },
+      });
+
+      await enqueueOperationalNotificationBestEffort({
+        ...buildStaffPasswordResetNotification({
+          merchantId,
+          merchantUserId: updated.id,
+          email: updated.email,
+        }),
+        audit: actor,
       });
 
       return jsonOk(c, { staff: toStaffMemberResponse(updated) });

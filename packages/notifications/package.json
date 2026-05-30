@@ -1,12 +1,17 @@
 {
-  "name": "@airrand/worker",
+  "name": "@airrand/notifications",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "tsc --watch",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -14,19 +19,14 @@
   },
   "dependencies": {
     "@airrand/database": "workspace:*",
-    "@airrand/domain": "workspace:*",
     "@airrand/jobs": "workspace:*",
-    "@airrand/notifications": "workspace:*",
     "bullmq": "^5.53.0",
-    "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
-    "ioredis": "^5.6.1"
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",
-    "@types/node": "^22.15.29",
     "eslint": "^9.28.0",
-    "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vitest": "^3.2.3"
   }

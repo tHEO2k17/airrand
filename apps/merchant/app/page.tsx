@@ -106,7 +106,7 @@ function PosConsoleContent() {
     setSuccess(null);
     try {
       await updateOrderStatus(merchantId, orderId, status);
-      setSuccess(`Order updated to ${status.replace("_", " ")}.`);
+      setSuccess(`Order updated to ${status.replace("_", " ")}.${status === "ready" ? " Pickup notification queued." : ""}`);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update order");

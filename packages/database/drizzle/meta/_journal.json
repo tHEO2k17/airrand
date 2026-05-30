@@ -64,6 +64,13 @@
       "when": 1780137656638,
       "tag": "0008_right_george_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780139190687,
+      "tag": "0009_lowly_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

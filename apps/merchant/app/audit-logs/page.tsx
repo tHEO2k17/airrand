@@ -238,7 +238,7 @@ function AuditLogsContent() {
       {exportStatus?.status === "completed" ? (
         <AlertMessage
           variant="success"
-          message={`Export ready (job ${exportStatus.exportJobId}).`}
+          message={`Export ready (job ${exportStatus.exportJobId}). Completion notification queued.`}
         />
       ) : null}
       {error ? <AlertMessage variant="error" message={error} /> : null}

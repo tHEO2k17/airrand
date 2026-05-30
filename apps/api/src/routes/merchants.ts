@@ -44,6 +44,10 @@ import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
 import { Readable } from "node:stream";
 import { enqueueAuditExportRequested } from "../lib/audit-export-queue.js";
+import {
+  buildOrderReadyForPickupNotification,
+  enqueueOperationalNotificationBestEffort,
+} from "../lib/notification-queue.js";
 import { toAuditExportJobResponse } from "../lib/audit-export.js";
 import {
   ExportDownloadError,
@@ -623,6 +627,24 @@ merchantsRoutes.patch(
         ).catch((error) => {
           console.error("Realtime publish failed:", error);
         });
+
+        if (
+          nextStatus === "ready" &&
+          result.order.customerContact?.trim()
+        ) {
+          void enqueueOperationalNotificationBestEffort({
+            ...buildOrderReadyForPickupNotification({
+              merchantId,
+              orderId: result.order.id,
+              orderReference: result.order.reference,
+              customerContact: result.order.customerContact,
+            }),
+            audit: {
+              ...getMerchantActor(c),
+              orderId: result.order.id,
+            },
+          });
+        }
       }
 
       return jsonOk(c, toOrderResponse(result.order, result.lines));

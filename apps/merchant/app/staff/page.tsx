@@ -181,7 +181,7 @@ function StaffContent() {
       );
       setStaff((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
       setSuccess(
-        `Password reset for ${updated.email}. Share the temporary password out of band.`,
+        `Password reset for ${updated.email}. Share the temporary password out of band. Staff notification queued.`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reset password");

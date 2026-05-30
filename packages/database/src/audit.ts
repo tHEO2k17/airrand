@@ -16,6 +16,9 @@ export const AUDIT_ACTIONS = {
   AUTH_ACCOUNT_LOCKED: "auth.account_locked",
   AUTH_PASSWORD_CHANGED: "auth.password_changed",
   AUTH_SESSION_REVOKED: "auth.session_revoked",
+  NOTIFICATION_QUEUED: "notification.queued",
+  NOTIFICATION_SENT: "notification.sent",
+  NOTIFICATION_FAILED: "notification.failed",
 } as const;
 
 export type AuditTx = Pick<Database, "insert">;

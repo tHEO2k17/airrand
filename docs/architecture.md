@@ -83,6 +83,22 @@ Public status endpoints expose **customer-safe** fields only (no staff data, no 
 
 Order create requires `customer_contact` (phone) with minimal format validation; `customer_name` is optional.
 
+### Operational notifications (Phase 10D)
+
+Provider-agnostic **operational** messaging only — not marketing, analytics, payment receipts, or OTP verification.
+
+| Component | Role |
+|-----------|------|
+| `@airrand/notifications` | Notification types, channel enums, Zod payload schemas, enqueue helper |
+| `notification_jobs` | Durable job rows (`queued` → `processing` → `sent` \| `failed`) |
+| `notification.requested` | BullMQ queue; worker validates and placeholder-dispatches |
+| API | Enqueues on order `ready`, staff password reset (best-effort) |
+| Worker | Enqueues audit export completed; processes all notification jobs |
+
+**Channels (placeholders):** `sms_placeholder` (customer pickup ready), `email_placeholder` (staff export ready, password reset notice), `internal` reserved. No Twilio/Hubtel/SMTP integration yet. Future OTP can reuse `sms_placeholder` with a distinct notification type.
+
+**No public notification APIs** for customers or merchants in this phase. Audit actions: `notification.queued`, `notification.sent`, `notification.failed`.
+
 ## Packages
 
 | Package | Responsibility |
@@ -90,6 +106,8 @@ Order create requires `customer_contact` (phone) with minimal format validation;
 | `@airrand/contracts` | API request/response shapes (Zod); no business logic |
 | `@airrand/domain` | Pure TS: valid order transitions, invariants |
 | `@airrand/database` | Drizzle schema + migrations + client (Phase 1) |
+| `@airrand/jobs` | BullMQ queue names and job payload schemas |
+| `@airrand/notifications` | Operational notification contracts and enqueue |
 | `@airrand/qr` | HMAC-SHA256 pickup tokens (`QR_SIGNING_SECRET`); payload: orderId, merchantId, issuedAt, expiresAt, nonce |
 | `@airrand/config` | Shared TS/ESLint presets |
 
@@ -115,6 +133,8 @@ Order create requires `customer_contact` (phone) with minimal format validation;
 - **Customer accounts**, saved payment methods, loyalty, recommendations
 - **Customer analytics, profiling, or advertising**
 - Customer OTP / SMS verification (future optional layer)
+- **Marketing campaigns, promotional SMS/email, or analytics messaging**
+- Push notification providers (FCM/APNs) — not implemented
 
 See [ADR 0001](./adr/0001-walletless-mvp.md).
 

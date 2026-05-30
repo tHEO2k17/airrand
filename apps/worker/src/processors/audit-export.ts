@@ -6,17 +6,20 @@ import {
 import {
   auditExportJobs,
   auditLogs,
+  merchantUsers,
   orders,
 } from "@airrand/database";
 import {
   buildAuditExportCsv,
   type AuditExportCsvRow,
 } from "@airrand/domain";
+import { buildAuditExportCompletedNotification } from "@airrand/notifications";
 import type { Job } from "bullmq";
 import { asc, eq } from "drizzle-orm";
 import { logWorkerEvent } from "../logger.js";
 import { db } from "../lib/db.js";
 import { writeAuditExportFile } from "../lib/export-storage.js";
+import { enqueueWorkerNotification } from "../lib/notification-queue.js";
 
 const SAFE_FAILURE_MESSAGE = "Audit export failed";
 
@@ -91,6 +94,23 @@ export async function processAuditExportRequested(
       rowCount: csvRows.length,
       filePath,
     });
+
+    const [requester] = await db
+      .select({ email: merchantUsers.email })
+      .from(merchantUsers)
+      .where(eq(merchantUsers.id, payload.requestedByMerchantUserId))
+      .limit(1);
+
+    if (requester?.email) {
+      await enqueueWorkerNotification(
+        buildAuditExportCompletedNotification({
+          merchantId: payload.merchantId,
+          exportJobId: payload.exportJobId,
+          requestedByMerchantUserId: payload.requestedByMerchantUserId,
+          recipientEmail: requester.email,
+        }),
+      );
+    }
 
     logWorkerEvent("info", {
       type: "job_completed",

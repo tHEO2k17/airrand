@@ -14,6 +14,7 @@ See [docs/market-scope.md](./docs/market-scope.md) for target vendors and users.
 | `apps/worker` | Background job worker (BullMQ + Redis) |
 | `packages/contracts` | Shared Zod schemas and DTO types |
 | `packages/jobs` | Queue names, job payloads, Redis helpers |
+| `packages/notifications` | Operational notification types, payload schemas, enqueue helper |
 | `packages/domain` | Order status rules and invariants |
 | `packages/database` | Schema, migrations, DB client |
 | `packages/qr` | Pickup token sign/verify |
@@ -81,7 +82,7 @@ Or all apps:
 pnpm dev
 ```
 
-### Background worker (Phase 10A–10C)
+### Background worker (Phase 10A–10D)
 
 Requires Redis (`REDIS_URL`) and PostgreSQL (`DATABASE_URL` for the worker). The worker has **no HTTP API** — it consumes BullMQ queues and writes export files to disk.
 
@@ -91,9 +92,11 @@ pnpm worker:dev    # watch mode
 pnpm worker:start
 ```
 
-Queues: `audit.export.requested`, `notification.placeholder`.
+Queues: `audit.export.requested`, `notification.requested`.
 
-**Audit export (Phase 10C):** Merchant staff with `audit_log:view` can request a CSV export from **Audit log** (`/audit-logs`). The API creates an `audit_export_jobs` row, enqueues BullMQ work, and returns `{ exportJobId, jobId, status: "queued" }`. The worker generates a CSV under `EXPORT_STORAGE_DIR` (default `./storage/exports`). The UI polls status and offers **Download CSV** when complete. **No email.** Keep API, worker, Redis, and Postgres running; use a shared export volume if API and worker are separate containers.
+**Audit export (Phase 10C):** Merchant staff with `audit_log:view` can request a CSV export from **Audit log** (`/audit-logs`). The API creates an `audit_export_jobs` row, enqueues BullMQ work, and returns `{ exportJobId, jobId, status: "queued" }`. The worker generates a CSV under `EXPORT_STORAGE_DIR` (default `./storage/exports`). The UI polls status and offers **Download CSV** when complete. **No email delivery** — staff download from the UI.
+
+**Operational notifications (Phase 10D):** Provider-agnostic notification jobs (`notification_jobs` table + `@airrand/notifications`). The API enqueues jobs when an order becomes `ready`, when staff passwords are reset, and the worker enqueues when an audit export completes. Channels are placeholders (`sms_placeholder`, `email_placeholder`, `internal`) — the worker validates payloads, logs structured events, and marks jobs `sent` without calling Twilio, Hubtel, or SMTP. **No marketing, no OTP, no customer-facing notification APIs yet.**
 
 API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`. The worker does not expose `/health` or `/ready`; see [docs/deployment.md](./docs/deployment.md).
 
@@ -330,4 +333,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)
 - **Phase 10B**: Audit export request queue (API producer)
 - **Phase 10C**: CSV audit export (local storage, merchant download)
+- **Phase 10D**: Operational notification jobs (placeholder SMS/email channels, no providers)
 - **Future (documented, not scheduled):** optional customer OTP and accounts (guest remains default); plug vendor type; delivery logistics — see [market-scope.md](./docs/market-scope.md), [customer-data-policy.md](./docs/customer-data-policy.md)

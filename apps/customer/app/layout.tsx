@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { CartProvider } from "../components/cart-context";
 import { MerchantProvider } from "../components/merchant-context";
-import { SiteHeader } from "../components/site-header";
+import { StickyCartBar } from "../components/sticky-cart-bar";
+import { StoreMain } from "../components/store-main";
+import { AppShell } from "../components/ui/app-shell";
+import { Header } from "../components/ui/header";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "airRand",
-  description: "Browse merchants and place pickup orders",
+  description: "Order ahead for pickup",
 };
 
 export default function RootLayout({
@@ -17,14 +20,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="app-shell">
-          <MerchantProvider>
-            <CartProvider>
-              <SiteHeader />
-              <main className="app-main">{children}</main>
-            </CartProvider>
-          </MerchantProvider>
-        </div>
+        <MerchantProvider>
+          <CartProvider>
+            <AppShell>
+              <Header />
+              <StoreMain>{children}</StoreMain>
+              <StickyCartBar />
+            </AppShell>
+          </CartProvider>
+        </MerchantProvider>
       </body>
     </html>
   );

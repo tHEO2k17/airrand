@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { CopyToken } from "../../components/copy-token";
 import { PickupQr } from "../../components/pickup-qr";
+import { PickupDisclaimer } from "../../components/pickup-disclaimer";
+import { Button } from "../../components/ui/button";
+import { EmptyState } from "../../components/ui/empty-state";
+import { LoadingState } from "../../components/ui/loading-state";
+import { StatusBadge } from "../../components/ui/badge";
+import { Surface } from "../../components/ui/surface";
 import {
   readOrderConfirmation,
   type StoredOrderConfirmation,
@@ -22,59 +29,78 @@ export default function OrderConfirmationPage() {
   }, []);
 
   if (!ready) {
-    return <p className="loading-state">Loading confirmation…</p>;
+    return <LoadingState label="Loading pickup code…" />;
   }
 
   if (!confirmation) {
     return (
-      <section className="page-shell">
-        <div className="card">
-          <h1>No order found</h1>
-          <p className="page-description">
-            Place an order from your cart to see your pickup code here.
-          </p>
-          <Link href="/" className="btn">
-            Back to menu
+      <div className="store-page">
+        <Surface>
+          <EmptyState
+            title="No pickup code found"
+            description="Place an order from your cart to get a pickup code for this visit."
+          />
+          <Link href="/" style={{ display: "block", marginTop: "1rem" }}>
+            <Button block>Back to menu</Button>
           </Link>
-        </div>
-      </section>
+        </Surface>
+      </div>
     );
   }
 
   return (
-    <section className="page-shell">
-      <header className="page-header">
-        <h1>Order confirmed</h1>
-        <p className="page-description">
-          Show this code to the merchant when picking up your order.
+    <div className="store-page">
+      <header className="store-hero">
+        <div className="store-empty__icon" style={{ marginBottom: "0.75rem" }}>
+          <CheckCircle2 size={32} strokeWidth={1.75} color="var(--store-accent)" />
+        </div>
+        <h1>Reserved for pickup</h1>
+        <p>
+          Show this pickup code to the merchant after your order is ready.
         </p>
       </header>
 
-      <div className="card">
-        <div className="confirmation-meta">
-          <p>
-            Order ID: <code>{confirmation.orderId}</code>
-          </p>
-          <p>
-            Status: <span className="status-pill">{confirmation.status}</span>
-          </p>
-          <p>Pickup code expires: {formatDateTime(confirmation.expiresAt)}</p>
+      <PickupDisclaimer />
+
+      <Surface>
+        <h2 className="store-section-title">Order details</h2>
+        <ul className="store-meta-list">
+          <li>
+            <strong>Order ID:</strong> <code>{confirmation.orderId}</code>
+          </li>
+          <li className="store-meta-list__status">
+            <strong>Status:</strong> <StatusBadge status={confirmation.status} />
+          </li>
+          <li>
+            <strong>Pickup code expires:</strong>{" "}
+            {formatDateTime(confirmation.expiresAt)}
+          </li>
+        </ul>
+        <p className="store-total-hint" style={{ marginTop: "1rem" }}>
+          Payment is arranged directly with the merchant.
+        </p>
+      </Surface>
+
+      <Surface>
+        <h2 className="store-section-title">Show Pickup Code</h2>
+        <p className="store-total-hint" style={{ marginBottom: "1rem" }}>
+          Present this QR at the counter when collecting your order.
+        </p>
+        <div className="store-pickup-qr">
+          <PickupQr token={confirmation.token} />
         </div>
-      </div>
+      </Surface>
 
-      <div className="card">
-        <h2>Pickup QR code</h2>
-        <PickupQr token={confirmation.token} />
-      </div>
-
-      <div className="card">
-        <h2>Pickup token (copy)</h2>
+      <Surface>
+        <h2 className="store-section-title">Copy pickup token</h2>
         <CopyToken token={confirmation.token} />
-      </div>
+      </Surface>
 
-      <Link href="/" className="btn btn-secondary">
-        Order more items
+      <Link href="/">
+        <Button block variant="secondary">
+          Order more items
+        </Button>
       </Link>
-    </section>
+    </div>
   );
 }

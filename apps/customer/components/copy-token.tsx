@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Copy } from "lucide-react";
+import { Button } from "./ui/button";
 
 export function CopyToken({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
@@ -16,11 +18,12 @@ export function CopyToken({ token }: { token: string }) {
   }
 
   return (
-    <div className="copy-token">
-      <pre className="token-block">{token}</pre>
-      <button type="button" className="btn btn-secondary" onClick={() => void handleCopy()}>
-        {copied ? "Copied" : "Copy token"}
-      </button>
+    <div className="store-copy">
+      <pre className="store-token-block">{token}</pre>
+      <Button variant="secondary" onClick={() => void handleCopy()}>
+        <Copy size={16} aria-hidden />
+        {copied ? "Copied" : "Copy pickup token"}
+      </Button>
     </div>
   );
 }

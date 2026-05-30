@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert } from "../../components/alert";
+import { AlertMessage } from "../../components/ui/alert-message";
+import { Button } from "../../components/ui/button";
+import { EmptyState } from "../../components/ui/empty-state";
+import { LoadingState } from "../../components/ui/loading-state";
+import { Surface } from "../../components/ui/surface";
+import { PickupDisclaimer } from "../../components/pickup-disclaimer";
 import { useCart } from "../../components/cart-context";
-import { LoadingState } from "../../components/loading-state";
-import { PaymentNote } from "../../components/payment-note";
 import { useMerchant } from "../../components/merchant-context";
 import { ApiError, createOrder } from "../../lib/api";
 import { formatMoney } from "../../lib/format";
@@ -88,101 +91,119 @@ export default function CartPage() {
   }
 
   return (
-    <section className="page-shell">
-      <header className="page-header">
+    <div className="store-page">
+      <header className="store-hero">
         <h1>Your cart</h1>
-        <p className="page-description">Review items and reserve pickup.</p>
+        <p>Review items and reserve for pickup.</p>
       </header>
 
-      <PaymentNote />
-      {merchantError ? <Alert variant="error" message={merchantError} /> : null}
-      {error ? <Alert variant="error" message={error} /> : null}
+      <PickupDisclaimer />
+      {merchantError ? <AlertMessage variant="error" message={merchantError} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
 
       {items.length === 0 ? (
-        <div className="card">
-          <p className="page-description">Your cart is empty.</p>
-          <Link href="/" className="btn btn-secondary">
-            Browse menu
+        <Surface>
+          <EmptyState
+            title="Your cart is empty"
+            description="Browse the menu and add items to reserve for pickup."
+          />
+          <Link href="/" style={{ display: "block", marginTop: "1rem" }}>
+            <Button block variant="secondary">
+              Back to menu
+            </Button>
           </Link>
-        </div>
+        </Surface>
       ) : (
         <>
-          <div className="card cart-list">
-            {items.map((item) => (
-              <div key={item.productId} className="cart-row">
-                <div>
-                  <strong>{item.name}</strong>
-                  <p className="page-description">
-                    {formatMoney(item.unitPriceCents)} each
-                  </p>
+          <Surface>
+            <div className="store-cart-list">
+              {items.map((item) => (
+                <div key={item.productId} className="store-cart-row">
+                  <div>
+                    <p className="store-cart-row__name">{item.name}</p>
+                    <p className="store-cart-row__price">
+                      {formatMoney(item.unitPriceCents)} each
+                    </p>
+                  </div>
+                  <div className="store-qty">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label="Decrease quantity"
+                      onClick={() => setQuantity(item.productId, item.quantity - 1)}
+                    >
+                      −
+                    </Button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={item.quantity}
+                      onChange={(e) =>
+                        setQuantity(item.productId, Number(e.target.value))
+                      }
+                      aria-label={`Quantity for ${item.name}`}
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label="Increase quantity"
+                      onClick={() => setQuantity(item.productId, item.quantity + 1)}
+                    >
+                      +
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => removeItem(item.productId)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-                <div className="qty-controls">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setQuantity(item.productId, item.quantity - 1)}
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={item.quantity}
-                    onChange={(e) =>
-                      setQuantity(item.productId, Number(e.target.value))
-                    }
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setQuantity(item.productId, item.quantity + 1)}
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => removeItem(item.productId)}
-                  >
-                    Remove
-                  </button>
-                </div>
+              ))}
+            </div>
+            <div className="store-total-row">
+              <div>
+                <span>Estimated order value</span>
+                <p className="store-total-hint">Catalog prices only — not a payment total</p>
               </div>
-            ))}
-            <p className="subtotal">Subtotal (display): {formatMoney(subtotalCents)}</p>
-          </div>
+              <strong>{formatMoney(subtotalCents)}</strong>
+            </div>
+          </Surface>
 
-          <form className="card form-grid" onSubmit={handleSubmit}>
-            <h2>Pickup details</h2>
-            <label>
-              Your name (required)
-              <input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              Contact (optional)
-              <input
-                value={customerContact}
-                onChange={(e) => setCustomerContact(e.target.value)}
-                placeholder="Phone or email"
-              />
-            </label>
-            <label>
-              Notes (optional)
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </label>
-            <button className="btn" type="submit" disabled={submitting}>
-              {submitting ? "Placing order…" : "Place pickup order"}
-            </button>
-          </form>
+          <Surface>
+            <h2 className="store-section-title">Pickup details</h2>
+            <form className="store-form" onSubmit={handleSubmit}>
+              <label>
+                Your name (required)
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  required
+                  autoComplete="name"
+                />
+              </label>
+              <label>
+                Contact (optional)
+                <input
+                  value={customerContact}
+                  onChange={(e) => setCustomerContact(e.target.value)}
+                  placeholder="Phone or email"
+                  autoComplete="tel"
+                />
+              </label>
+              <label>
+                Order notes (optional)
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+              </label>
+              <Button type="submit" block disabled={submitting}>
+                {submitting ? "Placing order…" : "Place Order for Pickup"}
+              </Button>
+            </form>
+          </Surface>
         </>
       )}
-    </section>
+    </div>
   );
 }

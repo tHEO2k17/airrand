@@ -1,0 +1,51 @@
+:root {
+  --store-bg: #f3f4f6;
+  --store-surface: #ffffff;
+  --store-surface-muted: #f9fafb;
+  --store-border: #e5e7eb;
+  --store-border-strong: #d1d5db;
+
+  --store-accent: #f97316;
+  --store-accent-hover: #ea580c;
+  --store-accent-soft: #ffedd5;
+  --store-accent-muted: #fed7aa;
+
+  --store-text: #111827;
+  --store-text-secondary: #4b5563;
+  --store-text-muted: #6b7280;
+
+  --store-success: #059669;
+  --store-success-soft: #d1fae5;
+  --store-danger: #dc2626;
+  --store-danger-soft: #fee2e2;
+  --store-info: #2563eb;
+  --store-info-soft: #dbeafe;
+  --store-warning-soft: #fff7ed;
+
+  --store-space-1: 0.25rem;
+  --store-space-2: 0.5rem;
+  --store-space-3: 0.75rem;
+  --store-space-4: 1rem;
+  --store-space-5: 1.25rem;
+  --store-space-6: 1.5rem;
+  --store-space-8: 2rem;
+
+  --store-radius-sm: 8px;
+  --store-radius-md: 12px;
+  --store-radius-lg: 16px;
+  --store-radius-full: 999px;
+
+  --store-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --store-shadow-md: 0 4px 14px rgba(17, 24, 39, 0.1);
+
+  --store-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --store-font-size-xs: 0.75rem;
+  --store-font-size-sm: 0.875rem;
+  --store-font-size-base: 1rem;
+  --store-font-size-lg: 1.125rem;
+  --store-font-size-xl: 1.35rem;
+  --store-font-size-2xl: 1.6rem;
+
+  --store-header-height: 64px;
+  --store-sticky-cart-height: 72px;
+}

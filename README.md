@@ -87,9 +87,19 @@ Sign in to the merchant app with seeded demo staff credentials (see **Merchant a
 
 The merchant home route **`/`** is the consolidated **Order Line** console: dark icon sidebar, active order queue, menu grid (Lucide icons, no product images), and a right-hand panel for order details plus catalog summary. Secondary routes (`/products`, `/orders`, `/pickup`, `/audit-logs`) share the same POS shell. Pickup verification stays on **`/pickup`** — the dashboard does not skip QR verification.
 
+### Customer storefront (Phase 7B)
+
+Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
+
+- **`/`** — menu with icon product cards, sticky cart summary
+- **`/cart`** — quantities, pickup details, **Place Order for Pickup**
+- **`/order-confirmation`** — pickup QR, copy token, pickup instructions
+
+Wording avoids payment processing: catalog prices and **estimated order value** only; payment is arranged directly with the merchant.
+
 ### End-to-end demo flow
 
-1. **Customer** (`:3002`): browse menu → add to cart → place pickup order → show QR/token on confirmation.
+1. **Customer** (`:3002`): browse menu → add to cart → **Place Order for Pickup** → **Show Pickup Code** on confirmation.
 2. **Merchant** (`:3001`): sign in → use Order Line (`/`) or Orders → Accept → Mark ready.
 3. **Merchant** Pickup screen: paste token (or scan later) → verify → order becomes `picked_up`.
 
@@ -224,4 +234,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 5B**: Rate limiting + camera QR scan
 - **Phase 6A**: Merchant staff authentication
 - **Phase 6B**: Staging deployment docs, Docker, readiness, CORS env
-- **Phase 7A** (current): Merchant POS UI refactor
+- **Phase 7A**: Merchant POS UI refactor
+- **Phase 7B** (current): Customer storefront polish

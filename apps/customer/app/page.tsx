@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ProductResponse } from "@airrand/contracts";
-import { Alert } from "../components/alert";
+import { EmptyState } from "../components/ui/empty-state";
+import { AlertMessage } from "../components/ui/alert-message";
+import { Button } from "../components/ui/button";
+import { LoadingState } from "../components/ui/loading-state";
+import { Surface } from "../components/ui/surface";
 import { useCart } from "../components/cart-context";
-import { LoadingState } from "../components/loading-state";
 import { useMerchant } from "../components/merchant-context";
 import { fetchAvailableProducts } from "../lib/api";
 import { formatMoney } from "../lib/format";
+import { getProductIcon } from "../lib/product-icon";
 
 export default function CatalogPage() {
   const { merchant, merchantId, loading: merchantLoading, error: merchantError } =
@@ -25,10 +29,9 @@ export default function CatalogPage() {
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchAvailableProducts(merchantId);
-      setProducts(list);
+      setProducts(await fetchAvailableProducts(merchantId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load products");
+      setError(err instanceof Error ? err.message : "Failed to load menu");
     } finally {
       setLoading(false);
     }
@@ -49,46 +52,59 @@ export default function CatalogPage() {
   }
 
   return (
-    <section className="page-shell">
-      <header className="page-header">
+    <div className="store-page">
+      <header className="store-hero">
         <h1>{merchant?.name ?? "Store"}</h1>
-        <p className="page-description">
-          Reserve items for pickup. No online payment on airRand.
-        </p>
+        <p>Order ahead and pick up faster.</p>
       </header>
 
-      {merchantError ? <Alert variant="error" message={merchantError} /> : null}
-      {error ? <Alert variant="error" message={error} /> : null}
+      {merchantError ? <AlertMessage variant="error" message={merchantError} /> : null}
+      {error ? <AlertMessage variant="error" message={error} /> : null}
       {merchantLoading || loading ? <LoadingState label="Loading menu…" /> : null}
 
       {!loading && !error && products.length === 0 ? (
-        <div className="card">
-          <p className="page-description">No available products right now.</p>
-        </div>
+        <Surface>
+          <EmptyState
+            title="Nothing on the menu yet"
+            description="Check back soon — this store has no available items right now."
+          />
+        </Surface>
       ) : null}
 
       {!loading && products.length > 0 ? (
-        <div className="product-grid">
-          {products.map((product) => (
-            <article key={product.id} className="card product-card">
-              <div>
-                <h2>{product.name}</h2>
-                {product.description ? (
-                  <p className="product-description">{product.description}</p>
-                ) : null}
-                <p className="product-price">{formatMoney(product.unitPriceCents)}</p>
-              </div>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => handleAdd(product)}
-              >
-                {addedId === product.id ? "Added" : "Add to cart"}
-              </button>
-            </article>
-          ))}
+        <div className="store-product-grid">
+          {products.map((product) => {
+            const Icon = getProductIcon(product.name);
+            return (
+              <Surface key={product.id} className="store-product-card">
+                <div className="store-product-card__top">
+                  <div className="store-product-card__icon" aria-hidden>
+                    <Icon size={24} strokeWidth={1.75} />
+                  </div>
+                  <div className="store-product-card__body">
+                    <h2 className="store-product-card__name">{product.name}</h2>
+                    {product.description ? (
+                      <p className="store-product-card__desc">
+                        {product.description}
+                      </p>
+                    ) : null}
+                    <p className="store-product-card__price">
+                      {formatMoney(product.unitPriceCents)}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  block
+                  variant={addedId === product.id ? "secondary" : "primary"}
+                  onClick={() => handleAdd(product)}
+                >
+                  {addedId === product.id ? "Added to cart" : "Add to cart"}
+                </Button>
+              </Surface>
+            );
+          })}
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

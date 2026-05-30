@@ -81,6 +81,9 @@ importers:
       '@airrand/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.2.6)
       next:
         specifier: ^15.3.3
         version: 15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

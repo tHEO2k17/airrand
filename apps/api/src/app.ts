@@ -1,9 +1,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { rateLimitMiddleware } from "./middleware/rate-limit.js";
 import { merchantsRoutes } from "./routes/merchants.js";
 import { jsonOk } from "./lib/response.js";
 
 export const app = new Hono();
+
+app.use("*", rateLimitMiddleware());
 
 app.use(
   "*",

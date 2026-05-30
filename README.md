@@ -113,6 +113,22 @@ Merchant UI: **Audit log** screen (`/audit-logs`) or `GET /merchants/:merchantId
 
 No authentication yet — actor is `customer` or `unknown` as appropriate.
 
+## Rate limiting (Phase 5B)
+
+The API applies in-memory per-IP limits (no Redis):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Fixed window length |
+| `RATE_LIMIT_MAX_READS` | `120` | GET (and other reads) per window |
+| `RATE_LIMIT_MAX_MUTATIONS` | `30` | POST/PATCH/PUT/DELETE per window |
+
+Returns `429` with `{ "error": { "code": "rate_limited", ... } }`.
+
+## Merchant pickup scan (Phase 5B)
+
+On **Pickup** (`/pickup`), the merchant app can scan a customer QR with the device camera (`html5-qrcode`) or paste the token manually. Client-side decoding is only used to route to the correct order; the server verifies the signature.
+
 ## Local database (Docker)
 
 PostgreSQL runs in Docker on host port **5433** (container `5432`) to avoid clashing with a system Postgres on `5432`. `DATABASE_URL` in `.env.example` matches this setup.
@@ -171,4 +187,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 2**: QR pickup token issue/verify
 - **Phase 3**: Merchant UI
 - **Phase 4**: Customer UI
-- **Phase 5A** (current): CI + audit log
+- **Phase 5A**: CI + audit log
+- **Phase 5B** (current): Rate limiting + camera QR scan

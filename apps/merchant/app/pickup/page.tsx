@@ -1,14 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import { Alert } from "../../components/alert";
+import { PickupScanner } from "../../components/pickup-scanner";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
 import { StatusPill } from "../../components/status-pill";
 import { useMerchant } from "../../components/merchant-context";
-import { ApiError, verifyPickup } from "../../lib/api";
-import { decodePickupTokenForRouting } from "../../lib/decode-pickup-token";
 import { formatDateTime } from "../../lib/format";
+import { verifyPickupToken } from "../../lib/verify-pickup";
 
 function PickupContent() {
   const { merchantId } = useMerchant();
@@ -21,72 +21,85 @@ function PickupContent() {
     status: string;
     verifiedAt: string;
   } | null>(null);
+  const [scannerEnabled, setScannerEnabled] = useState(true);
+
+  const runVerify = useCallback(
+    async (rawToken: string) => {
+      if (!merchantId || saving) {
+        return;
+      }
+
+      setSaving(true);
+      setError(null);
+      setSuccess(null);
+      setVerifiedOrder(null);
+
+      const result = await verifyPickupToken(merchantId, rawToken);
+
+      if (result.ok) {
+        setSuccess("Pickup verified successfully.");
+        setVerifiedOrder({
+          id: result.data.orderId,
+          status: result.data.status,
+          verifiedAt: result.data.verifiedAt,
+        });
+        setToken("");
+        setScannerEnabled(false);
+      } else {
+        setError(result.message);
+      }
+
+      setSaving(false);
+    },
+    [merchantId, saving],
+  );
 
   async function handleVerify(event: FormEvent) {
     event.preventDefault();
-    if (!merchantId) {
-      return;
-    }
-
-    const trimmed = token.trim();
-    if (!trimmed) {
-      setError("Paste a pickup token to verify.");
-      return;
-    }
-
-    const routing = decodePickupTokenForRouting(trimmed);
-    if (!routing) {
-      setError("Token format is invalid. Check the pasted value and try again.");
-      return;
-    }
-
-    if (routing.merchantId !== merchantId) {
-      setError("This token belongs to a different merchant.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-    setVerifiedOrder(null);
-
-    try {
-      const result = await verifyPickup(
-        merchantId,
-        routing.orderId,
-        trimmed,
-      );
-      setSuccess("Pickup verified successfully.");
-      setVerifiedOrder({
-        id: result.order.id,
-        status: result.order.status,
-        verifiedAt: result.verifiedAt,
-      });
-      setToken("");
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(`${err.code}: ${err.message}`);
-      } else {
-        setError(err instanceof Error ? err.message : "Verification failed");
-      }
-    } finally {
-      setSaving(false);
-    }
+    await runVerify(token);
   }
+
+  const handleScan = useCallback(
+    (decoded: string) => {
+      setToken(decoded);
+      void runVerify(decoded);
+    },
+    [runVerify],
+  );
 
   return (
     <PageShell
       title="Pickup verification"
-      description="Paste the customer's pickup token. The server verifies the signature and order state."
+      description="Scan the customer QR code or paste the token manually. The server verifies the signature and order state."
     >
       {error ? <Alert variant="error" message={error} /> : null}
       {success ? <Alert variant="success" message={success} /> : null}
 
       <div className="card">
+        <h2>Camera scan</h2>
         <p className="inline-muted">
-          Order ID is read from the token payload for routing only. Trust always
-          comes from server verification.
+          Order ID is read from the token for routing only. Trust always comes from
+          server verification.
         </p>
+        {scannerEnabled && !saving && !verifiedOrder ? (
+          <PickupScanner onScan={handleScan} disabled={saving} />
+        ) : (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              setScannerEnabled(true);
+              setError(null);
+              setSuccess(null);
+            }}
+          >
+            Scan another code
+          </button>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Manual entry</h2>
         <form className="form-grid" onSubmit={handleVerify}>
           <label>
             Pickup token

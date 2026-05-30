@@ -128,6 +128,21 @@ Orders keep an internal **UUID** primary key for APIs and database relations. St
 
 **Realtime (SSE):** Merchant Order Line / Orders use **Server-Sent Events** (`GET /merchants/:merchantId/events`) with automatic **polling fallback** if the stream fails. Customer order status uses `GET /merchants/:merchantId/orders/:orderId/events` (public, customer-safe payloads only). When `REDIS_URL` is set, events fan out across API instances via Redis pub/sub; without Redis, events stay in-process only.
 
+### Merchant operational attention (Phase 11B)
+
+The **Order Line** (`/`) helps staff notice new orders during pilots without staring at the screen continuously:
+
+| Feature | Behavior |
+|---------|----------|
+| **Sound** | Short chime on `order.created` only (not status changes). Mute/unmute in the POS header; preference stored in `localStorage`. First interaction may require enabling sound (browser autoplay rules). |
+| **Browser notifications** | Optional — staff tap **Enable notifications** after an explicit gesture. New orders always; **ready** orders optionally for pickup attention. Clicking a notification focuses the merchant tab. Denied permissions show a non-blocking message. |
+| **Visual** | “New” badge and brief highlight on recent order cards; unread pulse on the queue; live/reconnecting/polling connection badge. |
+| **Reconnect safety** | Tracks processed SSE event IDs and order baselines so reconnects do not replay sounds or badges for old orders. |
+| **Focus mode** | Toggle in the POS header — emphasizes the order queue and current order; hides non-essential catalog clutter. Persisted in `localStorage`. |
+| **Orders page** | Client-side status filters (all, placed, accepted, ready, picked_up, cancelled). |
+
+**Pilot recommendation:** Keep the Order Line open on a counter tablet with sound or notifications enabled during service hours; use **Focus mode** during rush periods. No payment or wallet features are involved — alerts are operational only.
+
 ### Responsive layout (Phase 8C)
 
 Design tokens and CSS use a dashboard-inspired card layout (large rounded surfaces, generous spacing, orange accent). No API changes.

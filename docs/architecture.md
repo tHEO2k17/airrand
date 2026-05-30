@@ -114,6 +114,26 @@ Provider-agnostic **operational** messaging only — not marketing, analytics, p
 
 Pharmacy prescription workflows, laundry service scheduling, and plug verification remain **deferred** (see [market-scope.md](./market-scope.md)).
 
+## Merchant operational attention (Phase 11B)
+
+Pilot-facing alerts on the merchant **Order Line** reuse existing SSE — no WebSocket migration and no order lifecycle API changes.
+
+| Module | Role |
+|--------|------|
+| `useOperationalAttention` | Coordinates sound, browser notifications, unread/highlight state, focus mode, reconnect dedupe |
+| `useMerchantRealtime` | SSE + polling fallback; forwards parsed events to attention hook |
+| `operational-attention/*` | Pure helpers: new-order detection, event-id dedupe, Web Audio chime, `Notification` API wrapper, `localStorage` preferences |
+
+**Sound:** `order.created` only. Chime uses Web Audio (no external asset). Mute preference: `airrand_merchant_alerts_muted` in `localStorage`.
+
+**Browser notifications:** Gated on `Notification.permission === "granted"` after explicit **Enable notifications** click. Tags dedupe by event type + order id. `order.created` and optional `order.status_changed` → `ready`.
+
+**Reconnect:** On SSE open after disconnect, `beginReconnectReconcile` / `syncOrdersAfterLoad` compare order id sets so baseline refresh does not treat existing orders as new.
+
+**Focus mode:** `airrand_merchant_focus_mode` in `localStorage`; CSS class on POS shell hides catalog grid emphasis.
+
+**Orders list:** Client-side `filterOrdersByStatus` on `/orders` — API list unchanged.
+
 ## Audit export storage (Phase 10E)
 
 | Component | Role |

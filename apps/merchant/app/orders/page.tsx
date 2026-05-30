@@ -17,6 +17,11 @@ import { fetchOrders, updateOrderStatus } from "../../lib/api";
 import { formatDateTime, formatMoney } from "../../lib/format";
 import { PollingToolbar } from "../../components/polling-toolbar";
 import { getAvailableOrderActions } from "../../lib/order-actions";
+import {
+  filterOrdersByStatus,
+  ORDER_STATUS_FILTER_OPTIONS,
+  type OrderStatusFilter,
+} from "../../lib/orders-status-filter";
 import { useMerchantRealtime } from "../../lib/use-merchant-realtime";
 
 function OrdersContent() {
@@ -32,6 +37,9 @@ function OrdersContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [referenceQuery, setReferenceQuery] = useState("");
   const [activeReferenceFilter, setActiveReferenceFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("all");
+
+  const filteredOrders = filterOrdersByStatus(orders, statusFilter);
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!merchantId) {
@@ -117,6 +125,23 @@ function OrdersContent() {
       />
 
       <Surface>
+        <div className="pos-category-chips" role="tablist" aria-label="Filter by status">
+          {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={statusFilter === option.value}
+              className={`pos-category-chip${statusFilter === option.value ? " pos-category-chip--active" : ""}`}
+              onClick={() => setStatusFilter(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </Surface>
+
+      <Surface>
         <form
           className="pos-form-grid"
           onSubmit={(event) => {
@@ -159,7 +184,10 @@ function OrdersContent() {
         {!loading && orders.length === 0 ? (
           <p className="pos-muted">No orders yet.</p>
         ) : null}
-        {!loading && orders.length > 0 ? (
+        {!loading && orders.length > 0 && filteredOrders.length === 0 ? (
+          <p className="pos-muted">No orders match this status filter.</p>
+        ) : null}
+        {!loading && filteredOrders.length > 0 ? (
           <div className="pos-table-wrap">
             <table>
               <thead>
@@ -173,7 +201,7 @@ function OrdersContent() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => {
+                {filteredOrders.map((order) => {
                   const actions = getAvailableOrderActions(order);
                   return (
                     <tr key={order.id}>

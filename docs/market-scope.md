@@ -85,6 +85,9 @@ The current codebase focuses on **standard merchants** only:
 - Merchant staff authentication, RBAC, and lifecycle
 - Audit log and CSV export (background worker)
 - Realtime order updates (SSE + polling fallback)
+- **Operational attention** on merchant POS (new-order sound, optional browser notifications, visual badges, focus mode) for pilot counter use — see [architecture.md](./architecture.md#merchant-operational-attention-phase-11b)
+
+**Pilot operating tip:** Run the Order Line on a dedicated device during service hours with sound or browser notifications enabled so new `placed` orders are not missed. This is operational alerting only — not payments, marketing push, or customer messaging.
 
 See [architecture.md](./architecture.md) and [security-boundaries.md](./security-boundaries.md) for technical boundaries.
 

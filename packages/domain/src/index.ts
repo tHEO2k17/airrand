@@ -41,3 +41,9 @@ export {
   assertSafeObjectKey,
 } from "./audit-export-storage.js";
 export { isValidCustomerPhone } from "./customer-contact.js";
+export {
+  PRODUCT_STOCK_STATES,
+  type ProductStockState,
+  isProductOrderable,
+  isProductCustomerCatalogVisible,
+} from "./product-availability.js";

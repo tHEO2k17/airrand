@@ -1,4 +1,10 @@
-import type { Merchant, Order, OrderLine, Product } from "@airrand/database";
+import type {
+  Merchant,
+  Order,
+  OrderLine,
+  Product,
+  ProductCategory,
+} from "@airrand/database";
 import { toCustomerOrderStatusResponse } from "../customer-order-status.js";
 import { toOrderResponse, toProductResponse } from "../mappers.js";
 import { merchantRealtimeChannel, orderRealtimeChannel } from "./channels.js";
@@ -114,11 +120,12 @@ export async function publishOrderPickupVerifiedRealtime(
 export async function publishProductCreatedRealtime(
   merchantId: string,
   product: Product,
+  category?: ProductCategory | null,
 ): Promise<void> {
   await publishMerchantEvent(
     merchantId,
     "product.created",
-    { product: toProductResponse(product) },
+    { product: toProductResponse(product, category) },
     { productId: product.id },
   );
 }
@@ -126,11 +133,12 @@ export async function publishProductCreatedRealtime(
 export async function publishProductUpdatedRealtime(
   merchantId: string,
   product: Product,
+  category?: ProductCategory | null,
 ): Promise<void> {
   await publishMerchantEvent(
     merchantId,
     "product.updated",
-    { product: toProductResponse(product) },
+    { product: toProductResponse(product, category) },
     { productId: product.id },
   );
 }

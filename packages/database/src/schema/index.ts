@@ -2,6 +2,8 @@ export * from "./enums.js";
 export * from "./merchants.js";
 export * from "./merchant-user-role.js";
 export * from "./merchant-users.js";
+export * from "./product-categories.js";
+export * from "./product-stock-state.js";
 export * from "./products.js";
 export * from "./orders.js";
 export * from "./order-lines.js";

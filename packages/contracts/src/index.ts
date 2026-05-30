@@ -1,6 +1,7 @@
 export * from "./order-status.js";
 export * from "./customer-order-status.js";
 export * from "./auth.js";
+export * from "./category.js";
 export * from "./product.js";
 export * from "./order.js";
 export * from "./pickup.js";

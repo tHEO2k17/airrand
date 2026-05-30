@@ -78,7 +78,7 @@ When plugs ship, expect:
 
 The current codebase focuses on **standard merchants** only:
 
-- Merchant catalog (products, availability)
+- Merchant catalog (products, **categories**, lightweight **stock state**, boolean availability)
 - **Guest-first** customer ordering (phone at checkout, no accounts)
 - Order lifecycle (`placed` → `ready` → `picked_up` / `cancelled`)
 - QR / token pickup verification
@@ -103,15 +103,19 @@ See [architecture.md](./architecture.md) and [security-boundaries.md](./security
 | **Marketplace discovery / ratings** | No plug or merchant reputation system yet |
 | **Email / SMS notifications** | Operational placeholder jobs only (Phase 10D); no providers yet |
 | **Durable object storage for exports** | Shipped in Phase 10E (MinIO local; S3-compatible in production) |
+| **Product categories & stock state** | Shipped in Phase 11A (lightweight; not ERP inventory) |
+| **Pharmacy prescription workflow** | Deferred — OTC/catalog grouping only in 11A |
+| **Laundry service workflow** | Deferred — category placeholder only (e.g. Laundry Services) |
 
 ## Roadmap alignment (product phases)
 
-Phases already shipped (0–10E) built the **standard merchant pickup stack**. Upcoming product directions (documentation only — not committed scope):
+Phases already shipped (0–11A) built the **standard merchant pickup stack**. Upcoming product directions (documentation only — not committed scope):
 
 | Phase (conceptual) | Focus |
 |--------------------|--------|
 | **10D** | Operational notification jobs (placeholder SMS/email; no providers) |
 | **10E** | Durable export storage (MinIO / S3-compatible via `@airrand/storage`) |
+| **11A** | Product categories and stock state for retail/convenience/OTC basics |
 | **11+** | Optional customer OTP; optional accounts (guest remains default); improved discovery |
 | **12+** | **Plug vendor type** — verification, onboarding, plug-specific policies |
 | **13+** | Delivery or errand logistics (only after pickup MVP is stable) |

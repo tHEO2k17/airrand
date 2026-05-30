@@ -3,13 +3,17 @@ import type {
   AuditExportJobResponse,
   AuditExportQueuedResponse,
   AuditLogResponse,
+  CreateProductCategoryInput,
   CreateProductInput,
   CreateStaffRequest,
   MerchantResponse,
   OrderResponse,
   PickupVerifyResponse,
+  ProductCategoryResponse,
   ProductResponse,
+  ProductStockState,
   StaffMemberResponse,
+  UpdateProductCategoryInput,
   UpdateProductInput,
 } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
@@ -69,6 +73,39 @@ export async function fetchMerchants(): Promise<MerchantResponse[]> {
   return data.merchants;
 }
 
+export async function fetchCategories(
+  merchantId: string,
+): Promise<ProductCategoryResponse[]> {
+  const data = await request<{ categories: ProductCategoryResponse[] }>(
+    `/merchants/${merchantId}/categories`,
+  );
+  return data.categories;
+}
+
+export async function createCategory(
+  merchantId: string,
+  input: CreateProductCategoryInput,
+): Promise<ProductCategoryResponse> {
+  return request<ProductCategoryResponse>(`/merchants/${merchantId}/categories`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateCategory(
+  merchantId: string,
+  categoryId: string,
+  input: UpdateProductCategoryInput,
+): Promise<ProductCategoryResponse> {
+  return request<ProductCategoryResponse>(
+    `/merchants/${merchantId}/categories/${categoryId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
 export async function fetchProducts(merchantId: string): Promise<ProductResponse[]> {
   const data = await request<{ products: ProductResponse[] }>(
     `/merchants/${merchantId}/products`,
@@ -84,6 +121,14 @@ export async function createProduct(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function updateProductStockState(
+  merchantId: string,
+  productId: string,
+  stockState: ProductStockState,
+): Promise<ProductResponse> {
+  return updateProduct(merchantId, productId, { stockState });
 }
 
 export async function updateProduct(

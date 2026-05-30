@@ -228,8 +228,8 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 
 | Access | Routes |
 |--------|--------|
-| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
-| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, audit export (`POST /audit-logs/export`, `GET .../exports/:id`, `GET .../download`), staff management, `GET /merchants/:merchantId/events` (SSE) |
+| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products?availableOnly=true`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, category CRUD (`GET/POST/PATCH .../categories`), product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, audit export (`POST /audit-logs/export`, `GET .../exports/:id`, `GET .../download`), staff management, `GET /merchants/:merchantId/events` (SSE) |
 
 Customer guest ordering stays public on catalog and order create. **No customer auth routes** — phone number is collected on order create only.
 
@@ -297,7 +297,7 @@ If you change `DATABASE_URL`, ensure it matches the Docker port (`5433`) unless 
 
 ## MVP boundaries
 
-In scope: standard merchants (convenience, pharmacy pickup desk, laundry counter, small retail), products, **guest-first** customer orders (phone required), order status, QR pickup verification, staff RBAC, audit log and CSV export.
+In scope: standard merchants (convenience, pharmacy pickup desk, laundry counter, small retail), product **categories** and lightweight **stock state** (`in_stock` / `low_stock` / `out_of_stock`), **guest-first** customer orders (phone required), order status, QR pickup verification, staff RBAC, audit log and CSV export.
 
 Out of scope: payments, wallets, balances, ledgers, settlements, payment intents, financial custody, customer accounts, plug onboarding, delivery logistics.
 
@@ -335,4 +335,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 10B**: Audit export request queue (API producer)
 - **Phase 10C**: CSV audit export (local storage, merchant download)
 - **Phase 10D**: Operational notification jobs (placeholder SMS/email channels, no providers)
+- **Phase 11A**: Product categories and lightweight stock state (not full ERP inventory)
 - **Future (documented, not scheduled):** optional customer OTP and accounts (guest remains default); plug vendor type; delivery logistics — see [market-scope.md](./docs/market-scope.md), [customer-data-policy.md](./docs/customer-data-policy.md)

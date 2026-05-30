@@ -101,6 +101,19 @@ Provider-agnostic **operational** messaging only — not marketing, analytics, p
 
 **Brand alignment:** In-app notification feedback uses existing `AlertMessage` / `NotificationFeedback` primitives and semantic tokens (success for actions, info for queued jobs). Placeholder SMS/email copy lives in `@airrand/notifications/templates` — operational tone, orange-accent merchant UI unchanged. See [design-system.md](./design-system.md).
 
+## Catalog organization (Phase 11A)
+
+| Component | Role |
+|-----------|------|
+| `product_categories` | Merchant-scoped grouping (name, optional `icon_key`, sort order, active flag) |
+| `products.category_id` | Optional FK; inactive categories hide products from customer catalog |
+| `products.stock_state` | `in_stock`, `low_stock`, `out_of_stock` — controls orderability |
+| `products.stock_quantity` | Optional informational count only (no auto-decrement) |
+
+**Availability rule:** a product is customer-visible and orderable when `is_available = true`, `stock_state != out_of_stock`, and its category (if any) is active. Merchant POS shows stock badges and category filters; customer storefront uses category chips.
+
+Pharmacy prescription workflows, laundry service scheduling, and plug verification remain **deferred** (see [market-scope.md](./market-scope.md)).
+
 ## Audit export storage (Phase 10E)
 
 | Component | Role |

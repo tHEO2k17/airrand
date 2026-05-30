@@ -3,6 +3,8 @@ import type {
   MerchantUserResponse,
   OrderLineResponse,
   OrderResponse,
+  ProductCategoryResponse,
+  ProductCategorySummary,
   ProductResponse,
 } from "@airrand/contracts";
 import type {
@@ -11,6 +13,7 @@ import type {
   Order,
   OrderLine,
   Product,
+  ProductCategory,
 } from "@airrand/database";
 
 export function toMerchantUserResponse(
@@ -38,14 +41,50 @@ export function toMerchantResponse(merchant: Merchant): MerchantResponse {
   };
 }
 
-export function toProductResponse(product: Product): ProductResponse {
+export function toProductCategorySummary(
+  category: ProductCategory | null | undefined,
+): ProductCategorySummary | null {
+  if (!category) {
+    return null;
+  }
+  return {
+    id: category.id,
+    name: category.name,
+    iconKey: category.iconKey,
+    isActive: category.isActive,
+  };
+}
+
+export function toProductCategoryResponse(
+  category: ProductCategory,
+): ProductCategoryResponse {
+  return {
+    id: category.id,
+    merchantId: category.merchantId,
+    name: category.name,
+    iconKey: category.iconKey,
+    sortOrder: category.sortOrder,
+    isActive: category.isActive,
+    createdAt: category.createdAt.toISOString(),
+    updatedAt: category.updatedAt.toISOString(),
+  };
+}
+
+export function toProductResponse(
+  product: Product,
+  category?: ProductCategory | null,
+): ProductResponse {
   return {
     id: product.id,
     merchantId: product.merchantId,
+    categoryId: product.categoryId,
+    category: toProductCategorySummary(category ?? null),
     name: product.name,
     description: product.description,
     unitPriceCents: product.unitPriceCents,
     isAvailable: product.isAvailable,
+    stockState: product.stockState,
+    stockQuantity: product.stockQuantity,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };

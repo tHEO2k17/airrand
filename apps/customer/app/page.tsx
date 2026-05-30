@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProductResponse } from "@airrand/contracts";
 import { EmptyState } from "../components/ui/empty-state";
 import { AlertMessage } from "../components/ui/alert-message";
 import { Button } from "../components/ui/button";
 import { LoadingState } from "../components/ui/loading-state";
 import { Surface } from "../components/ui/surface";
+import { Badge } from "../components/ui/badge";
 import { useCart } from "../components/cart-context";
 import { useMerchant } from "../components/merchant-context";
 import { fetchAvailableProducts } from "../lib/api";
@@ -21,6 +22,7 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
 
   const load = useCallback(async () => {
     if (!merchantId) {
@@ -40,6 +42,25 @@ export default function CatalogPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const categoryChips = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const product of products) {
+      if (product.category) {
+        byId.set(product.category.id, product.category.name);
+      }
+    }
+    return [...byId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    if (categoryFilter === "all") {
+      return products;
+    }
+    return products.filter((p) => p.categoryId === categoryFilter);
+  }, [products, categoryFilter]);
 
   function handleAdd(product: ProductResponse) {
     addProduct({
@@ -62,6 +83,28 @@ export default function CatalogPage() {
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {merchantLoading || loading ? <LoadingState label="Loading menu…" /> : null}
 
+      {!loading && !error && products.length > 0 && categoryChips.length > 0 ? (
+        <div className="store-category-chips" role="tablist" aria-label="Categories">
+          <button
+            type="button"
+            className={`store-category-chip${categoryFilter === "all" ? " store-category-chip--active" : ""}`}
+            onClick={() => setCategoryFilter("all")}
+          >
+            All
+          </button>
+          {categoryChips.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={`store-category-chip${categoryFilter === category.id ? " store-category-chip--active" : ""}`}
+              onClick={() => setCategoryFilter(category.id)}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {!loading && !error && products.length === 0 ? (
         <Surface>
           <EmptyState
@@ -71,17 +114,32 @@ export default function CatalogPage() {
         </Surface>
       ) : null}
 
-      {!loading && products.length > 0 ? (
+      {!loading && filteredProducts.length > 0 ? (
         <div className="store-product-grid">
-          {products.map((product) => {
+          {filteredProducts.map((product) => {
             const Icon = getProductIcon(product.name);
+            const outOfStock = product.stockState === "out_of_stock";
             return (
-              <Surface key={product.id} className="store-product-card" padding="lg">
+              <Surface
+                key={product.id}
+                className={`store-product-card${outOfStock ? " store-product-card--disabled" : ""}`}
+                padding="lg"
+              >
                 <div className="store-product-card__top">
                   <div className="store-product-card__icon" aria-hidden>
                     <Icon size={24} strokeWidth={1.75} />
                   </div>
                   <div className="store-product-card__body">
+                    <div className="store-product-card__meta">
+                      {product.category ? (
+                        <span className="store-product-card__category">
+                          {product.category.name}
+                        </span>
+                      ) : null}
+                      {product.stockState === "low_stock" ? (
+                        <Badge tone="accent">Low stock</Badge>
+                      ) : null}
+                    </div>
                     <h2 className="store-product-card__name">{product.name}</h2>
                     {product.description ? (
                       <p className="store-product-card__desc">
@@ -96,14 +154,23 @@ export default function CatalogPage() {
                 <Button
                   block
                   variant={addedId === product.id ? "secondary" : "primary"}
+                  disabled={outOfStock || !product.isAvailable}
                   onClick={() => handleAdd(product)}
                 >
-                  {addedId === product.id ? "Added to cart" : "Add to cart"}
+                  {outOfStock
+                    ? "Out of stock"
+                    : addedId === product.id
+                      ? "Added to cart"
+                      : "Add to cart"}
                 </Button>
               </Surface>
             );
           })}
         </div>
+      ) : null}
+
+      {!loading && products.length > 0 && filteredProducts.length === 0 ? (
+        <p className="store-muted">No items in this category right now.</p>
       ) : null}
     </div>
   );

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import {
   createOrderSchema,
+  createProductCategorySchema,
   createProductSchema,
   listOrdersQuerySchema,
   listProductsQuerySchema,
@@ -9,6 +10,7 @@ import {
   auditExportRequestSchema,
   pickupVerifyRequestSchema,
   updateOrderStatusSchema,
+  updateProductCategorySchema,
   updateProductSchema,
 } from "@airrand/contracts";
 import {
@@ -26,6 +28,7 @@ import {
   merchants,
   orderLines,
   orders,
+  productCategories,
   products,
 } from "@airrand/database";
 import { zValidator } from "@hono/zod-validator";
@@ -38,8 +41,14 @@ import { toCustomerOrderStatusResponse } from "../lib/customer-order-status.js";
 import {
   toMerchantResponse,
   toOrderResponse,
+  toProductCategoryResponse,
   toProductResponse,
 } from "../lib/mappers.js";
+import {
+  assertProductOrderable,
+  findMerchantCategory,
+  listProductsWithCategories,
+} from "../lib/product-catalog.js";
 import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
 import { Readable } from "node:stream";
@@ -83,6 +92,109 @@ merchantsRoutes.get("/", async (c) => {
   }
 });
 
+merchantsRoutes.get(
+  "/:merchantId/categories",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const rows = await db
+        .select()
+        .from(productCategories)
+        .where(eq(productCategories.merchantId, merchantId))
+        .orderBy(asc(productCategories.sortOrder), asc(productCategories.name));
+
+      return jsonOk(c, { categories: rows.map(toProductCategoryResponse) });
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.post(
+  "/:merchantId/categories",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("product:create"),
+  zValidator("json", createProductCategorySchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const [category] = await db
+        .insert(productCategories)
+        .values({
+          merchantId,
+          name: body.name,
+          iconKey: body.iconKey ?? null,
+          sortOrder: body.sortOrder ?? 0,
+          isActive: body.isActive ?? true,
+        })
+        .returning();
+
+      if (!category) {
+        return jsonError(c, "CREATE_FAILED", "Failed to create category", 500);
+      }
+
+      return jsonOk(c, toProductCategoryResponse(category), 201);
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+merchantsRoutes.patch(
+  "/:merchantId/categories/:categoryId",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("product:update"),
+  zValidator("json", updateProductCategorySchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const categoryId = c.req.param("categoryId");
+      const merchant = await findMerchant(merchantId);
+      if (!merchant) {
+        return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+      }
+
+      const body = c.req.valid("json");
+      const [category] = await db
+        .update(productCategories)
+        .set({
+          ...body,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(productCategories.id, categoryId),
+            eq(productCategories.merchantId, merchantId),
+          ),
+        )
+        .returning();
+
+      if (!category) {
+        return jsonError(c, "CATEGORY_NOT_FOUND", "Category not found", 404);
+      }
+
+      return jsonOk(c, toProductCategoryResponse(category));
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
 merchantsRoutes.get("/:merchantId/products", async (c) => {
   try {
     const merchantId = c.req.param("merchantId");
@@ -96,18 +208,16 @@ merchantsRoutes.get("/:merchantId/products", async (c) => {
       return jsonError(c, "VALIDATION_ERROR", query.error.message, 400);
     }
 
-    const conditions = [eq(products.merchantId, merchantId)];
-    if (query.data.availableOnly) {
-      conditions.push(eq(products.isAvailable, true));
-    }
+    const rows = await listProductsWithCategories(
+      merchantId,
+      query.data.availableOnly ?? false,
+    );
 
-    const rows = await db
-      .select()
-      .from(products)
-      .where(and(...conditions))
-      .orderBy(asc(products.name));
-
-    return jsonOk(c, { products: rows.map(toProductResponse) });
+    return jsonOk(c, {
+      products: rows.map(({ product, category }) =>
+        toProductResponse(product, category),
+      ),
+    });
   } catch (error) {
     return handleRouteError(c, error);
   }
@@ -128,14 +238,25 @@ merchantsRoutes.post(
       }
 
       const body = c.req.valid("json");
+      let category: Awaited<ReturnType<typeof findMerchantCategory>> = null;
+      if (body.categoryId) {
+        category = await findMerchantCategory(merchantId, body.categoryId);
+        if (!category) {
+          return jsonError(c, "CATEGORY_NOT_FOUND", "Category not found", 404);
+        }
+      }
+
       const [product] = await db
         .insert(products)
         .values({
           merchantId,
+          categoryId: body.categoryId ?? null,
           name: body.name,
           description: body.description,
           unitPriceCents: body.unitPriceCents,
           isAvailable: body.isAvailable ?? true,
+          stockState: body.stockState ?? "in_stock",
+          stockQuantity: body.stockQuantity ?? null,
         })
         .returning();
 
@@ -143,11 +264,13 @@ merchantsRoutes.post(
         return jsonError(c, "CREATE_FAILED", "Failed to create product", 500);
       }
 
-      void publishProductCreatedRealtime(merchantId, product).catch((error) => {
-        console.error("Realtime publish failed:", error);
-      });
+      void publishProductCreatedRealtime(merchantId, product, category).catch(
+        (error) => {
+          console.error("Realtime publish failed:", error);
+        },
+      );
 
-      return jsonOk(c, toProductResponse(product), 201);
+      return jsonOk(c, toProductResponse(product, category), 201);
     } catch (error) {
       return handleRouteError(c, error);
     }
@@ -170,6 +293,13 @@ merchantsRoutes.patch(
       }
 
       const body = c.req.valid("json");
+      if (body.categoryId) {
+        const category = await findMerchantCategory(merchantId, body.categoryId);
+        if (!category) {
+          return jsonError(c, "CATEGORY_NOT_FOUND", "Category not found", 404);
+        }
+      }
+
       const [product] = await db
         .update(products)
         .set({
@@ -185,11 +315,17 @@ merchantsRoutes.patch(
         return jsonError(c, "PRODUCT_NOT_FOUND", "Product not found", 404);
       }
 
-      void publishProductUpdatedRealtime(merchantId, product).catch((error) => {
-        console.error("Realtime publish failed:", error);
-      });
+      const category = product.categoryId
+        ? await findMerchantCategory(merchantId, product.categoryId)
+        : null;
 
-      return jsonOk(c, toProductResponse(product));
+      void publishProductUpdatedRealtime(merchantId, product, category).catch(
+        (error) => {
+          console.error("Realtime publish failed:", error);
+        },
+      );
+
+      return jsonOk(c, toProductResponse(product, category));
     } catch (error) {
       return handleRouteError(c, error);
     }
@@ -209,9 +345,13 @@ merchantsRoutes.post(
 
       const body = c.req.valid("json");
       const productIds = body.lines.map((line) => line.productId);
-      const catalog = await db
-        .select()
+      const catalogRows = await db
+        .select({
+          product: products,
+          category: productCategories,
+        })
         .from(products)
+        .leftJoin(productCategories, eq(products.categoryId, productCategories.id))
         .where(
           and(
             eq(products.merchantId, merchantId),
@@ -219,11 +359,13 @@ merchantsRoutes.post(
           ),
         );
 
-      const catalogById = new Map(catalog.map((p) => [p.id, p]));
+      const catalogById = new Map(
+        catalogRows.map((row) => [row.product.id, row]),
+      );
 
       for (const line of body.lines) {
-        const product = catalogById.get(line.productId);
-        if (!product) {
+        const row = catalogById.get(line.productId);
+        if (!row) {
           return jsonError(
             c,
             "PRODUCT_NOT_FOUND",
@@ -231,13 +373,9 @@ merchantsRoutes.post(
             400,
           );
         }
-        if (!product.isAvailable) {
-          return jsonError(
-            c,
-            "PRODUCT_UNAVAILABLE",
-            `Product "${product.name}" is not available`,
-            400,
-          );
+        const orderable = assertProductOrderable(row.product, row.category);
+        if (!orderable.ok) {
+          return jsonError(c, "PRODUCT_UNAVAILABLE", orderable.message, 400);
         }
       }
 
@@ -266,7 +404,7 @@ merchantsRoutes.post(
         }
 
         const lineValues = body.lines.map((line) => {
-          const product = catalogById.get(line.productId)!;
+          const { product } = catalogById.get(line.productId)!;
           return {
             orderId: order.id,
             productId: product.id,

@@ -716,3 +716,50 @@
 .store-qty input {
   max-width: 4rem;
 }
+
+.store-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--store-space-2);
+  margin-bottom: var(--store-space-4);
+}
+
+.store-category-chip {
+  border: 1px solid var(--store-border);
+  background: var(--store-surface);
+  color: var(--store-text);
+  border-radius: 999px;
+  padding: var(--store-space-1) var(--store-space-3);
+  font-size: var(--store-font-size-sm);
+  cursor: pointer;
+}
+
+.store-category-chip--active {
+  border-color: var(--store-accent);
+  background: var(--store-accent-soft);
+  color: var(--store-accent-hover);
+}
+
+.store-product-card--disabled {
+  opacity: 0.6;
+}
+
+.store-product-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--store-space-2);
+  margin-bottom: var(--store-space-1);
+}
+
+.store-product-card__category {
+  font-size: var(--store-font-size-xs);
+  color: var(--store-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.store-muted {
+  color: var(--store-muted);
+  margin: var(--store-space-4) 0;
+}

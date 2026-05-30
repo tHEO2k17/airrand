@@ -73,6 +73,13 @@ Middleware enforces `session.merchantId === route :merchantId`.
 - **Client decode is not trusted** — merchant UI may decode for routing only; `POST .../pickup/verify` re-verifies signature, expiry, and order state.
 - Compromise of `QR_SIGNING_SECRET` allows forging pickup tokens — rotate secret and treat like a signing key.
 
+## Catalog and stock (Phase 11A)
+
+- Product **categories** are merchant-scoped; customers see category names on catalog items only (no admin category APIs exposed without staff auth).
+- **Stock state** (`in_stock`, `low_stock`, `out_of_stock`) and optional **stock quantity** are operational signals only — quantities do not auto-decrement and are not financial inventory.
+- `out_of_stock` products are rejected at order create and excluded from `availableOnly` catalog queries.
+- Pharmacy prescription capture, controlled-substance rules, and laundry scheduling are **out of scope** for this phase.
+
 ## Audit logging
 
 - Actions: `order.created`, `order.status_changed`, `order.pickup_verified`.

@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { OrderResponse, ProductResponse } from "@airrand/contracts";
+import type {
+  OrderResponse,
+  ProductCategoryResponse,
+  ProductResponse,
+} from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
 import { MerchantGate } from "../components/merchant-gate";
 import { OrderDetailPanel } from "../components/pos/order-detail-panel";
@@ -17,10 +21,12 @@ import { useMerchant } from "../components/merchant-context";
 import { useMerchantPermissions } from "../lib/use-merchant-permissions";
 import { useMerchantRealtime } from "../lib/use-merchant-realtime";
 import {
+  fetchCategories,
   fetchOrders,
   fetchProducts,
   updateOrderStatus,
   updateProduct,
+  updateProductStockState,
 } from "../lib/api";
 import { isActiveOrderStatus } from "../lib/order-progress";
 function PosConsoleContent() {
@@ -34,6 +40,7 @@ function PosConsoleContent() {
   const [notificationInfo, setNotificationInfo] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [products, setProducts] = useState<ProductResponse[]>([]);
+  const [categories, setCategories] = useState<ProductCategoryResponse[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,11 +56,13 @@ function PosConsoleContent() {
     }
     setError(null);
     try {
-      const [productList, orderList] = await Promise.all([
+      const [productList, categoryList, orderList] = await Promise.all([
         fetchProducts(merchantId),
+        fetchCategories(merchantId),
         fetchOrders(merchantId),
       ]);
       setProducts(productList);
+      setCategories(categoryList);
       const sorted = [...orderList].sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -121,6 +130,27 @@ function PosConsoleContent() {
     }
   }
 
+  async function handleStockStateChange(
+    product: ProductResponse,
+    stockState: ProductResponse["stockState"],
+  ) {
+    if (!merchantId) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await updateProductStockState(merchantId, product.id, stockState);
+      setSuccess(`"${product.name}" stock set to ${stockState.replace("_", " ")}.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update stock");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleToggleAvailability(product: ProductResponse) {
     if (!merchantId) {
       return;
@@ -179,9 +209,11 @@ function PosConsoleContent() {
               <h2 className="pos-section-title">Menu</h2>
               <ProductGrid
                 products={products}
+                categories={categories}
                 saving={saving}
                 canManageProducts={canUpdateProduct}
                 onToggleAvailability={handleToggleAvailability}
+                onStockStateChange={handleStockStateChange}
               />
             </section>
           </div>

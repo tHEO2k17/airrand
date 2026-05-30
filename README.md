@@ -87,20 +87,23 @@ Sign in to the merchant app with seeded demo staff credentials (see **Merchant a
 
 The merchant home route **`/`** is the consolidated **Order Line** console: dark icon sidebar, active order queue, menu grid (Lucide icons, no product images), and a right-hand panel for order details plus catalog summary. Secondary routes (`/products`, `/orders`, `/pickup`, `/audit-logs`) share the same POS shell. Pickup verification stays on **`/pickup`** — the dashboard does not skip QR verification.
 
-### Customer storefront (Phase 7B)
+### Customer storefront (Phase 7B–8A)
 
 Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
 
 - **`/`** — menu with icon product cards, sticky cart summary
 - **`/cart`** — quantities, pickup details, **Place Order for Pickup**
-- **`/order-confirmation`** — pickup QR, copy token, pickup instructions
+- **`/order-confirmation`** — pickup QR, copy token, link to **Track order status**
+- **`/order-status`** — read-only order progress (status badge, timeline, items, pickup instructions). Loads merchant/order IDs from session after checkout, or via manual form. Polls the API every ~12 seconds until the order is `picked_up` or `cancelled`.
 
 Wording avoids payment processing: catalog prices and **estimated order value** only; payment is arranged directly with the merchant.
 
+**Polling (no WebSockets):** Customer order status and merchant Order Line / Orders screens refresh on a timer (HTTP polling only). Real-time push is not implemented yet.
+
 ### End-to-end demo flow
 
-1. **Customer** (`:3002`): browse menu → add to cart → **Place Order for Pickup** → **Show Pickup Code** on confirmation.
-2. **Merchant** (`:3001`): sign in → use Order Line (`/`) or Orders → Accept → Mark ready.
+1. **Customer** (`:3002`): browse menu → add to cart → **Place Order for Pickup** → **Show Pickup Code** on confirmation → **Track order status** to watch progress.
+2. **Merchant** (`:3001`): sign in → use Order Line (`/`) or Orders (auto-refresh ~10s, manual **Refresh**) → Accept → Mark ready.
 3. **Merchant** Pickup screen: paste token (or scan later) → verify → order becomes `picked_up`.
 
 Payment happens outside airRand; the apps only coordinate reservation and pickup verification.
@@ -151,7 +154,7 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 
 | Access | Routes |
 |--------|--------|
-| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `POST /auth/merchant/login` |
+| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `POST /auth/merchant/login` |
 | Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs` |
 
 Customer guest ordering stays public on catalog and order create.

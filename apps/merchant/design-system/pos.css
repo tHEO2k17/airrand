@@ -140,6 +140,19 @@
   font-size: var(--pos-font-size-sm);
 }
 
+.polling-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pos-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--pos-space-4);
+}
+
+.polling-toolbar__meta {
+  font-size: var(--pos-font-size-xs);
+}
+
 .pos-surface {
   background: var(--pos-surface);
   border: 1px solid var(--pos-border);

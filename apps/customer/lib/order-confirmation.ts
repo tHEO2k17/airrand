@@ -2,6 +2,7 @@ import { ORDER_CONFIRMATION_STORAGE_KEY } from "./config";
 
 export interface StoredOrderConfirmation {
   orderId: string;
+  merchantId: string;
   status: string;
   token: string;
   expiresAt: string;
@@ -23,6 +24,7 @@ export function readOrderConfirmation(): StoredOrderConfirmation | null {
     const parsed = JSON.parse(raw) as StoredOrderConfirmation;
     if (
       typeof parsed.orderId !== "string" ||
+      typeof parsed.merchantId !== "string" ||
       typeof parsed.status !== "string" ||
       typeof parsed.token !== "string" ||
       typeof parsed.expiresAt !== "string"

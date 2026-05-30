@@ -27,6 +27,7 @@ import { Hono } from "hono";
 import { db } from "../lib/db.js";
 import { handleRouteError } from "../lib/errors.js";
 import { toAuditLogResponse } from "../lib/audit.js";
+import { toCustomerOrderStatusResponse } from "../lib/customer-order-status.js";
 import {
   toMerchantResponse,
   toOrderResponse,
@@ -309,6 +310,37 @@ merchantsRoutes.get("/:merchantId/orders", requireMerchantAuth(), async (c) => {
         toOrderResponse(order, linesByOrderId.get(order.id) ?? []),
       ),
     });
+  } catch (error) {
+    return handleRouteError(c, error);
+  }
+});
+
+merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
+  try {
+    const merchantId = c.req.param("merchantId");
+    const orderId = c.req.param("orderId");
+
+    const merchant = await findMerchant(merchantId);
+    if (!merchant) {
+      return jsonError(c, "MERCHANT_NOT_FOUND", "Merchant not found", 404);
+    }
+
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.id, orderId), eq(orders.merchantId, merchantId)))
+      .limit(1);
+
+    if (!order) {
+      return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+    }
+
+    const lines = await db
+      .select()
+      .from(orderLines)
+      .where(eq(orderLines.orderId, orderId));
+
+    return jsonOk(c, toCustomerOrderStatusResponse(order, lines, merchant));
   } catch (error) {
     return handleRouteError(c, error);
   }

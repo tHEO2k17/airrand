@@ -18,7 +18,11 @@ import {
   updateOrderStatus,
   updateProduct,
 } from "../lib/api";
+import { PollingToolbar } from "../components/polling-toolbar";
 import { isActiveOrderStatus } from "../lib/order-progress";
+import { usePollingRefresh } from "../lib/use-polling-refresh";
+
+const POLL_INTERVAL_MS = 10_000;
 
 function PosConsoleContent() {
   const { merchantId } = useMerchant();
@@ -29,12 +33,18 @@ function PosConsoleContent() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!merchantId) {
       return;
     }
-    setLoading(true);
+    if (options?.silent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [productList, orderList] = await Promise.all([
@@ -54,16 +64,27 @@ function PosConsoleContent() {
         const firstActive = sorted.find((o) => isActiveOrderStatus(o.status));
         return firstActive?.id ?? sorted[0]?.id ?? null;
       });
+      setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load console");
     } finally {
-      setLoading(false);
+      if (options?.silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, [merchantId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  usePollingRefresh(
+    () => load({ silent: true }),
+    POLL_INTERVAL_MS,
+    Boolean(merchantId) && !loading && !saving,
+  );
 
   const activeOrders = useMemo(
     () => orders.filter((o) => isActiveOrderStatus(o.status)),
@@ -118,6 +139,12 @@ function PosConsoleContent() {
   return (
     <div className="pos-console">
       <PosHeader />
+
+      <PollingToolbar
+        lastUpdated={lastUpdated}
+        onRefresh={() => void load({ silent: true })}
+        refreshing={refreshing}
+      />
 
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {success ? <AlertMessage variant="success" message={success} /> : null}

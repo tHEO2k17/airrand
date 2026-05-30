@@ -69,6 +69,7 @@ export default function CartPage() {
 
       saveOrderConfirmation({
         orderId: order.id,
+        merchantId: order.merchantId,
         status: order.status,
         token: order.pickup.token,
         expiresAt: order.pickup.expiresAt,

@@ -13,7 +13,11 @@ import { PageShell } from "../../components/page-shell";
 import { useMerchant } from "../../components/merchant-context";
 import { fetchOrders, updateOrderStatus } from "../../lib/api";
 import { formatDateTime, formatMoney } from "../../lib/format";
+import { PollingToolbar } from "../../components/polling-toolbar";
 import { getAvailableOrderActions } from "../../lib/order-actions";
+import { usePollingRefresh } from "../../lib/use-polling-refresh";
+
+const POLL_INTERVAL_MS = 10_000;
 
 function OrdersContent() {
   const { merchantId } = useMerchant();
@@ -22,12 +26,18 @@ function OrdersContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!merchantId) {
       return;
     }
-    setLoading(true);
+    if (options?.silent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     setError(null);
     try {
       const list = await fetchOrders(merchantId);
@@ -37,16 +47,27 @@ function OrdersContent() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         ),
       );
+      setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load orders");
     } finally {
-      setLoading(false);
+      if (options?.silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   }, [merchantId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  usePollingRefresh(
+    () => load({ silent: true }),
+    POLL_INTERVAL_MS,
+    Boolean(merchantId) && !loading && !saving,
+  );
 
   async function handleStatusChange(orderId: string, status: OrderStatus) {
     if (!merchantId) {
@@ -73,6 +94,12 @@ function OrdersContent() {
     >
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {success ? <AlertMessage variant="success" message={success} /> : null}
+
+      <PollingToolbar
+        lastUpdated={lastUpdated}
+        onRefresh={() => void load({ silent: true })}
+        refreshing={refreshing}
+      />
 
       <Surface>
         {loading ? <LoadingState /> : null}

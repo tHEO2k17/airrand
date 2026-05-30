@@ -1,6 +1,7 @@
 import type {
   CreateOrderInput,
   CreateOrderResponse,
+  CustomerOrderStatusResponse,
   MerchantResponse,
   ProductResponse,
 } from "@airrand/contracts";
@@ -60,4 +61,13 @@ export async function createOrder(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function fetchOrderStatus(
+  merchantId: string,
+  orderId: string,
+): Promise<CustomerOrderStatusResponse> {
+  return request<CustomerOrderStatusResponse>(
+    `/merchants/${merchantId}/orders/${orderId}/status`,
+  );
 }

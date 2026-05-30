@@ -96,6 +96,10 @@ export default function OrderConfirmationPage() {
         <CopyToken token={confirmation.token} />
       </Surface>
 
+      <Link href="/order-status" style={{ display: "block" }}>
+        <Button block>Track order status</Button>
+      </Link>
+
       <Link href="/">
         <Button block variant="secondary">
           Order more items

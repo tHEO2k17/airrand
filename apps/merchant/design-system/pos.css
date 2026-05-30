@@ -1274,3 +1274,9 @@
   border: 1px solid var(--pos-border);
   background: #000;
 }
+
+.pickup-scanner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pos-space-2);
+}

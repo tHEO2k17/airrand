@@ -253,6 +253,9 @@ importers:
 
   packages/contracts:
     dependencies:
+      '@airrand/domain':
+        specifier: workspace:*
+        version: link:../domain
       zod:
         specifier: ^3.25.56
         version: 3.25.76

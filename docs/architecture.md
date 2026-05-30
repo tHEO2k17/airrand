@@ -4,6 +4,8 @@
 
 airRand orchestrates **pickup commerce** between merchants and customers without holding money or managing wallets. The platform records catalog data, orders, status transitions, and QR-based pickup verification only.
 
+**Product positioning:** wallet-less commerce and pickup coordination for convenience stores, pharmacies, laundry services, small retail, and (future) verified “plugs.” See [market-scope.md](./market-scope.md) and [customer-data-policy.md](./customer-data-policy.md).
+
 ## System context
 
 ```mermaid
@@ -32,17 +34,54 @@ Does **not** process or display wallet balances.
 ### `apps/customer`
 
 - Browse merchant catalog
-- Cart and place order
+- Cart and place order (**guest-first — no sign-up**)
+- Collect **phone number** at checkout (lightweight identity)
 - Show pickup QR after order
+- Track order status by merchant + reference (mobile-first)
 
-Does **not** collect card/bank details in MVP.
+Target users: busy office workers, students, and mobile-first customers in African and similar low-friction commerce contexts. **Speed and accessibility** over account persistence.
+
+Does **not** collect card/bank details, passwords, or create customer accounts in MVP.
+
+### Customer flow (guest-first)
+
+```mermaid
+sequenceDiagram
+  participant C as Customer browser
+  participant API as API
+  participant M as Merchant POS
+
+  C->>API: Browse catalog (public)
+  C->>API: POST order (phone + lines, no auth)
+  API-->>C: order reference, pickup QR token
+  C->>API: GET status (merchant + reference or UUID)
+  M->>API: Update status, verify pickup QR
+  API-->>C: SSE/poll status updates (customer-safe fields)
+```
+
+Future optional layers (not MVP): OTP on phone for status lookup; optional accounts while guest path remains default.
 
 ### `apps/api`
 
 - Single backend for both clients
-- Auth boundaries: merchant staff vs customer (Phase 1+)
+- Auth boundaries: **merchant staff only** (customers are unauthenticated guests)
 - Enforces `packages/domain` rules on status changes
 - Issues and verifies pickup tokens via `packages/qr`
+
+### API and domain expectations (customer orders)
+
+Documented contract intent for `POST /merchants/:merchantId/orders`:
+
+| Field | Expectation |
+|-------|-------------|
+| `customer_contact` | **Required** — valid phone number; minimal format validation |
+| `customer_name` | Optional — display/audit label only |
+| `lines` | Required — at least one line item |
+| Customer auth | **None** — no Bearer token, no cookies |
+
+Public status endpoints expose **customer-safe** fields only (no staff data, no pickup nonce). Merchant-scoped routes always filter by `merchant_id`.
+
+Order create requires `customer_contact` (phone) with minimal format validation; `customer_name` is optional.
 
 ## Packages
 
@@ -72,6 +111,10 @@ Does **not** collect card/bank details in MVP.
 - Wallets, balances, ledgers, settlements
 - Multi-merchant single cart
 - Delivery logistics
+- Plug onboarding, identity verification, or plug-specific APIs
+- **Customer accounts**, saved payment methods, loyalty, recommendations
+- **Customer analytics, profiling, or advertising**
+- Customer OTP / SMS verification (future optional layer)
 
 See [ADR 0001](./adr/0001-walletless-mvp.md).
 

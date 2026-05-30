@@ -64,7 +64,7 @@ No server secrets in the merchant app. Staff sessions use the API-issued Bearer 
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_API_BASE_URL` | Yes | `http://localhost:3003` | Browser → API base URL (build-time for production images) |
 
-Guest ordering only; no customer auth env vars in this phase.
+**Guest-first ordering only** — no customer auth env vars. Customers provide phone at checkout; no sign-up, OTP, or session secrets in this phase. See [customer-data-policy.md](./customer-data-policy.md).
 
 ---
 

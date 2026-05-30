@@ -12,6 +12,8 @@ airRand is **commerce orchestration only**:
 
 Any payment happens **outside** this platform. Do not store card data, bank details, or “balance” fields in this codebase.
 
+See also [market-scope.md](./market-scope.md) for target vendors, users, and future plug verification requirements, and [customer-data-policy.md](./customer-data-policy.md) for guest-first customer data handling.
+
 ## No financial custody
 
 The API and apps must not:
@@ -21,6 +23,20 @@ The API and apps must not:
 - Present stored-value or wallet semantics
 
 Order records describe **fulfillment state** (`placed` → `picked_up`), not payment state.
+
+## Customer order tracking (guest-first)
+
+**Customer accounts are intentionally excluded from MVP.** Shoppers do not sign up, log in, or receive session tokens.
+
+### What customers provide
+
+- **`customer_contact` (phone)** — required at checkout; operational contact for merchant callback and future optional OTP
+- **`customer_name`** — optional display label on merchant order line
+- **Order reference + merchant ID** — primary tracking keys after checkout (see [order-references.md](./order-references.md))
+
+### What status APIs expose
+
+Customer-safe status payloads exclude staff fields, pickup nonces, and internal tokens (see realtime section).
 
 ## Public vs protected API surface
 
@@ -33,10 +49,11 @@ No merchant staff session required:
 | `GET /health`, `GET /ready` | Operational; no business data |
 | `GET /merchants` | Lists merchants (MVP: small set / demo) |
 | `GET /merchants/:id/products` | Catalog read |
-| `POST /merchants/:id/orders` | **Creates orders** — rate-limited; no customer auth yet |
+| `POST /merchants/:id/orders` | **Creates orders** — rate-limited; requires phone (`customer_contact`); **no customer auth** |
+| `GET .../orders/.../status`, `GET .../by-reference/.../status` | Merchant-scoped status; reference is not a secret |
 | `POST /auth/merchant/login` | Credential guessing — rate-limited |
 
-Customer ordering intentionally stays guest-based in this phase.
+Customer ordering is **intentionally guest-first** — no sign-up, no customer sessions. Phone is operational identity only.
 
 ### Protected (merchant staff)
 
@@ -137,7 +154,9 @@ Returns `429` with `rate_limited` error code.
 
 | Risk | Mitigation path |
 |------|-----------------|
-| Guest order spam | Rate limits; future customer auth or CAPTCHA |
+| Guest order spam | Rate limits; future optional OTP on status lookup |
+| Reference enumeration | Merchant-scoped lookups; minimal public payloads; future OTP |
+| Customer PII retention | Policy documented; automatic purge deferred |
 | Temporary staff passwords leaked | Share out of band; rotate hash via DB or recreate user |
 | Shared demo password | Rotate seed; remove seed in prod |
 | IP spoofing behind proxy | Configure trusted proxy headers carefully |
@@ -154,4 +173,4 @@ For staging handoff, verify:
 2. `./scripts/smoke-staging.sh` — critical paths
 3. Secrets not in git; `.env.staging` gitignored
 
-See [deployment.md](./deployment.md) and [env-reference.md](./env-reference.md).
+See [deployment.md](./deployment.md), [env-reference.md](./env-reference.md), [market-scope.md](./market-scope.md), and [customer-data-policy.md](./customer-data-policy.md).

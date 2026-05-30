@@ -39,9 +39,9 @@ export default function CartPage() {
       return;
     }
 
-    const trimmedName = customerName.trim();
-    if (!trimmedName) {
-      setError("Your name is required.");
+    const trimmedContact = customerContact.trim();
+    if (!trimmedContact) {
+      setError("Your phone number is required.");
       return;
     }
     if (items.length === 0) {
@@ -62,8 +62,8 @@ export default function CartPage() {
           productId: item.productId,
           quantity: item.quantity,
         })),
-        customerName: trimmedName,
-        customerContact: customerContact.trim() || undefined,
+        customerContact: trimmedContact,
+        customerName: customerName.trim() || undefined,
         notes: notes.trim() || undefined,
       });
 
@@ -179,21 +179,24 @@ export default function CartPage() {
             <h2 className="store-section-title">Pickup details</h2>
             <form className="store-form" onSubmit={handleSubmit}>
               <label>
-                Your name (required)
-                <input
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  required
-                  autoComplete="name"
-                />
-              </label>
-              <label>
-                Contact (optional)
+                Phone number (required)
                 <input
                   value={customerContact}
                   onChange={(e) => setCustomerContact(e.target.value)}
-                  placeholder="Phone or email"
+                  required
+                  type="tel"
+                  inputMode="tel"
                   autoComplete="tel"
+                  placeholder="+233 24 412 3456"
+                />
+              </label>
+              <label>
+                Your name (optional)
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  autoComplete="name"
+                  placeholder="First name or nickname"
                 />
               </label>
               <label>

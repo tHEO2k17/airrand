@@ -4,6 +4,8 @@
 
 An order represents a customer's intent to pick up products from a single merchant. Payment happens outside the platform; airRand tracks fulfillment state only.
 
+**Guest checkout:** customers do not sign up. They provide a **phone number** (required) and optional name at cart submit. The API stores `customer_contact` and optional `customer_name` for merchant operations only — see [customer-data-policy.md](./customer-data-policy.md).
+
 ## Statuses
 
 | Status | Meaning | Set by |
@@ -54,6 +56,10 @@ Tokens encode only `orderId`, `merchantId`, `issuedAt`, `expiresAt`, and `nonce`
 - Payment intents or processor webhooks
 
 Merchants may use their own POS or cash; that is outside this lifecycle.
+
+## Customer data after fulfillment
+
+Per [customer-data-policy.md](./customer-data-policy.md), name and phone on orders are **operational only**. Automatic purge or anonymization after terminal states is documented but **not implemented** in MVP.
 
 ## Audit (later)
 

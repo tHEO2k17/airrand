@@ -25,7 +25,20 @@ airRand uses two identifiers for orders:
 
 Merchant and customer surfaces show `reference` instead of truncated UUIDs. The customer order-status page looks up by reference; UUIDs stay in session storage for API/SSE only. Audit logs join orders to display `orderReference` when available.
 
-References are operational labels, not authentication secrets.
+## Customer tracking (guest-first)
+
+Customers track orders without accounts using:
+
+| Key | Purpose |
+|-----|---------|
+| **Merchant ID** | Scopes lookup to one vendor |
+| **Order reference** | Human-friendly search key (e.g. `ORD-1001`) |
+| **Session order UUID** | Post-checkout convenience in browser storage |
+| **Phone (future OTP)** | Optional proof-of-possession — not MVP |
+
+References are **operational labels, not authentication secrets**. Status APIs must remain merchant-scoped; knowing a reference must not reveal unrelated orders. Phone alone must not list orders across merchants.
+
+See [customer-data-policy.md](./customer-data-policy.md) and [security-boundaries.md](./security-boundaries.md#customer-order-tracking-guest-first).
 
 ## Multi-instance
 

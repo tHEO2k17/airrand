@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCustomerPhone } from "@airrand/domain";
 import { orderStatusSchema } from "./order-status.js";
 import { productResponseSchema } from "./product.js";
 
@@ -9,8 +10,13 @@ const orderLineInputSchema = z.object({
 
 export const createOrderSchema = z.object({
   lines: z.array(orderLineInputSchema).min(1).max(50),
+  customerContact: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required")
+    .max(20)
+    .refine(isValidCustomerPhone, "Invalid phone number"),
   customerName: z.string().trim().min(1).max(200).optional(),
-  customerContact: z.string().trim().min(1).max(200).optional(),
   notes: z.string().trim().max(1000).optional(),
 });
 

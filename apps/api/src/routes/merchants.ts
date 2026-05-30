@@ -282,7 +282,7 @@ merchantsRoutes.post(
           merchantId,
           orderId: order.id,
           actorType: "customer",
-          actorLabel: body.customerName ?? null,
+          actorLabel: body.customerName ?? body.customerContact ?? null,
           action: AUDIT_ACTIONS.ORDER_CREATED,
           metadata: {
             lineCount: insertedLines.length,

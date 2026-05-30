@@ -1,6 +1,8 @@
 # airRand
 
-Wallet-less commerce orchestration MVP. Merchants manage products and orders; customers place pickup orders and receive a QR code. **This platform does not handle payments, wallets, or financial custody.**
+Wallet-less commerce and pickup coordination MVP. Merchants manage products and orders; customers place **guest pickup orders** (phone at checkout, no accounts) and receive a QR code. **This platform does not handle payments, wallets, or financial custody.**
+
+See [docs/market-scope.md](./docs/market-scope.md) for target vendors and users.
 
 ## Monorepo layout
 
@@ -17,7 +19,7 @@ Wallet-less commerce orchestration MVP. Merchants manage products and orders; cu
 | `packages/qr` | Pickup token sign/verify |
 | `packages/config` | Shared TypeScript and ESLint config |
 
-See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
+See [docs/architecture.md](./docs/architecture.md), [docs/deployment.md](./docs/deployment.md), [docs/env-reference.md](./docs/env-reference.md), [docs/market-scope.md](./docs/market-scope.md), [docs/customer-data-policy.md](./docs/customer-data-policy.md), and [docs/adr/0001-walletless-mvp.md](./docs/adr/0001-walletless-mvp.md).
 
 ## Prerequisites
 
@@ -103,16 +105,18 @@ Sign in to the merchant app with seeded demo staff credentials (see **Merchant a
 
 The merchant home route **`/`** is the consolidated **Order Line** console: dark icon sidebar, active order queue, menu grid (Lucide icons, no product images), and a right-hand panel for order details plus catalog summary. Secondary routes (`/products`, `/orders`, `/pickup`, `/audit-logs`) share the same POS shell. Pickup verification stays on **`/pickup`** — the dashboard does not skip QR verification.
 
-### Customer storefront (Phase 7B–8A)
+### Customer storefront (Phase 7B–8A) — guest-first
+
+**No customer accounts or sign-up in MVP.** Ordering is intentionally guest-first for speed and mobile accessibility (see [customer-data-policy.md](./docs/customer-data-policy.md)).
 
 Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
 
 - **`/`** — menu with icon product cards, sticky cart summary
-- **`/cart`** — quantities, pickup details, **Place Order for Pickup**
+- **`/cart`** — quantities, pickup details, **phone number required** before **Place Order for Pickup**; name optional
 - **`/order-confirmation`** — pickup QR, copy token, link to **Track order status**
-- **`/order-status`** — read-only order progress (status badge, timeline, items, pickup instructions). Loads merchant/order IDs from session after checkout, or via manual form. Polls the API every ~12 seconds until the order is `picked_up` or `cancelled`.
+- **`/order-status`** — read-only order progress (status badge, timeline, items, pickup instructions). Tracks by **merchant + order reference** (and session-held order UUID for API/SSE). Polls every ~12 seconds until `picked_up` or `cancelled`.
 
-Wording avoids payment processing: catalog prices and **estimated order value** only; payment is arranged directly with the merchant.
+**Identity model:** phone number (`customer_contact`) is lightweight operational identity — not a login. Payment is arranged directly with the merchant; catalog shows estimated value only.
 
 ### Order references (operational IDs)
 
@@ -223,7 +227,14 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 | Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
 | Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, audit export (`POST /audit-logs/export`, `GET .../exports/:id`, `GET .../download`), staff management, `GET /merchants/:merchantId/events` (SSE) |
 
-Customer guest ordering stays public on catalog and order create.
+Customer guest ordering stays public on catalog and order create. **No customer auth routes** — phone number is collected on order create only.
+
+### Customer data (product policy)
+
+- **Guest-first:** no accounts, passwords, or customer sessions
+- **Phone required** at checkout (product target); name optional
+- Data is **operational only** — not for profiling, loyalty, or ads
+- Future: optional OTP and optional accounts; automatic PII purge after fulfillment — see [customer-data-policy.md](./docs/customer-data-policy.md)
 
 ## Rate limiting (Phase 5B / 9A)
 
@@ -282,13 +293,15 @@ If you change `DATABASE_URL`, ensure it matches the Docker port (`5433`) unless 
 
 ## MVP boundaries
 
-In scope: merchants, products, customer orders, order status, QR pickup verification.
+In scope: standard merchants (convenience, pharmacy pickup desk, laundry counter, small retail), products, **guest-first** customer orders (phone required), order status, QR pickup verification, staff RBAC, audit log and CSV export.
 
-Out of scope: payments, wallets, balances, ledgers, settlements, payment intents, financial custody.
+Out of scope: payments, wallets, balances, ledgers, settlements, payment intents, financial custody, customer accounts, plug onboarding, delivery logistics.
 
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
+- [Market scope](./docs/market-scope.md)
+- [Customer data policy](./docs/customer-data-policy.md)
 - [Order lifecycle](./docs/order-lifecycle.md)
 - [Order references](./docs/order-references.md)
 - [ADR 0001: Wallet-less MVP](./docs/adr/0001-walletless-mvp.md)
@@ -315,3 +328,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 10A**: BullMQ worker foundation (`apps/worker`, placeholder queues)
 - **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)
 - **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)
+- **Phase 10B**: Audit export request queue (API producer)
+- **Phase 10C**: CSV audit export (local storage, merchant download)
+- **Future (documented, not scheduled):** optional customer OTP and accounts (guest remains default); plug vendor type; delivery logistics — see [market-scope.md](./docs/market-scope.md), [customer-data-policy.md](./docs/customer-data-policy.md)

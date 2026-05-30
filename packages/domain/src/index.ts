@@ -41,3 +41,4 @@ export {
   assertSafeRelativeExportPath,
   getExportStorageDir,
 } from "./audit-export-storage.js";
+export { isValidCustomerPhone } from "./customer-contact.js";

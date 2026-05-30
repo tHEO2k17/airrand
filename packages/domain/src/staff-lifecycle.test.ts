@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   canCreateStaffWithRole,
   canDeactivateMerchantUser,
+  canReactivateMerchantUser,
+  canResetStaffPassword,
   canUpdateStaffRole,
 } from "./staff-lifecycle.js";
 
@@ -74,5 +76,41 @@ describe("canUpdateStaffRole", () => {
       activeOwnerCount: 2,
     });
     expect(result.allowed).toBe(true);
+  });
+});
+
+describe("canReactivateMerchantUser", () => {
+  it("blocks reactivating an active account", () => {
+    expect(
+      canReactivateMerchantUser({ targetIsActive: true }).allowed,
+    ).toBe(false);
+  });
+
+  it("allows reactivating an inactive account", () => {
+    expect(
+      canReactivateMerchantUser({ targetIsActive: false }).allowed,
+    ).toBe(true);
+  });
+});
+
+describe("canResetStaffPassword", () => {
+  it("blocks resetting your own password", () => {
+    expect(
+      canResetStaffPassword({
+        actorUserId: "u1",
+        targetUserId: "u1",
+        targetIsActive: true,
+      }).allowed,
+    ).toBe(false);
+  });
+
+  it("blocks resetting password for inactive accounts", () => {
+    expect(
+      canResetStaffPassword({
+        actorUserId: "u1",
+        targetUserId: "u2",
+        targetIsActive: false,
+      }).allowed,
+    ).toBe(false);
   });
 });

@@ -192,3 +192,31 @@ export async function deactivateStaffMember(
   );
   return data.staff;
 }
+
+export async function reactivateStaffMember(
+  merchantId: string,
+  merchantUserId: string,
+): Promise<StaffMemberResponse> {
+  const data = await request<{ staff: StaffMemberResponse }>(
+    `/merchants/${merchantId}/staff/${merchantUserId}/reactivate`,
+    {
+      method: "POST",
+    },
+  );
+  return data.staff;
+}
+
+export async function resetStaffPassword(
+  merchantId: string,
+  merchantUserId: string,
+  temporaryPassword: string,
+): Promise<StaffMemberResponse> {
+  const data = await request<{ staff: StaffMemberResponse }>(
+    `/merchants/${merchantId}/staff/${merchantUserId}/reset-password`,
+    {
+      method: "POST",
+      body: JSON.stringify({ temporaryPassword }),
+    },
+  );
+  return data.staff;
+}

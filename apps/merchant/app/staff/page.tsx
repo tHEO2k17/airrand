@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AssignableStaffRole, StaffMemberResponse } from "@airrand/contracts";
 import { AlertMessage } from "../../components/ui/alert-message";
 import { LoadingState } from "../../components/ui/loading-state";
@@ -15,6 +15,8 @@ import {
   createStaffMember,
   deactivateStaffMember,
   fetchStaff,
+  reactivateStaffMember,
+  resetStaffPassword,
   updateStaffMemberRole,
 } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
@@ -29,6 +31,8 @@ function StaffContent() {
     canCreateStaff,
     canUpdateStaffRole,
     canDeactivateStaff,
+    canReactivateStaff,
+    canResetStaffPassword,
     role: actorRole,
   } = useMerchantPermissions();
 
@@ -103,7 +107,7 @@ function StaffContent() {
       setTemporaryPassword("");
       setNewRole(actorRole === "manager" ? "staff" : "staff");
       setSuccess(
-        `Created ${created.email}. Share the temporary password securely; the user should change it manually when password reset is available.`,
+        `Created ${created.email}. Share the temporary password securely — they must change it on first sign-in.`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create staff member");
@@ -126,6 +130,61 @@ function StaffContent() {
       setSuccess(`Updated role for ${updated.email}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update role");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleReactivate(member: StaffMemberResponse) {
+    if (!merchantId || !canReactivateStaff) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updated = await reactivateStaffMember(merchantId, member.id);
+      setStaff((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+      setSuccess(`Reactivated ${updated.email}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reactivate staff member");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleResetPassword(member: StaffMemberResponse) {
+    if (!merchantId || !canResetStaffPassword) {
+      return;
+    }
+
+    const temporaryPassword = window.prompt(
+      `Set a new temporary password for ${member.email} (min 8 characters):`,
+    );
+    if (!temporaryPassword) {
+      return;
+    }
+    if (temporaryPassword.length < 8) {
+      setError("Temporary password must be at least 8 characters.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const updated = await resetStaffPassword(
+        merchantId,
+        member.id,
+        temporaryPassword,
+      );
+      setStaff((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+      setSuccess(
+        `Password reset for ${updated.email}. Share the temporary password out of band.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset password");
     } finally {
       setSaving(false);
     }
@@ -184,7 +243,7 @@ function StaffContent() {
   return (
     <PageShell
       title="Staff"
-      description="Invite staff with a temporary password. Email delivery is not enabled yet — share credentials out of band."
+      description="Invite staff with a temporary password. New users must change it on first sign-in. Share credentials out of band — email is not enabled yet."
     >
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {success ? <AlertMessage variant="success" message={success} /> : null}
@@ -288,25 +347,69 @@ function StaffContent() {
                         formatRoleLabel(member.role)
                       )}
                     </td>
-                    <td>{member.isActive ? "Active" : "Inactive"}</td>
+                    <td>
+                      {member.isActive ? "Active" : "Inactive"}
+                      {member.isActive && member.mustChangePassword ? (
+                        <span className="pos-muted"> · Must change password</span>
+                      ) : null}
+                    </td>
                     <td>
                       {member.lastLoginAt
                         ? formatDateTime(member.lastLoginAt)
                         : "Never"}
                     </td>
-                    <td>
-                      {canDeactivateStaff && member.isActive && !isSelf ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          disabled={saving || member.role === "owner"}
-                          onClick={() => void handleDeactivate(member)}
-                        >
-                          Deactivate
-                        </Button>
-                      ) : (
-                        "—"
-                      )}
+                    <td className="pos-table-actions">
+                      {(() => {
+                        const actions: ReactNode[] = [];
+                        if (canReactivateStaff && !member.isActive) {
+                          actions.push(
+                            <Button
+                              key="reactivate"
+                              type="button"
+                              variant="secondary"
+                              disabled={saving}
+                              onClick={() => void handleReactivate(member)}
+                            >
+                              Reactivate
+                            </Button>,
+                          );
+                        }
+                        if (
+                          canResetStaffPassword &&
+                          member.isActive &&
+                          !isSelf &&
+                          member.role !== "owner"
+                        ) {
+                          actions.push(
+                            <Button
+                              key="reset"
+                              type="button"
+                              variant="secondary"
+                              disabled={saving}
+                              onClick={() => void handleResetPassword(member)}
+                            >
+                              Reset password
+                            </Button>,
+                          );
+                        }
+                        if (canDeactivateStaff && member.isActive && !isSelf) {
+                          actions.push(
+                            <Button
+                              key="deactivate"
+                              type="button"
+                              variant="secondary"
+                              disabled={saving || member.role === "owner"}
+                              onClick={() => void handleDeactivate(member)}
+                            >
+                              Deactivate
+                            </Button>,
+                          );
+                        }
+                        if (actions.length === 0) {
+                          return "—";
+                        }
+                        return actions;
+                      })()}
                     </td>
                   </tr>
                 );

@@ -11,6 +11,7 @@ import type { RealtimeEventMessage } from "../lib/realtime/types.js";
 import { assertCustomerSafeRealtimePayload } from "../lib/realtime/sanitize.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
+import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
 
 const HEARTBEAT_MS = 28_000;
 
@@ -19,6 +20,7 @@ export const eventsRoutes = new Hono();
 eventsRoutes.get(
   "/:merchantId/events",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("order:view"),
   async (c) => {
     const merchantId = c.req.param("merchantId");

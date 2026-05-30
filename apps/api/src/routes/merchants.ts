@@ -42,6 +42,7 @@ import { getMerchantActor } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
+import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
 import { staffRoutes } from "./staff.js";
 import { eventsRoutes } from "./events.js";
 import {
@@ -99,6 +100,7 @@ merchantsRoutes.get("/:merchantId/products", async (c) => {
 merchantsRoutes.post(
   "/:merchantId/products",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("product:create"),
   zValidator("json", createProductSchema),
   async (c) => {
@@ -139,6 +141,7 @@ merchantsRoutes.post(
 merchantsRoutes.patch(
   "/:merchantId/products/:productId",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("product:update"),
   zValidator("json", updateProductSchema),
   async (c) => {
@@ -312,6 +315,7 @@ merchantsRoutes.post(
 merchantsRoutes.get(
   "/:merchantId/orders",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("order:view"),
   async (c) => {
   try {
@@ -436,6 +440,7 @@ merchantsRoutes.get("/:merchantId/orders/:orderId/status", async (c) => {
 merchantsRoutes.post(
   "/:merchantId/orders/:orderId/pickup/verify",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("pickup:verify"),
   zValidator("json", pickupVerifyRequestSchema),
   async (c) => {
@@ -533,6 +538,7 @@ merchantsRoutes.post(
 merchantsRoutes.patch(
   "/:merchantId/orders/:orderId/status",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("order:update_status"),
   zValidator("json", updateOrderStatusSchema),
   async (c) => {
@@ -616,6 +622,7 @@ merchantsRoutes.patch(
 merchantsRoutes.get(
   "/:merchantId/audit-logs",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("audit_log:view"),
   async (c) => {
   try {

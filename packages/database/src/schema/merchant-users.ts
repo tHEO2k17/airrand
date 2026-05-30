@@ -23,6 +23,7 @@ export const merchantUsers = pgTable(
     role: merchantUserRoleEnum("role").notNull().default("staff"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     isActive: boolean("is_active").notNull().default(true),
+    mustChangePassword: boolean("must_change_password").notNull().default(false),
     invitedAt: timestamp("invited_at", { withTimezone: true }),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     createdByMerchantUserId: uuid("created_by_merchant_user_id"),

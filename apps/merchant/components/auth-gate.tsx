@@ -6,13 +6,15 @@ import { LoadingState } from "./ui/loading-state";
 import { useAuth } from "./auth-context";
 
 const PUBLIC_PATHS = ["/login"];
+const PASSWORD_CHANGE_PATH = "/change-password";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { token, loading } = useAuth();
+  const { token, loading, mustChangePassword } = useAuth();
 
   const isPublic = PUBLIC_PATHS.includes(pathname);
+  const isPasswordChange = pathname === PASSWORD_CHANGE_PATH;
 
   useEffect(() => {
     if (loading) {
@@ -24,10 +26,15 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (token && pathname === "/login") {
-      router.replace("/");
+    if (token && mustChangePassword && !isPasswordChange) {
+      router.replace(PASSWORD_CHANGE_PATH);
+      return;
     }
-  }, [isPublic, loading, pathname, router, token]);
+
+    if (token && pathname === "/login") {
+      router.replace(mustChangePassword ? PASSWORD_CHANGE_PATH : "/");
+    }
+  }, [isPasswordChange, isPublic, loading, mustChangePassword, pathname, router, token]);
 
   if (loading) {
     return <LoadingState label="Checking session…" />;
@@ -35,6 +42,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!token && !isPublic) {
     return <LoadingState label="Redirecting to login…" />;
+  }
+
+  if (token && mustChangePassword && !isPasswordChange) {
+    return <LoadingState label="Password change required…" />;
   }
 
   if (token && pathname === "/login") {

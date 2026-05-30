@@ -1,5 +1,6 @@
 import {
   createStaffRequestSchema,
+  resetStaffPasswordRequestSchema,
   updateStaffRoleRequestSchema,
 } from "@airrand/contracts";
 import { hashPassword } from "@airrand/auth";
@@ -11,6 +12,8 @@ import {
 import {
   canCreateStaffWithRole,
   canDeactivateMerchantUser,
+  canReactivateMerchantUser,
+  canResetStaffPassword,
   canUpdateStaffRole,
 } from "@airrand/domain";
 import { zValidator } from "@hono/zod-validator";
@@ -23,12 +26,14 @@ import { jsonError, jsonOk } from "../lib/response.js";
 import { toStaffMemberResponse } from "../lib/staff-mapper.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
+import { requirePasswordChangeComplete } from "../middleware/require-password-change-complete.js";
 
 export const staffRoutes = new Hono();
 
 staffRoutes.get(
   "/:merchantId/staff",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("staff:view"),
   async (c) => {
     try {
@@ -51,6 +56,7 @@ staffRoutes.get(
 staffRoutes.post(
   "/:merchantId/staff",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("staff:create"),
   zValidator("json", createStaffRequestSchema),
   async (c) => {
@@ -96,6 +102,7 @@ staffRoutes.post(
           passwordHash,
           role: body.role,
           isActive: true,
+          mustChangePassword: true,
           invitedAt: now,
           createdByMerchantUserId: auth.merchantUserId,
           createdAt: now,
@@ -129,6 +136,7 @@ staffRoutes.post(
 staffRoutes.patch(
   "/:merchantId/staff/:merchantUserId/role",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("staff:update_role"),
   zValidator("json", updateStaffRoleRequestSchema),
   async (c) => {
@@ -208,6 +216,7 @@ staffRoutes.patch(
 staffRoutes.post(
   "/:merchantId/staff/:merchantUserId/deactivate",
   requireMerchantAuth(),
+  requirePasswordChangeComplete(),
   requireMerchantPermission("staff:deactivate"),
   async (c) => {
     try {
@@ -272,6 +281,159 @@ staffRoutes.post(
           merchantUserId: updated.id,
           email: updated.email,
           role: updated.role,
+        },
+      });
+
+      return jsonOk(c, { staff: toStaffMemberResponse(updated) });
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+staffRoutes.post(
+  "/:merchantId/staff/:merchantUserId/reactivate",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("staff:reactivate"),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchantUserId = c.req.param("merchantUserId");
+
+      const [target] = await db
+        .select()
+        .from(merchantUsers)
+        .where(
+          and(
+            eq(merchantUsers.id, merchantUserId),
+            eq(merchantUsers.merchantId, merchantId),
+          ),
+        )
+        .limit(1);
+
+      if (!target) {
+        return jsonError(c, "NOT_FOUND", "Staff member not found", 404);
+      }
+
+      const reactivateCheck = canReactivateMerchantUser({
+        targetIsActive: target.isActive,
+      });
+
+      if (!reactivateCheck.allowed) {
+        return jsonError(
+          c,
+          "forbidden",
+          reactivateCheck.reason ?? "Not allowed",
+          403,
+        );
+      }
+
+      const now = new Date();
+      const [updated] = await db
+        .update(merchantUsers)
+        .set({
+          isActive: true,
+          deactivatedAt: null,
+          updatedAt: now,
+        })
+        .where(eq(merchantUsers.id, target.id))
+        .returning();
+
+      if (!updated) {
+        return jsonError(c, "INTERNAL_ERROR", "Failed to reactivate staff member", 500);
+      }
+
+      const actor = getMerchantActor(c);
+      await insertAuditLogSafe(db, {
+        merchantId,
+        ...actor,
+        action: AUDIT_ACTIONS.STAFF_REACTIVATED,
+        metadata: {
+          merchantUserId: updated.id,
+          email: updated.email,
+          role: updated.role,
+        },
+      });
+
+      return jsonOk(c, { staff: toStaffMemberResponse(updated) });
+    } catch (error) {
+      return handleRouteError(c, error);
+    }
+  },
+);
+
+staffRoutes.post(
+  "/:merchantId/staff/:merchantUserId/reset-password",
+  requireMerchantAuth(),
+  requirePasswordChangeComplete(),
+  requireMerchantPermission("staff:reset_password"),
+  zValidator("json", resetStaffPasswordRequestSchema),
+  async (c) => {
+    try {
+      const merchantId = c.req.param("merchantId");
+      const merchantUserId = c.req.param("merchantUserId");
+      const body = c.req.valid("json");
+      const auth = getMerchantAuth(c)!;
+
+      const [target] = await db
+        .select()
+        .from(merchantUsers)
+        .where(
+          and(
+            eq(merchantUsers.id, merchantUserId),
+            eq(merchantUsers.merchantId, merchantId),
+          ),
+        )
+        .limit(1);
+
+      if (!target) {
+        return jsonError(c, "NOT_FOUND", "Staff member not found", 404);
+      }
+
+      if (target.role === "owner") {
+        return jsonError(
+          c,
+          "forbidden",
+          "Owner passwords cannot be reset through staff management.",
+          403,
+        );
+      }
+
+      const resetCheck = canResetStaffPassword({
+        actorUserId: auth.merchantUserId,
+        targetUserId: target.id,
+        targetIsActive: target.isActive,
+      });
+
+      if (!resetCheck.allowed) {
+        return jsonError(c, "forbidden", resetCheck.reason ?? "Not allowed", 403);
+      }
+
+      const now = new Date();
+      const passwordHash = await hashPassword(body.temporaryPassword);
+      const [updated] = await db
+        .update(merchantUsers)
+        .set({
+          passwordHash,
+          mustChangePassword: true,
+          updatedAt: now,
+        })
+        .where(eq(merchantUsers.id, target.id))
+        .returning();
+
+      if (!updated) {
+        return jsonError(c, "INTERNAL_ERROR", "Failed to reset password", 500);
+      }
+
+      const actor = getMerchantActor(c);
+      await insertAuditLogSafe(db, {
+        merchantId,
+        ...actor,
+        action: AUDIT_ACTIONS.STAFF_PASSWORD_RESET,
+        metadata: {
+          merchantUserId: updated.id,
+          email: updated.email,
         },
       });
 

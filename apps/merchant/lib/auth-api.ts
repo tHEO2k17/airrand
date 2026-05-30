@@ -1,4 +1,6 @@
 import type {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   MerchantAuthResponse,
   MerchantLoginInput,
   MerchantMeResponse,
@@ -56,4 +58,18 @@ export async function logoutMerchant(token: string | null): Promise<void> {
 
 export async function fetchMerchantMe(token: string): Promise<MerchantMeResponse> {
   return authRequest<MerchantMeResponse>("/auth/merchant/me", undefined, token);
+}
+
+export async function changeMerchantPassword(
+  input: ChangePasswordRequest,
+  token: string,
+): Promise<ChangePasswordResponse> {
+  return authRequest<ChangePasswordResponse>(
+    "/auth/merchant/change-password",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
 }

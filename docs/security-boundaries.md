@@ -85,18 +85,21 @@ Returns `429` with `rate_limited` error code.
 - Redis pub/sub shares events across API replicas when `REDIS_URL` is set; otherwise in-memory only (single-instance).
 - Clients fall back to HTTP polling if SSE disconnects.
 
-## Staff lifecycle (Phase 9B)
+## Staff lifecycle (Phase 9B / 9E)
 
 - Owners/managers can create staff with a **temporary password** (Argon2-hashed server-side). No email is sent — credentials must be shared manually.
-- No invite tokens, no password reset, no reactivation UI in this phase.
-- Managers cannot create owners, change roles, or deactivate users.
+- New staff accounts have `must_change_password` until they set a new password via `POST /auth/merchant/change-password`.
+- Owners can **reactivate** inactive staff and **reset passwords** (new temporary password + forced change). Owner accounts cannot be reset through staff management.
+- Managers cannot create owners, change roles, deactivate, reactivate, or reset passwords.
 - The last active **owner** cannot be deactivated; users cannot deactivate themselves.
+- Protected merchant routes return `403 PASSWORD_CHANGE_REQUIRED` until the password is changed (auth `me`, `change-password`, and `logout` remain available).
 - `password_hash` is never returned from staff APIs; only safe profile fields are exposed.
-- Audit events: `staff.created`, `staff.role_updated`, `staff.deactivated`.
+- Audit events: `staff.created`, `staff.role_updated`, `staff.deactivated`, `staff.reactivated`, `staff.password_reset`, `staff.password_changed`.
+- No email invites, no password-reset tokens, no BullMQ — out-of-band credential sharing only.
 
-## Authentication limitations (Phase 6A)
+## Authentication limitations (Phase 6A / 9E)
 
-- No MFA, no account lockout beyond rate limits, no password reset flow (staff must change passwords manually when that feature exists).
+- No MFA, no account lockout beyond rate limits, no email-based password reset.
 - Demo seed credentials (`owner@demo-cafe.test` / `ChangeMe123!`) are **local-only** — disable or rotate before any shared staging.
 - Session tokens are bearer-equivalent if leaked from `localStorage`.
 - Fine-grained RBAC (`owner` | `manager` | `staff`) is enforced on protected merchant routes (Phase 8B).

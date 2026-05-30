@@ -1233,6 +1233,12 @@
   border-bottom: 1px solid var(--pos-border);
 }
 
+.pos-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pos-space-2);
+}
+
 .pos-split {
   display: grid;
   grid-template-columns: 1fr;

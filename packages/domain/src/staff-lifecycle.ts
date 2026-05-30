@@ -63,3 +63,35 @@ export function canUpdateStaffRole(input: {
 
   return { allowed: true };
 }
+
+export function canReactivateMerchantUser(input: {
+  targetIsActive: boolean;
+}): { allowed: boolean; reason?: string } {
+  if (input.targetIsActive) {
+    return { allowed: false, reason: "This account is already active." };
+  }
+
+  return { allowed: true };
+}
+
+export function canResetStaffPassword(input: {
+  actorUserId: string;
+  targetUserId: string;
+  targetIsActive: boolean;
+}): { allowed: boolean; reason?: string } {
+  if (input.actorUserId === input.targetUserId) {
+    return {
+      allowed: false,
+      reason: "Use change password for your own account.",
+    };
+  }
+
+  if (!input.targetIsActive) {
+    return {
+      allowed: false,
+      reason: "Reactivate the account before resetting its password.",
+    };
+  }
+
+  return { allowed: true };
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { MerchantMeResponse } from "@airrand/contracts";
+import type { MerchantMeResponse, MerchantUserResponse } from "@airrand/contracts";
 import {
   createContext,
   useCallback,
@@ -18,11 +18,13 @@ interface AuthContextValue {
   merchant: MerchantMeResponse["merchant"] | null;
   merchantId: string | null;
   token: string | null;
+  mustChangePassword: boolean;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  applyPasswordChange: (user: MerchantUserResponse) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,6 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMerchant(session.merchant);
     setToken(sessionToken);
     setAuthToken(sessionToken);
+  }, []);
+
+  const applyPasswordChange = useCallback((nextUser: MerchantUserResponse) => {
+    setUser(nextUser);
   }, []);
 
   const refreshSession = useCallback(async () => {
@@ -105,13 +111,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       merchant,
       merchantId: merchant?.id ?? null,
       token,
+      mustChangePassword: user?.mustChangePassword ?? false,
       loading,
       error,
       login,
       logout,
       refreshSession,
+      applyPasswordChange,
     }),
-    [user, merchant, token, loading, error, login, logout, refreshSession],
+    [
+      user,
+      merchant,
+      token,
+      loading,
+      error,
+      login,
+      logout,
+      refreshSession,
+      applyPasswordChange,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

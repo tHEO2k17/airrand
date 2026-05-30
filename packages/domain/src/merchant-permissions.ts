@@ -11,6 +11,8 @@ export const MERCHANT_PERMISSION_ACTIONS = [
   "staff:create",
   "staff:update_role",
   "staff:deactivate",
+  "staff:reactivate",
+  "staff:reset_password",
 ] as const;
 
 export type MerchantPermissionAction =
@@ -25,6 +27,8 @@ const STAFF_ALLOWED_ACTIONS: ReadonlySet<MerchantPermissionAction> = new Set([
 const MANAGER_DENIED_ACTIONS: ReadonlySet<MerchantPermissionAction> = new Set([
   "staff:update_role",
   "staff:deactivate",
+  "staff:reactivate",
+  "staff:reset_password",
 ]);
 
 export function merchantRoleCan(

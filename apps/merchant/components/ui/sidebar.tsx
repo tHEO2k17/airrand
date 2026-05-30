@@ -3,6 +3,7 @@
 import {
   ClipboardList,
   LayoutDashboard,
+  KeyRound,
   LogOut,
   Package,
   QrCode,
@@ -90,6 +91,13 @@ export function Sidebar() {
       </nav>
 
       <div className="pos-sidebar__footer">
+        <Link
+          href="/change-password"
+          className={`pos-sidebar__link ${pathname === "/change-password" ? "is-active" : ""}`}
+        >
+          <KeyRound size={20} strokeWidth={1.75} aria-hidden />
+          <span className="pos-sidebar__link-label">Change password</span>
+        </Link>
         <button
           type="button"
           className="pos-sidebar__link pos-sidebar__logout"

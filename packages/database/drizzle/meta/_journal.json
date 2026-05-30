@@ -43,6 +43,13 @@
       "when": 1780135800976,
       "tag": "0005_romantic_invisible_woman",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780136236523,
+      "tag": "0006_majestic_ted_forrester",
+      "breakpoints": true
     }
   ]
 }

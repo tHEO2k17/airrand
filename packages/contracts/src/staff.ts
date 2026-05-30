@@ -12,6 +12,7 @@ export const staffMemberResponseSchema = z.object({
   displayName: z.string().nullable(),
   role: merchantStaffRoleSchema,
   isActive: z.boolean(),
+  mustChangePassword: z.boolean(),
   lastLoginAt: z.string().datetime().nullable(),
   invitedAt: z.string().datetime().nullable(),
   deactivatedAt: z.string().datetime().nullable(),
@@ -60,3 +61,17 @@ export const deactivateStaffResponseSchema = z.object({
 });
 
 export type DeactivateStaffResponse = z.infer<typeof deactivateStaffResponseSchema>;
+
+export const reactivateStaffResponseSchema = z.object({
+  staff: staffMemberResponseSchema,
+});
+
+export type ReactivateStaffResponse = z.infer<typeof reactivateStaffResponseSchema>;
+
+export const resetStaffPasswordResponseSchema = z.object({
+  staff: staffMemberResponseSchema,
+});
+
+export type ResetStaffPasswordResponse = z.infer<
+  typeof resetStaffPasswordResponseSchema
+>;

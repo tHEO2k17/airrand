@@ -16,6 +16,8 @@ export {
   canCreateStaffWithRole,
   canDeactivateMerchantUser,
   canUpdateStaffRole,
+  canReactivateMerchantUser,
+  canResetStaffPassword,
 } from "./staff-lifecycle.js";
 export {
   ORDER_REFERENCE_PREFIX,

@@ -175,19 +175,23 @@ Staff sign in at the merchant app **/login**. Sessions use HMAC-signed tokens (A
 | Create staff | Yes | Yes (staff only) | No |
 | Update staff roles | Yes | No | No |
 | Deactivate staff | Yes | No | No |
+| Reactivate staff | Yes | No | No |
+| Reset staff password | Yes | No | No |
 
 The API returns `403` with `{ "error": { "code": "forbidden", "message": "You do not have permission to perform this action." } }` when a role is not allowed. The merchant UI hides or disables controls staff cannot use (for example, product edits, Staff, and the Audit nav item).
 
-### Staff management (Phase 9B)
+### Staff management (Phase 9B / 9E)
 
-Owners and managers can open **Staff** (`/staff`) to list accounts. Owners may create **manager** or **staff** users; managers may create **staff** only. New accounts receive a **temporary password** you must share out of band — there is no email invite or password-reset flow yet.
+Owners and managers can open **Staff** (`/staff`) to list accounts. Owners may create **manager** or **staff** users; managers may create **staff** only. New accounts receive a **temporary password** you must share out of band — there is no email delivery yet.
 
-- Owners can change roles (manager ↔ staff) and deactivate users.
-- Managers cannot change roles or deactivate users.
-- You cannot deactivate yourself or the last active **owner**.
+- New staff must **change password on first sign-in** (`mustChangePassword`).
+- Owners can change roles (manager ↔ staff), deactivate, **reactivate**, and **reset passwords** (sets a new temporary password + forced change).
+- Managers cannot change roles, deactivate, reactivate, or reset passwords.
+- You cannot deactivate yourself or the last active **owner**. Owner passwords cannot be reset via staff management.
+- Any signed-in user can change their own password at **Change password** (`/change-password`).
 - Demo seed passwords remain for local use only; rotate or disable before shared staging.
 
-Protected API: `GET/POST /merchants/:merchantId/staff`, `PATCH .../role`, `POST .../deactivate`.
+Protected API: `GET/POST /merchants/:merchantId/staff`, `PATCH .../role`, `POST .../deactivate`, `POST .../reactivate`, `POST .../reset-password`, `POST /auth/merchant/change-password`.
 
 The merchant app stores the session token in `localStorage` and sends `Authorization: Bearer …` on protected API calls. The API also sets an HttpOnly `airrand_session` cookie on login for same-site deployments.
 
@@ -196,7 +200,7 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 | Access | Routes |
 |--------|--------|
 | Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
-| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management, `GET /merchants/:merchantId/events` (SSE) |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, `POST /auth/merchant/change-password`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management, `GET /merchants/:merchantId/events` (SSE) |
 
 Customer guest ordering stays public on catalog and order create.
 
@@ -285,5 +289,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 8A–8C**: Order status polling, merchant RBAC, responsive layout
 - **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)
 - **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)
+- **Phase 9E**: Merchant account lifecycle (forced password change, reactivate, owner password reset)
 - **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)
 - **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)

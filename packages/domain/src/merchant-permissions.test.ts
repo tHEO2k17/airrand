@@ -13,11 +13,15 @@ describe("merchantRoleCan", () => {
     }
   });
 
-  it("allows manager all actions except staff role updates and deactivation", () => {
+  it("allows manager all actions except owner-only staff lifecycle", () => {
+    const ownerOnly: typeof allActions[number][] = [
+      "staff:update_role",
+      "staff:deactivate",
+      "staff:reactivate",
+      "staff:reset_password",
+    ];
     for (const action of allActions) {
-      const expected =
-        action !== "staff:update_role" && action !== "staff:deactivate";
-      expect(merchantRoleCan("manager", action)).toBe(expected);
+      expect(merchantRoleCan("manager", action)).toBe(!ownerOnly.includes(action));
     }
   });
 

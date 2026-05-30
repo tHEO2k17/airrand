@@ -18,6 +18,7 @@ export const merchantUserResponseSchema = z.object({
   displayName: z.string().nullable(),
   role: merchantStaffRoleSchema,
   isActive: z.boolean(),
+  mustChangePassword: z.boolean(),
   lastLoginAt: z.string().datetime().nullable(),
 });
 

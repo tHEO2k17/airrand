@@ -23,6 +23,7 @@ export function toMerchantUserResponse(
     displayName: user.displayName,
     role: user.role,
     isActive: user.isActive,
+    mustChangePassword: user.mustChangePassword,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
   };
 }

@@ -9,6 +9,9 @@ export const AUDIT_ACTIONS = {
   STAFF_CREATED: "staff.created",
   STAFF_ROLE_UPDATED: "staff.role_updated",
   STAFF_DEACTIVATED: "staff.deactivated",
+  STAFF_REACTIVATED: "staff.reactivated",
+  STAFF_PASSWORD_RESET: "staff.password_reset",
+  STAFF_PASSWORD_CHANGED: "staff.password_changed",
 } as const;
 
 export type AuditTx = Pick<Database, "insert">;

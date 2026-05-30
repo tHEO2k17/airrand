@@ -11,8 +11,10 @@ import { PosHeader } from "../components/pos/pos-header";
 import { ProductGrid } from "../components/pos/product-grid";
 import { AlertMessage } from "../components/ui/alert-message";
 import { LoadingState } from "../components/ui/loading-state";
+import { useAuth } from "../components/auth-context";
 import { useMerchant } from "../components/merchant-context";
 import { useMerchantPermissions } from "../lib/use-merchant-permissions";
+import { useMerchantRealtime } from "../lib/use-merchant-realtime";
 import {
   fetchOrders,
   fetchProducts,
@@ -20,12 +22,9 @@ import {
   updateProduct,
 } from "../lib/api";
 import { isActiveOrderStatus } from "../lib/order-progress";
-import { usePollingRefresh } from "../lib/use-polling-refresh";
-
-const POLL_INTERVAL_MS = 10_000;
-
 function PosConsoleContent() {
   const { merchantId } = useMerchant();
+  const { token } = useAuth();
   const { canUpdateProduct } = useMerchantPermissions();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -81,11 +80,12 @@ function PosConsoleContent() {
     void load();
   }, [load]);
 
-  usePollingRefresh(
-    () => load({ silent: true }),
-    POLL_INTERVAL_MS,
-    Boolean(merchantId) && !loading && !saving,
-  );
+  const { connectionStatus } = useMerchantRealtime({
+    merchantId,
+    token,
+    enabled: Boolean(merchantId) && !loading && !saving,
+    onRefresh: () => load({ silent: true }),
+  });
 
   const activeOrders = useMemo(
     () => orders.filter((o) => isActiveOrderStatus(o.status)),
@@ -151,6 +151,7 @@ function PosConsoleContent() {
               lastUpdated={lastUpdated}
               onRefresh={() => void load({ silent: true })}
               refreshing={refreshing}
+              connectionStatus={connectionStatus}
             />
 
             <section className="pos-section" aria-label="Order line">

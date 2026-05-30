@@ -98,7 +98,7 @@ Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
 
 Wording avoids payment processing: catalog prices and **estimated order value** only; payment is arranged directly with the merchant.
 
-**Polling (no WebSockets):** Customer order status and merchant Order Line / Orders screens refresh on a timer (HTTP polling only). Real-time push is not implemented yet.
+**Realtime (SSE):** Merchant Order Line / Orders use **Server-Sent Events** (`GET /merchants/:merchantId/events`) with automatic **polling fallback** if the stream fails. Customer order status uses `GET /merchants/:merchantId/orders/:orderId/events` (public, customer-safe payloads only). When `REDIS_URL` is set, events fan out across API instances via Redis pub/sub; without Redis, events stay in-process only.
 
 ### Responsive layout (Phase 8C)
 
@@ -191,8 +191,8 @@ The merchant app stores the session token in `localStorage` and sends `Authoriza
 
 | Access | Routes |
 |--------|--------|
-| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `POST /auth/merchant/login` |
-| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management |
+| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `GET /merchants/:merchantId/orders/:orderId/status`, `GET /merchants/:merchantId/orders/:orderId/events`, `POST /auth/merchant/login` |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs`, staff management, `GET /merchants/:merchantId/events` (SSE) |
 
 Customer guest ordering stays public on catalog and order create.
 
@@ -280,3 +280,4 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 8A–8C**: Order status polling, merchant RBAC, responsive layout
 - **Phase 9A**: Redis rate limits, request IDs, structured logging, readiness (DB/Redis/secrets)
 - **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)
+- **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)

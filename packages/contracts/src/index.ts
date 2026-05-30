@@ -7,3 +7,4 @@ export * from "./pickup.js";
 export * from "./merchant.js";
 export * from "./audit.js";
 export * from "./staff.js";
+export * from "./realtime.js";

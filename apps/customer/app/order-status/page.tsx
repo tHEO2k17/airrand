@@ -17,8 +17,14 @@ import {
   buildOrderStatusTimeline,
   isTerminalOrderStatus,
 } from "../../lib/order-status-timeline";
+import { useOrderRealtime } from "../../lib/use-order-realtime";
+import type { OrderRealtimeConnectionStatus } from "../../lib/use-order-realtime";
 
-const POLL_INTERVAL_MS = 12_000;
+const CONNECTION_LABELS: Record<OrderRealtimeConnectionStatus, string> = {
+  live: "Live updates",
+  reconnecting: "Reconnecting…",
+  polling: "Polling every 12 seconds",
+};
 
 function pickupInstructions(status: string): string {
   switch (status) {
@@ -88,18 +94,16 @@ export default function OrderStatusPage() {
     void loadStatus().finally(() => setLoading(false));
   }, [hydrated, canFetch, loadStatus]);
 
-  const pollingEnabled =
-    canFetch && status !== null && !isTerminalOrderStatus(status.status);
+  const realtimeEnabled =
+    canFetch && (status === null || !isTerminalOrderStatus(status.status));
 
-  useEffect(() => {
-    if (!pollingEnabled) {
-      return;
-    }
-    const id = window.setInterval(() => {
-      void loadStatus();
-    }, POLL_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [pollingEnabled, loadStatus]);
+  const { connectionStatus } = useOrderRealtime({
+    merchantId: activeMerchantId,
+    orderId: activeOrderId,
+    enabled: realtimeEnabled,
+    onStatus: (next) => setStatus(next),
+    onPoll: () => loadStatus(),
+  });
 
   const timelineSteps = useMemo(
     () => buildOrderStatusTimeline(status?.status ?? "placed"),
@@ -228,9 +232,9 @@ export default function OrderStatusPage() {
             </Link>
           </Surface>
 
-          {pollingEnabled ? (
+          {realtimeEnabled ? (
             <p className="store-total-hint store-polling-hint">
-              Status refreshes automatically every few seconds.
+              {CONNECTION_LABELS[connectionStatus]}
             </p>
           ) : null}
         </>

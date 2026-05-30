@@ -136,7 +136,8 @@ docker build -f apps/customer/Dockerfile \
 
 - **Rate limits** use Redis fixed-window counters when `REDIS_URL` is set. If Redis is down or unreachable, the API **falls back to in-memory limits per process** and logs a one-time JSON warning (`rate_limit_fallback`). Limits are not shared across replicas during fallback.
 - **Sessions** are stateless signed tokens; logout clears client storage/cookie but does not require server session store.
-- **Redis** is used for distributed rate limiting only (no job queues in this phase).
+- **Redis** is used for distributed rate limiting and realtime event pub/sub (no job queues in this phase).
+- **Realtime** uses SSE; merchant clients need a valid session (`Authorization: Bearer`). Customer order SSE is public but scoped to a single order id.
 
 ### Troubleshooting
 

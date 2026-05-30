@@ -72,6 +72,14 @@ Middleware enforces `session.merchantId === route :merchantId`.
 
 Returns `429` with `rate_limited` error code.
 
+## Realtime streams (Phase 9C)
+
+- **Merchant SSE** (`GET /merchants/:merchantId/events`) requires staff auth. Payloads may include operational order/product data but never passwords, session tokens, pickup nonces, or QR signing material.
+- **Customer order SSE** (`GET /merchants/:merchantId/orders/:orderId/events`) is **public** (no customer auth). Only customer-safe order status fields are published — same boundary as `GET .../status` (no PII, no nonce, no internal tokens).
+- Events: `order.created`, `order.status_changed`, `order.pickup_verified`, `product.created`, `product.updated`.
+- Redis pub/sub shares events across API replicas when `REDIS_URL` is set; otherwise in-memory only (single-instance).
+- Clients fall back to HTTP polling if SSE disconnects.
+
 ## Staff lifecycle (Phase 9B)
 
 - Owners/managers can create staff with a **temporary password** (Argon2-hashed server-side). No email is sent — credentials must be shared manually.

@@ -10,17 +10,17 @@ import { Surface } from "../../components/ui/surface";
 import { StatusBadge } from "../../components/ui/badge";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
+import { useAuth } from "../../components/auth-context";
 import { useMerchant } from "../../components/merchant-context";
 import { fetchOrders, updateOrderStatus } from "../../lib/api";
 import { formatDateTime, formatMoney } from "../../lib/format";
 import { PollingToolbar } from "../../components/polling-toolbar";
 import { getAvailableOrderActions } from "../../lib/order-actions";
-import { usePollingRefresh } from "../../lib/use-polling-refresh";
-
-const POLL_INTERVAL_MS = 10_000;
+import { useMerchantRealtime } from "../../lib/use-merchant-realtime";
 
 function OrdersContent() {
   const { merchantId } = useMerchant();
+  const { token } = useAuth();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,11 +63,12 @@ function OrdersContent() {
     void load();
   }, [load]);
 
-  usePollingRefresh(
-    () => load({ silent: true }),
-    POLL_INTERVAL_MS,
-    Boolean(merchantId) && !loading && !saving,
-  );
+  const { connectionStatus } = useMerchantRealtime({
+    merchantId,
+    token,
+    enabled: Boolean(merchantId) && !loading && !saving,
+    onRefresh: () => load({ silent: true }),
+  });
 
   async function handleStatusChange(orderId: string, status: OrderStatus) {
     if (!merchantId) {
@@ -99,6 +100,7 @@ function OrdersContent() {
         lastUpdated={lastUpdated}
         onRefresh={() => void load({ silent: true })}
         refreshing={refreshing}
+        connectionStatus={connectionStatus}
       />
 
       <Surface>

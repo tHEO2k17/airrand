@@ -40,10 +40,19 @@ import { jsonError, jsonOk } from "../lib/response.js";
 import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 import { requireMerchantPermission } from "../middleware/merchant-permission.js";
 import { staffRoutes } from "./staff.js";
+import { eventsRoutes } from "./events.js";
+import {
+  publishOrderCreatedRealtime,
+  publishOrderPickupVerifiedRealtime,
+  publishOrderStatusChangedRealtime,
+  publishProductCreatedRealtime,
+  publishProductUpdatedRealtime,
+} from "../lib/realtime/publish.js";
 
 export const merchantsRoutes = new Hono();
 
 merchantsRoutes.route("/", staffRoutes);
+merchantsRoutes.route("/", eventsRoutes);
 
 merchantsRoutes.get("/", async (c) => {
   try {
@@ -113,6 +122,10 @@ merchantsRoutes.post(
         return jsonError(c, "CREATE_FAILED", "Failed to create product", 500);
       }
 
+      void publishProductCreatedRealtime(merchantId, product).catch((error) => {
+        console.error("Realtime publish failed:", error);
+      });
+
       return jsonOk(c, toProductResponse(product), 201);
     } catch (error) {
       return handleRouteError(c, error);
@@ -149,6 +162,10 @@ merchantsRoutes.patch(
       if (!product) {
         return jsonError(c, "PRODUCT_NOT_FOUND", "Product not found", 404);
       }
+
+      void publishProductUpdatedRealtime(merchantId, product).catch((error) => {
+        console.error("Realtime publish failed:", error);
+      });
 
       return jsonOk(c, toProductResponse(product));
     } catch (error) {
@@ -263,6 +280,12 @@ merchantsRoutes.post(
         issuedAt,
         expiresAt,
       });
+
+      void publishOrderCreatedRealtime(merchant, result.order, result.lines).catch(
+        (error) => {
+          console.error("Realtime publish failed:", error);
+        },
+      );
 
       return jsonOk(
         c,
@@ -427,6 +450,23 @@ merchantsRoutes.post(
 
       const { order, lines } = result;
 
+      const [merchantRow] = await db
+        .select()
+        .from(merchants)
+        .where(eq(merchants.id, merchantId))
+        .limit(1);
+
+      if (merchantRow) {
+        void publishOrderPickupVerifiedRealtime(
+          merchantRow,
+          order,
+          lines,
+          verifiedAt.toISOString(),
+        ).catch((error) => {
+          console.error("Realtime publish failed:", error);
+        });
+      }
+
       return jsonOk(c, {
         order: toOrderResponse(order, lines),
         verifiedAt: verifiedAt.toISOString(),
@@ -501,6 +541,16 @@ merchantsRoutes.patch(
 
       if (!result) {
         return jsonError(c, "ORDER_NOT_FOUND", "Order not found", 404);
+      }
+
+      if (existing.status !== nextStatus) {
+        void publishOrderStatusChangedRealtime(
+          merchant,
+          result.order,
+          result.lines,
+        ).catch((error) => {
+          console.error("Realtime publish failed:", error);
+        });
       }
 
       return jsonOk(c, toOrderResponse(result.order, result.lines));

@@ -9,7 +9,9 @@ Wallet-less commerce orchestration MVP. Merchants manage products and orders; cu
 | `apps/merchant` | Merchant POS / dashboard (Next.js) |
 | `apps/customer` | Customer storefront (Next.js) |
 | `apps/api` | HTTP API (Hono) |
+| `apps/worker` | Background job worker (BullMQ + Redis) |
 | `packages/contracts` | Shared Zod schemas and DTO types |
+| `packages/jobs` | Queue names, job payloads, Redis helpers |
 | `packages/domain` | Order status rules and invariants |
 | `packages/database` | Schema, migrations, DB client |
 | `packages/qr` | Pickup token sign/verify |
@@ -77,7 +79,19 @@ Or all apps:
 pnpm dev
 ```
 
-API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`.
+### Background worker (Phase 10A)
+
+Requires Redis (`REDIS_URL` in root `.env`). The worker has **no HTTP API** — it only consumes BullMQ queues.
+
+```bash
+pnpm worker:dev    # watch mode
+# or after build:
+pnpm worker:start
+```
+
+Queues (placeholders in this phase): `audit.export.requested`, `notification.placeholder`. Producers are not wired from the API yet.
+
+API probes: `GET http://localhost:3003/health` (liveness), `GET http://localhost:3003/ready` (DB, Redis when configured, secrets). Responses include `X-Request-Id`. The worker does not expose `/health` or `/ready`; see [docs/deployment.md](./docs/deployment.md).
 
 Staging smoke test: `./scripts/smoke-staging.sh`
 
@@ -296,5 +310,6 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 9B**: Merchant staff lifecycle (create, role update, deactivate)
 - **Phase 9E**: Merchant account lifecycle (forced password change, reactivate, owner password reset)
 - **Phase 9F**: Session invalidation (`session_version`) and login lockout
+- **Phase 10A**: BullMQ worker foundation (`apps/worker`, placeholder queues)
 - **Phase 9C**: SSE realtime (merchant + customer order streams, Redis pub/sub)
 - **Phase 9D**: Human-friendly order references (`ORD-1001`, sequence-backed)

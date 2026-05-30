@@ -11,7 +11,9 @@
     "db:generate": "pnpm --filter @airrand/database db:generate",
     "db:migrate": "pnpm --filter @airrand/database db:migrate",
     "db:seed": "pnpm --filter @airrand/database db:seed",
-    "smoke": "bash scripts/smoke-staging.sh"
+    "smoke": "bash scripts/smoke-staging.sh",
+    "worker:dev": "pnpm --filter @airrand/worker dev",
+    "worker:start": "pnpm --filter @airrand/worker start"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",

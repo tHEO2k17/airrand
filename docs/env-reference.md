@@ -24,6 +24,7 @@ Used by `apps/api`, `pnpm db:*`, and Docker API containers.
 | `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit fixed window (ms) |
 | `RATE_LIMIT_MAX_READS` | No | `120` | Max GET (read) requests per IP per window |
 | `RATE_LIMIT_MAX_MUTATIONS` | No | `30` | Max POST/PATCH/etc. per IP per window |
+| `WORKER_CONCURRENCY` | No | `5` | BullMQ job concurrency per queue (`apps/worker`) |
 | `CORS_ALLOWED_ORIGINS` | No | `http://localhost:3001,http://localhost:3002` | Comma-separated browser origins allowed to call the API |
 
 ### Deprecated / optional (documentation only)
@@ -96,6 +97,17 @@ Readiness (`GET /ready`) verifies database connectivity, Redis when `REDIS_URL` 
 | `RATE_LIMIT_MAX_MUTATIONS` | Stricter bucket (POST, PATCH, …) |
 
 When `REDIS_URL` is set, counters are shared across API replicas via keys `airrand:rl:{bucket}:{ip}:{windowId}`. On Redis errors or connection failure, the API **falls back to in-memory limits per process** (fail-open for availability, weaker cross-instance enforcement until Redis recovers). A one-time warning is logged to stdout.
+
+---
+
+## Background worker (`apps/worker`)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REDIS_URL` | Yes (worker) | — | BullMQ connection; worker exits on startup if unset |
+| `WORKER_CONCURRENCY` | No | `5` | Concurrent jobs per queue |
+
+The worker does not read `DATABASE_URL` in this phase. Queue names and payload schemas live in `@airrand/jobs`.
 
 ---
 

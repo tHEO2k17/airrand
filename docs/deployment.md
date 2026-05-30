@@ -11,6 +11,7 @@ This document describes how to run airRand in a **staging-style** environment us
 | API (Hono) | 3003 | `apps/api/Dockerfile` |
 | Merchant UI (Next.js) | 3001 | `apps/merchant/Dockerfile` |
 | Customer UI (Next.js) | 3002 | `apps/customer/Dockerfile` |
+| Worker (BullMQ) | _(none — no HTTP)_ | `apps/worker/Dockerfile` |
 
 ## Prerequisites
 
@@ -102,6 +103,19 @@ Readiness checks:
 - **redis** — `PING` when `REDIS_URL` is configured
 - **secrets** — `AUTH_SESSION_SECRET` and `QR_SIGNING_SECRET` present and ≥32 characters
 
+### Background worker (Phase 10A)
+
+| Property | Detail |
+|----------|--------|
+| Process | `apps/worker` — BullMQ consumers only |
+| HTTP | **None** — do not route traffic to the worker |
+| Redis | **Required** — same `REDIS_URL` as the API |
+| Queues | `audit.export.requested`, `notification.placeholder` (placeholder processors) |
+
+**Readiness:** The API `GET /ready` checks Redis for the API process. The worker has no `/ready` endpoint. For staging compose, ensure the `worker` service stays running and logs `worker_started` on boot. If the worker exits, restart it; job backlog will grow in Redis until a worker is available.
+
+**Local dev:** With `docker compose up -d` (Redis on 6379), run `pnpm worker:dev` in a second terminal.
+
 ### Merchant auth hardening (Phase 9F)
 
 - **Session invalidation:** Tokens carry `sessionVersion` from `merchant_users.session_version`. Password change, owner password reset, and deactivation increment the version so older tokens receive `401 SESSION_REVOKED`.
@@ -124,6 +138,7 @@ docker build -f apps/merchant/Dockerfile \
 docker build -f apps/customer/Dockerfile \
   --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.staging.example.com \
   -t airrand-customer .
+docker build -f apps/worker/Dockerfile -t airrand-worker .
 ```
 
 `NEXT_PUBLIC_*` is embedded at **build time** for Next.js. Rebuild merchant/customer images when the public API URL changes.
@@ -131,6 +146,7 @@ docker build -f apps/customer/Dockerfile \
 ## Pre-deploy checklist
 
 - [ ] Postgres reachable; migrations applied
+- [ ] Redis reachable; `worker` service running (staging compose) or `pnpm worker:start`
 - [ ] Secrets rotated from demo defaults; not committed
 - [ ] `CORS_ALLOWED_ORIGINS` lists production/staging browser origins
 - [ ] Redis reachable when `REDIS_URL` is set

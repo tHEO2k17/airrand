@@ -99,6 +99,8 @@ Provider-agnostic **operational** messaging only — not marketing, analytics, p
 
 **No public notification APIs** for customers or merchants in this phase. Audit actions: `notification.queued`, `notification.sent`, `notification.failed`.
 
+**Brand alignment:** In-app notification feedback uses existing `AlertMessage` / `NotificationFeedback` primitives and semantic tokens (success for actions, info for queued jobs). Placeholder SMS/email copy lives in `@airrand/notifications/templates` — operational tone, orange-accent merchant UI unchanged. See [design-system.md](./design-system.md).
+
 ## Packages
 
 | Package | Responsibility |

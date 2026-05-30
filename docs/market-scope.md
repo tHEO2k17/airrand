@@ -33,6 +33,8 @@ Customer UX assumptions:
 
 Designed for low-friction commerce behavior (including mobile-first African markets): minimize steps, avoid account walls, preserve operational traceability for merchants.
 
+**UX consistency:** Customer and merchant apps share the orange accent (`#f97316`), neutral operational surfaces, and semantic alert colors. Operational notifications (Phase 10D) reuse this system — no separate notification brand. See [design-system.md](./design-system.md).
+
 ## Target vendors
 
 airRand serves small and mid-volume pickup-oriented businesses and operators.

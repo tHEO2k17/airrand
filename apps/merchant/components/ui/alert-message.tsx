@@ -1,17 +1,19 @@
-import { AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
-type AlertVariant = "error" | "success" | "info";
+type AlertVariant = "error" | "success" | "info" | "warning";
 
 const variantClass: Record<AlertVariant, string> = {
   error: "pos-alert--error",
   success: "pos-alert--success",
   info: "pos-alert--info",
+  warning: "pos-alert--warning",
 };
 
 const icons = {
   error: AlertCircle,
   success: CheckCircle2,
   info: Info,
+  warning: AlertTriangle,
 };
 
 export function AlertMessage({
@@ -29,3 +31,5 @@ export function AlertMessage({
     </div>
   );
 }
+
+export type { AlertVariant };

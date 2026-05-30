@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AuditExportJobResponse, AuditLogResponse } from "@airrand/contracts";
 import { AlertMessage } from "../../components/ui/alert-message";
+import { NotificationFeedback } from "../../components/ui/notification-feedback";
+import { NOTIFICATION_UI_COPY } from "@airrand/notifications/templates";
 import { Button } from "../../components/ui/button";
 import { LoadingState } from "../../components/ui/loading-state";
 import { MerchantGate } from "../../components/merchant-gate";
@@ -236,10 +238,16 @@ function AuditLogsContent() {
         ) : null}
       </Surface>
       {exportStatus?.status === "completed" ? (
-        <AlertMessage
-          variant="success"
-          message={`Export ready (job ${exportStatus.exportJobId}). Completion notification queued.`}
-        />
+        <>
+          <NotificationFeedback
+            kind="actionSuccess"
+            message={`Export ready (job ${exportStatus.exportJobId}).`}
+          />
+          <NotificationFeedback
+            kind="notificationQueued"
+            message={NOTIFICATION_UI_COPY.exportCompleteQueued}
+          />
+        </>
       ) : null}
       {error ? <AlertMessage variant="error" message={error} /> : null}
       {loading ? <LoadingState /> : null}

@@ -13,6 +13,7 @@
   "dependencies": {
     "@airrand/contracts": "workspace:*",
     "@airrand/domain": "workspace:*",
+    "@airrand/notifications": "workspace:*",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.17.0",
     "next": "^15.3.3",

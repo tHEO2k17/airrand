@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./templates": {
+      "types": "./dist/templates.d.ts",
+      "default": "./dist/templates.js"
     }
   },
   "scripts": {

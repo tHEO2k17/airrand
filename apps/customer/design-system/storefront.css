@@ -312,6 +312,11 @@
   color: var(--store-info);
 }
 
+.store-alert--warning {
+  background: var(--store-accent-soft);
+  color: var(--store-accent-hover);
+}
+
 .store-disclaimer {
   margin: 0;
   padding: var(--store-space-3) var(--store-space-4);

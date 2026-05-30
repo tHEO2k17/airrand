@@ -642,6 +642,11 @@
   color: var(--pos-info);
 }
 
+.pos-alert--warning {
+  background: var(--pos-accent-soft);
+  color: var(--pos-accent-hover);
+}
+
 .pos-order-line {
   display: grid;
   grid-template-columns: 1fr;

@@ -3,6 +3,8 @@
 import { FormEvent, useCallback, useEffect, useState, type ReactNode } from "react";
 import type { AssignableStaffRole, StaffMemberResponse } from "@airrand/contracts";
 import { AlertMessage } from "../../components/ui/alert-message";
+import { NotificationFeedback } from "../../components/ui/notification-feedback";
+import { NOTIFICATION_UI_COPY } from "@airrand/notifications/templates";
 import { LoadingState } from "../../components/ui/loading-state";
 import { MerchantGate } from "../../components/merchant-gate";
 import { PageShell } from "../../components/page-shell";
@@ -41,6 +43,7 @@ function StaffContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [notificationInfo, setNotificationInfo] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -173,6 +176,7 @@ function StaffContent() {
     setSaving(true);
     setError(null);
     setSuccess(null);
+    setNotificationInfo(null);
     try {
       const updated = await resetStaffPassword(
         merchantId,
@@ -181,8 +185,9 @@ function StaffContent() {
       );
       setStaff((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
       setSuccess(
-        `Password reset for ${updated.email}. Share the temporary password out of band. Staff notification queued.`,
+        `Password reset for ${updated.email}. Share the temporary password out of band.`,
       );
+      setNotificationInfo(NOTIFICATION_UI_COPY.staffResetQueued);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reset password");
     } finally {
@@ -245,8 +250,11 @@ function StaffContent() {
       title="Staff"
       description="Invite staff with a temporary password. New users must change it on first sign-in. Share credentials out of band — email is not enabled yet."
     >
-      {error ? <AlertMessage variant="error" message={error} /> : null}
-      {success ? <AlertMessage variant="success" message={success} /> : null}
+      {error ? <NotificationFeedback kind="error" message={error} /> : null}
+      {success ? <NotificationFeedback kind="actionSuccess" message={success} /> : null}
+      {notificationInfo ? (
+        <NotificationFeedback kind="notificationQueued" message={notificationInfo} />
+      ) : null}
 
       {canCreateStaff ? (
         <Surface>

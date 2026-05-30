@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { OrderResponse } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
-import { AlertMessage } from "../../components/ui/alert-message";
+import { NotificationFeedback } from "../../components/ui/notification-feedback";
+import { NOTIFICATION_UI_COPY } from "@airrand/notifications/templates";
 import { LoadingState } from "../../components/ui/loading-state";
 import { Button } from "../../components/ui/button";
 import { Surface } from "../../components/ui/surface";
@@ -26,6 +27,7 @@ function OrdersContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [notificationInfo, setNotificationInfo] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [referenceQuery, setReferenceQuery] = useState("");
@@ -81,9 +83,13 @@ function OrdersContent() {
     setSaving(true);
     setError(null);
     setSuccess(null);
+    setNotificationInfo(null);
     try {
       await updateOrderStatus(merchantId, orderId, status);
-      setSuccess(`Order updated to ${status.replace("_", " ")}.${status === "ready" ? " Pickup notification queued." : ""}`);
+      setSuccess(`Order updated to ${status.replace("_", " ")}.`);
+      setNotificationInfo(
+        status === "ready" ? NOTIFICATION_UI_COPY.orderReadyQueued : null,
+      );
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update order");
@@ -97,8 +103,11 @@ function OrdersContent() {
       title="Orders"
       description="Review incoming orders and move them through fulfillment."
     >
-      {error ? <AlertMessage variant="error" message={error} /> : null}
-      {success ? <AlertMessage variant="success" message={success} /> : null}
+      {error ? <NotificationFeedback kind="error" message={error} /> : null}
+      {success ? <NotificationFeedback kind="actionSuccess" message={success} /> : null}
+      {notificationInfo ? (
+        <NotificationFeedback kind="notificationQueued" message={notificationInfo} />
+      ) : null}
 
       <PollingToolbar
         lastUpdated={lastUpdated}

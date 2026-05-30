@@ -9,7 +9,8 @@ import { OrderLineCards } from "../components/pos/order-line-cards";
 import { OrderLineStats } from "../components/pos/order-line-stats";
 import { PosHeader } from "../components/pos/pos-header";
 import { ProductGrid } from "../components/pos/product-grid";
-import { AlertMessage } from "../components/ui/alert-message";
+import { NotificationFeedback } from "../components/ui/notification-feedback";
+import { NOTIFICATION_UI_COPY } from "@airrand/notifications/templates";
 import { LoadingState } from "../components/ui/loading-state";
 import { useAuth } from "../components/auth-context";
 import { useMerchant } from "../components/merchant-context";
@@ -30,6 +31,7 @@ function PosConsoleContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [notificationInfo, setNotificationInfo] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -104,9 +106,13 @@ function PosConsoleContent() {
     setSaving(true);
     setError(null);
     setSuccess(null);
+    setNotificationInfo(null);
     try {
       await updateOrderStatus(merchantId, orderId, status);
-      setSuccess(`Order updated to ${status.replace("_", " ")}.${status === "ready" ? " Pickup notification queued." : ""}`);
+      setSuccess(`Order updated to ${status.replace("_", " ")}.`);
+      setNotificationInfo(
+        status === "ready" ? NOTIFICATION_UI_COPY.orderReadyQueued : null,
+      );
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update order");
@@ -139,8 +145,11 @@ function PosConsoleContent() {
 
   return (
     <div className="pos-console">
-      {error ? <AlertMessage variant="error" message={error} /> : null}
-      {success ? <AlertMessage variant="success" message={success} /> : null}
+      {error ? <NotificationFeedback kind="error" message={error} /> : null}
+      {success ? <NotificationFeedback kind="actionSuccess" message={success} /> : null}
+      {notificationInfo ? (
+        <NotificationFeedback kind="notificationQueued" message={notificationInfo} />
+      ) : null}
 
       {loading ? (
         <LoadingState label="Loading merchant console…" />

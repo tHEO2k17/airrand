@@ -3,6 +3,7 @@
 import type { OrderResponse } from "@airrand/contracts";
 import type { OrderStatus } from "@airrand/domain";
 import { Check, QrCode } from "lucide-react";
+import { confirmOrderCancel } from "../../lib/order-cancel-confirm";
 import { StatusBadge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { EmptyState } from "../ui/empty-state";
@@ -134,8 +135,7 @@ export function OrderDetailPanel({
               ) : (
                 <Button
                   variant="secondary"
-                  size="sm"
-                  className="pos-btn--block"
+                  className="pos-btn--block pos-btn--fulfillment"
                   disabled={saving || !canApply}
                   onClick={() => onStatusChange(order.id, step.status)}
                 >
@@ -148,15 +148,20 @@ export function OrderDetailPanel({
       </ul>
 
       {cancelAction ? (
-        <Button
-          variant="danger"
-          size="sm"
-          className="pos-btn--block"
-          disabled={saving}
-          onClick={() => onStatusChange(order.id, "cancelled")}
-        >
-          Cancel order
-        </Button>
+        <div className="pos-order-cancel-section">
+          <Button
+            variant="danger"
+            className="pos-btn--block pos-btn--fulfillment"
+            disabled={saving}
+            onClick={() => {
+              if (confirmOrderCancel(order.reference)) {
+                onStatusChange(order.id, "cancelled");
+              }
+            }}
+          >
+            Cancel order
+          </Button>
+        </div>
       ) : null}
 
       {order.status === "ready" && onVerifyPickup ? (

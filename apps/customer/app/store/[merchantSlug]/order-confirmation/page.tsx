@@ -3,24 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
-import { CopyToken } from "../../../../components/copy-token";
-import { PickupQr } from "../../../../components/pickup-qr";
-import { PickupDisclaimer } from "../../../../components/pickup-disclaimer";
+import { OrderConfirmationActions } from "../../../../components/order-confirmation-actions";
 import { Button } from "../../../../components/ui/button";
 import { EmptyState } from "../../../../components/ui/empty-state";
 import { LoadingState } from "../../../../components/ui/loading-state";
-import { OrderConfirmationLiveStatus } from "../../../../components/order-confirmation-live";
 import { Surface } from "../../../../components/ui/surface";
 import { useMerchant } from "../../../../components/merchant-context";
 import {
   readOrderConfirmation,
   type StoredOrderConfirmation,
 } from "../../../../lib/order-confirmation";
-import { formatDateTime } from "../../../../lib/format";
-import {
-  buildStorePath,
-  buildStoreTrackingPath,
-} from "../../../../lib/store-paths";
+import { buildStorePath } from "../../../../lib/store-paths";
 
 export default function StoreOrderConfirmationPage() {
   const { merchantSlug } = useMerchant();
@@ -35,7 +28,7 @@ export default function StoreOrderConfirmationPage() {
   }, [merchantSlug]);
 
   if (!ready) {
-    return <LoadingState label="Loading pickup code…" />;
+    return <LoadingState label="Loading order confirmation…" />;
   }
 
   const storePath = buildStorePath(merchantSlug);
@@ -45,8 +38,8 @@ export default function StoreOrderConfirmationPage() {
       <div className="store-page store-page--centered">
         <Surface>
           <EmptyState
-            title="No pickup code found"
-            description="Place an order from your cart to get a pickup code for this visit."
+            title="No order found for this visit"
+            description="Place an order from your cart to get a tracking link for this shop."
           />
           <Link href={storePath} style={{ display: "block", marginTop: "1rem" }}>
             <Button block>Back to menu</Button>
@@ -56,11 +49,6 @@ export default function StoreOrderConfirmationPage() {
     );
   }
 
-  const trackingPath = buildStoreTrackingPath(
-    merchantSlug,
-    confirmation.reference,
-  );
-
   return (
     <div className="store-page store-page--centered">
       <header className="store-hero">
@@ -69,56 +57,15 @@ export default function StoreOrderConfirmationPage() {
         </div>
         <h1>Reserved for pickup</h1>
         <p>
-          Show this pickup code to the merchant after your order is ready.
+          Your order is in. Save your tracking link to follow progress and get your
+          pickup code when ready.
         </p>
       </header>
 
-      <PickupDisclaimer />
-
-      <Surface>
-        <h2 className="store-section-title">Order details</h2>
-        <ul className="store-meta-list">
-          <li>
-            <strong>Order reference:</strong> {confirmation.reference}
-          </li>
-          <li className="store-meta-list__status">
-            <strong>Status:</strong>{" "}
-            <OrderConfirmationLiveStatus confirmation={confirmation} />
-          </li>
-          <li>
-            <strong>Pickup code expires:</strong>{" "}
-            {formatDateTime(confirmation.expiresAt)}
-          </li>
-        </ul>
-        <p className="store-total-hint" style={{ marginTop: "1rem" }}>
-          Payment is arranged directly with the merchant.
-        </p>
-      </Surface>
-
-      <Surface>
-        <h2 className="store-section-title">Show Pickup Code</h2>
-        <p className="store-total-hint" style={{ marginBottom: "1rem" }}>
-          Present this QR at the counter when collecting your order.
-        </p>
-        <div className="store-pickup-qr">
-          <PickupQr token={confirmation.token} />
-        </div>
-      </Surface>
-
-      <Surface>
-        <h2 className="store-section-title">Copy pickup token</h2>
-        <CopyToken token={confirmation.token} />
-      </Surface>
-
-      <Link href={trackingPath} style={{ display: "block" }}>
-        <Button block>Track order status</Button>
-      </Link>
-
-      <Link href={storePath}>
-        <Button block variant="secondary">
-          Order more items
-        </Button>
-      </Link>
+      <OrderConfirmationActions
+        confirmation={confirmation}
+        merchantSlug={merchantSlug}
+      />
     </div>
   );
 }

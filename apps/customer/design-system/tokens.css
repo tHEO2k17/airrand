@@ -44,6 +44,9 @@
   --store-shadow-sm: var(--airrand-shadow-sm);
   --store-shadow-md: var(--airrand-shadow-md);
   --store-shadow-lg: var(--airrand-shadow-lg);
+  --store-elevation-1: var(--airrand-elevation-1);
+  --store-elevation-2: var(--airrand-elevation-2);
+  --store-elevation-3: var(--airrand-elevation-3);
 
   --store-font: var(--airrand-font);
   --store-font-size-xs: var(--airrand-font-size-xs);
@@ -52,6 +55,11 @@
   --store-font-size-lg: var(--airrand-font-size-lg);
   --store-font-size-xl: var(--airrand-font-size-xl);
   --store-font-size-2xl: var(--airrand-font-size-2xl);
+  --store-font-size-3xl: var(--airrand-font-size-3xl);
+
+  --store-bp-sm: var(--airrand-bp-sm);
+  --store-bp-md: var(--airrand-bp-md);
+  --store-bp-lg: var(--airrand-bp-lg);
 
   --store-header-height: 64px;
   --store-sticky-cart-height: 76px;

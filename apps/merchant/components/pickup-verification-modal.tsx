@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
 import { PickupVerificationPanel } from "./pickup-verification-panel";
+import { bindModalLifecycle } from "../lib/modal-lifecycle";
 import type { VerifyPickupSuccess } from "../lib/verify-pickup";
 
 export function PickupVerificationModal({
@@ -29,20 +30,7 @@ export function PickupVerificationModal({
       return;
     }
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
+    return bindModalLifecycle(onClose);
   }, [open, onClose]);
 
   if (!open) {
@@ -74,7 +62,7 @@ export function PickupVerificationModal({
           <Button
             type="button"
             variant="secondary"
-            size="sm"
+            className="pos-modal__close"
             aria-label="Close pickup verification"
             onClick={onClose}
           >
@@ -88,6 +76,7 @@ export function PickupVerificationModal({
           variant="modal"
           orderReference={orderReference}
           onVerified={handleVerified}
+          onAutoClose={onClose}
         />
 
         <footer className="pos-modal__footer">

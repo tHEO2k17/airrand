@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveTrackOrderLookup } from "./track-order-lookup.js";
 
 describe("resolveTrackOrderLookup", () => {
-  it("builds tracking path from slug and normalized reference", () => {
+  it("builds tracking path from shop link name and normalized reference", () => {
     const result = resolveTrackOrderLookup("Kofi-Mart", "1022");
     expect(result).toEqual({
       ok: true,
@@ -18,11 +18,19 @@ describe("resolveTrackOrderLookup", () => {
     });
   });
 
-  it("rejects empty slug", () => {
+  it("accepts ORD- prefix references", () => {
+    const result = resolveTrackOrderLookup("kofi-mart", "ORD-1022");
+    expect(result).toEqual({
+      ok: true,
+      path: "/store/kofi-mart/track/ORD-1022",
+    });
+  });
+
+  it("rejects empty shop link name", () => {
     const result = resolveTrackOrderLookup("  ", "ORD-1022");
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.message).toMatch(/store slug/i);
+      expect(result.message).toMatch(/shop link name/i);
     }
   });
 

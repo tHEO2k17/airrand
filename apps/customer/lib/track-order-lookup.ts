@@ -12,7 +12,10 @@ export function resolveTrackOrderLookup(
 ): TrackOrderLookupResult {
   const merchantSlug = normalizeStoreSlug(merchantSlugInput);
   if (!merchantSlug) {
-    return { ok: false, message: "Enter the store slug from your order link (e.g. kofi-mart)." };
+    return {
+      ok: false,
+      message: "Enter the shop link name from your order link (e.g. kofi-mart).",
+    };
   }
 
   const trimmedReference = referenceInput.trim();

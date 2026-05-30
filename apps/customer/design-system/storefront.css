@@ -56,7 +56,7 @@
   padding: 0.5rem 0.9rem;
   border-radius: var(--store-radius-full);
   background: var(--store-accent-soft);
-  color: #c2410c;
+  color: var(--store-accent-hover);
   font-weight: 600;
   font-size: var(--store-font-size-sm);
   border: 1px solid var(--store-accent-muted);
@@ -172,6 +172,7 @@
 .store-btn--md {
   padding: 0.65rem 1.15rem;
   border-radius: var(--store-radius-md);
+  min-height: var(--store-touch-min);
 }
 
 .store-btn--sm {
@@ -225,7 +226,7 @@
 
 .store-badge--accent {
   background: var(--store-accent-soft);
-  color: #c2410c;
+  color: var(--store-accent-hover);
 }
 
 .store-badge--info {
@@ -742,7 +743,8 @@
   background: var(--store-surface);
   color: var(--store-text);
   border-radius: 999px;
-  padding: var(--store-space-1) var(--store-space-3);
+  min-height: var(--store-touch-min);
+  padding: var(--store-space-2) var(--store-space-4);
   font-size: var(--store-font-size-sm);
   cursor: pointer;
 }
@@ -935,12 +937,97 @@
   margin-bottom: var(--store-space-5);
 }
 
+.store-hero--compact h1 {
+  font-size: var(--store-font-size-xl);
+}
+
+.store-page--tracking {
+  gap: var(--store-space-5);
+}
+
+.store-pickup-code-surface {
+  border-color: color-mix(in srgb, var(--store-accent) 25%, var(--store-border));
+}
+
 @media (min-width: 900px) {
   .store-hero--product-first h1 {
-    font-size: var(--store-font-size-3xl, 2rem);
+    font-size: var(--store-font-size-3xl);
   }
 
   .store-product-grid--commerce {
     gap: var(--store-space-6);
   }
+}
+
+/* —— Phase 11C.1 pilot UX —— */
+.store-header__brand-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.store-header__brand-link:hover .store-header__brand {
+  color: var(--store-accent-hover);
+}
+
+.store-header__browse {
+  display: inline-block;
+  margin-top: var(--store-space-1);
+  font-size: var(--store-font-size-xs);
+  color: var(--store-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.store-home-track {
+  margin-bottom: var(--store-space-5);
+}
+
+.store-field-hint {
+  font-size: var(--store-font-size-xs);
+  color: var(--store-text-muted);
+  line-height: 1.45;
+}
+
+.store-tracking-actions .store-btn {
+  min-height: var(--store-touch-min);
+}
+
+.store-qty__btn {
+  min-height: var(--store-touch-min);
+  min-width: var(--store-touch-min);
+}
+
+.store-qty input {
+  min-height: var(--store-touch-min);
+}
+
+.store-pickup-qr--locked {
+  background: var(--store-surface-muted);
+}
+
+.store-pickup-qr-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--store-space-3);
+  padding: var(--store-space-6);
+  text-align: center;
+  color: var(--store-text-secondary);
+}
+
+.store-pickup-qr-locked__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--store-text);
+}
+
+.store-pickup-qr-locked__desc {
+  margin: 0;
+  font-size: var(--store-font-size-sm);
+  line-height: 1.45;
+  max-width: 28ch;
+}
+
+.store-confirmation-track {
+  border-color: color-mix(in srgb, var(--store-accent) 20%, var(--store-border));
 }

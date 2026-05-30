@@ -1,0 +1,214 @@
+/* Card primitives, skeletons, merchant chips — customer commerce layer */
+
+.store-card {
+  background: var(--store-surface);
+  border: 1px solid var(--store-border);
+  border-radius: var(--store-radius-xl);
+  box-shadow: var(--store-elevation-1);
+}
+
+.store-card--elevated {
+  box-shadow: var(--store-elevation-2);
+}
+
+.store-card--product {
+  display: flex;
+  flex-direction: column;
+  gap: var(--store-space-4);
+  padding: var(--store-space-5);
+  border-radius: var(--store-radius-2xl);
+}
+
+/* Loading skeletons */
+.store-skeleton-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--store-space-4);
+}
+
+@media (min-width: 560px) {
+  .store-skeleton-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .store-skeleton-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.store-skeleton-card {
+  padding: var(--store-space-5);
+  border-radius: var(--store-radius-xl);
+  border: 1px solid var(--store-border);
+  background: var(--store-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--store-space-3);
+}
+
+.store-skeleton {
+  border-radius: var(--store-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--store-surface-muted) 0%,
+    var(--store-border) 50%,
+    var(--store-surface-muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: store-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.store-skeleton--icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--store-radius-lg);
+}
+
+.store-skeleton--title {
+  height: 1.125rem;
+  width: 72%;
+}
+
+.store-skeleton--text {
+  height: 0.875rem;
+  width: 48%;
+}
+
+.store-skeleton--price {
+  height: 1.25rem;
+  width: 36%;
+}
+
+.store-skeleton--button {
+  height: var(--store-touch-min);
+  width: 100%;
+  border-radius: var(--store-radius-md);
+}
+
+@keyframes store-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Merchant chips — secondary context on product-first surfaces */
+.store-merchant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--store-space-2);
+  min-height: var(--store-touch-min);
+  padding: var(--store-space-2) var(--store-space-4);
+  border-radius: var(--store-radius-full);
+  border: 1px solid var(--store-border);
+  background: var(--store-surface);
+  font-size: var(--store-font-size-sm);
+  font-weight: 600;
+  color: var(--store-text);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.store-merchant-chip:hover {
+  border-color: var(--store-accent-muted);
+  background: var(--store-accent-soft);
+}
+
+.store-merchant-chip__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--store-radius-full);
+  background: var(--store-accent-soft);
+  color: var(--store-accent-hover);
+  font-size: var(--store-font-size-xs);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.store-merchant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--store-space-2);
+}
+
+/* Placeholder / promo sections */
+.store-placeholder-banner {
+  padding: var(--store-space-5);
+  border-radius: var(--store-radius-xl);
+  border: 1px dashed var(--store-border-strong);
+  background: var(--store-surface-muted);
+}
+
+.store-placeholder-banner__title {
+  margin: 0;
+  font-size: var(--store-font-size-base);
+  font-weight: 600;
+}
+
+.store-placeholder-banner__desc {
+  margin: var(--store-space-2) 0 0;
+  font-size: var(--store-font-size-sm);
+  color: var(--store-text-muted);
+  line-height: 1.45;
+}
+
+/* Tracking — status callouts */
+.store-tracking-callout {
+  padding: var(--store-space-5);
+  border-radius: var(--store-radius-xl);
+  border: 1px solid var(--store-border);
+}
+
+.store-tracking-callout--ready {
+  background: var(--store-success-soft);
+  border-color: color-mix(in srgb, var(--store-success) 35%, var(--store-border));
+}
+
+.store-tracking-callout--ready .store-tracking-callout__title {
+  color: var(--store-success);
+}
+
+.store-tracking-callout--success {
+  background: var(--store-success-soft);
+  border-color: color-mix(in srgb, var(--store-success) 25%, var(--store-border));
+}
+
+.store-tracking-callout__title {
+  margin: 0;
+  font-size: var(--store-font-size-lg);
+  font-weight: 700;
+}
+
+.store-tracking-callout__desc {
+  margin: var(--store-space-2) 0 0;
+  font-size: var(--store-font-size-sm);
+  color: var(--store-text-secondary);
+  line-height: 1.45;
+}
+
+.store-tracking-help {
+  padding: var(--store-space-5);
+  border-radius: var(--store-radius-xl);
+  background: var(--store-surface-muted);
+  border: 1px solid var(--store-border);
+}
+
+.store-tracking-help__title {
+  margin: 0;
+  font-size: var(--store-font-size-base);
+  font-weight: 600;
+}
+
+.store-tracking-help__desc {
+  margin: var(--store-space-2) 0 var(--store-space-4);
+  font-size: var(--store-font-size-sm);
+  color: var(--store-text-muted);
+  line-height: 1.45;
+}

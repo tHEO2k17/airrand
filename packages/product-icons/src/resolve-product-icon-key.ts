@@ -6,8 +6,11 @@ export const PRODUCT_ICON_KEYS = [
   "pill",
   "spray",
   "package",
+  "basket",
   "shirt",
   "plug",
+  "smartphone",
+  "scissors",
   "utensils",
   "generic",
 ] as const;
@@ -17,18 +20,27 @@ export type ProductIconKey = (typeof PRODUCT_ICON_KEYS)[number];
 const KEYWORD_RULES: Array<{ pattern: RegExp; key: ProductIconKey }> = [
   {
     pattern:
-      /\b(medicine|pharmacy|tablet|pill|pain relief|otc|wellness|ibuprofen|paracetamol|aspirin)\b/i,
+      /\b(medicine|pharmacy|tablet|pill|capsule|pain relief|otc|wellness|ibuprofen|paracetamol|aspirin)\b/i,
     key: "pill",
   },
   {
-    pattern: /\b(detergent|sanitizer|soap|toiletries|spray|cleaner|hygiene|sparkles)\b/i,
+    pattern: /\b(beauty|salon|haircut|cosmetic|makeup|scissors|grooming)\b/i,
+    key: "scissors",
+  },
+  {
+    pattern: /\b(detergent|sanitizer|soap|toiletries|spray|cleaner|hygiene)\b/i,
     key: "spray",
+  },
+  {
+    pattern: /\b(grocery|groceries|basket|produce|vegetable|fruit|carton)\b/i,
+    key: "basket",
   },
   { pattern: /\b(rice|grain|pasta|flour|maize|package|pack)\b/i, key: "package" },
   { pattern: /\b(laundry|wash|shirt|linen)\b/i, key: "shirt" },
   {
-    pattern: /\b(electronic|charger|cable|plug|battery|phone|adapter|device)\b/i,
-    key: "plug",
+    pattern:
+      /\b(electronic|charger|cable|plug|battery|phone|smartphone|laptop|adapter|device)\b/i,
+    key: "smartphone",
   },
   { pattern: /\b(bread|croissant|bakery|pastry|baguette)\b/i, key: "croissant" },
   { pattern: /\b(snack|chip|cookie|biscuit|candy|nuts)\b/i, key: "cookie" },
@@ -53,10 +65,11 @@ const CATEGORY_NAME_RULES: Array<{ pattern: RegExp; key: ProductIconKey }> = [
   { pattern: /\b(drink|beverage)\b/i, key: "cup" },
   { pattern: /\b(snack)\b/i, key: "cookie" },
   { pattern: /\b(toiletries?)\b/i, key: "spray" },
+  { pattern: /\b(beauty|salon)\b/i, key: "scissors" },
   { pattern: /\b(otc|wellness|medicine|pharmacy)\b/i, key: "pill" },
   { pattern: /\b(laundry)\b/i, key: "shirt" },
-  { pattern: /\b(groceries?)\b/i, key: "package" },
-  { pattern: /\b(electronics?)\b/i, key: "plug" },
+  { pattern: /\b(groceries?)\b/i, key: "basket" },
+  { pattern: /\b(electronics?)\b/i, key: "smartphone" },
 ];
 
 export type ProductIconInput = {

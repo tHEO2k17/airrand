@@ -35,6 +35,39 @@ describe("resolveProductIconKey", () => {
     ).toBe("shirt");
   });
 
+  it("maps groceries keywords to basket", () => {
+    expect(
+      resolveProductIconKey({
+        productName: "Fresh vegetables",
+        categoryName: "Groceries",
+      }),
+    ).toBe("basket");
+  });
+
+  it("maps electronics keywords to smartphone", () => {
+    expect(
+      resolveProductIconKey({
+        productName: "USB-C charger",
+        categoryName: "Electronics",
+      }),
+    ).toBe("smartphone");
+  });
+
+  it("maps beauty keywords to scissors", () => {
+    expect(
+      resolveProductIconKey({
+        productName: "Haircut voucher",
+        categoryName: "Beauty",
+      }),
+    ).toBe("scissors");
+  });
+
+  it("maps capsule keyword to pill", () => {
+    expect(
+      resolveProductIconKey({ productName: "Vitamin capsule pack" }),
+    ).toBe("pill");
+  });
+
   it("falls back to generic", () => {
     expect(
       resolveProductIconKey({ productName: "Misc item", categoryName: "General" }),

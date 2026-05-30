@@ -1,8 +1,8 @@
 export function PickupDisclaimer() {
   return (
     <p className="store-disclaimer">
-      Payment is handled directly with the merchant outside airRand for this MVP.
-      airRand coordinates your pickup order only.
+      Payment is arranged directly with the shop. airRand coordinates your pickup
+      order only — we do not process payments.
     </p>
   );
 }

@@ -14,10 +14,15 @@ export function Header() {
     <header className="store-header">
       <div className="store-header__inner">
         <div>
-          <p className="store-header__brand">airRand</p>
+          <Link href="/" className="store-header__brand-link">
+            <p className="store-header__brand">airRand</p>
+          </Link>
           <p className="store-header__store">
             {loading ? "Loading…" : (merchant?.name ?? "Store")}
           </p>
+          <Link href="/" className="store-header__browse">
+            Browse products
+          </Link>
         </div>
         <Link href={buildStoreCartPath(merchantSlug)} className="store-cart-link">
           <ShoppingCart size={18} aria-hidden />

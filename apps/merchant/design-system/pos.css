@@ -1606,3 +1606,31 @@
   flex-wrap: wrap;
   gap: var(--pos-space-1);
 }
+
+/* —— Phase 11C.1 pilot UX —— */
+.pos-btn--fulfillment {
+  min-height: var(--pos-touch-min);
+}
+
+.pos-order-cancel-section {
+  margin-top: var(--pos-space-6);
+  padding-top: var(--pos-space-4);
+  border-top: 1px solid var(--pos-border);
+}
+
+.pos-modal__close {
+  min-height: var(--pos-touch-min);
+  min-width: var(--pos-touch-min);
+}
+
+.pos-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,68 @@
+/* Operational card primitives — merchant POS layer */
+
+.pos-card {
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radius-xl);
+  box-shadow: var(--pos-elevation-1);
+}
+
+.pos-card--operational {
+  background: var(--pos-surface);
+  border-radius: var(--pos-radius-xl);
+  box-shadow: var(--pos-elevation-1);
+}
+
+.pos-card--elevated {
+  box-shadow: var(--pos-elevation-2);
+}
+
+/* Order queue emphasis */
+.pos-order-card.is-selected {
+  border-width: 2px;
+  border-color: var(--pos-accent);
+  background: var(--pos-surface);
+}
+
+.pos-order-card.is-unread {
+  border-color: var(--pos-accent-muted);
+}
+
+.pos-order-card.is-unread::before {
+  content: "";
+  position: absolute;
+  top: var(--pos-space-3);
+  right: var(--pos-space-3);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--pos-radius-full);
+  background: var(--pos-accent);
+}
+
+.pos-order-card {
+  position: relative;
+}
+
+/* Category filter clarity */
+.pos-category-chip--active {
+  border-color: var(--pos-accent);
+  background: var(--pos-accent-soft);
+  color: var(--pos-accent-hover);
+  font-weight: 700;
+}
+
+/* Focus mode — reduce peripheral noise */
+.pos-console--focus .pos-sidebar__nav .pos-sidebar__link:not(.is-active) {
+  opacity: 0.55;
+}
+
+.pos-console--focus .pos-order-line .pos-order-card:not(.is-selected) {
+  opacity: 0.72;
+}
+
+/* Tablet ergonomics — larger touch targets on order actions */
+@media (min-width: 768px) {
+  .pos-order-card__actions .pos-btn {
+    min-height: var(--pos-touch-min);
+  }
+}

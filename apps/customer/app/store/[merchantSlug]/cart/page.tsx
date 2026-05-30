@@ -11,7 +11,8 @@ import { Surface } from "../../../../components/ui/surface";
 import { PickupDisclaimer } from "../../../../components/pickup-disclaimer";
 import { useCart } from "../../../../components/cart-context";
 import { useMerchant } from "../../../../components/merchant-context";
-import { ApiError, createOrder } from "../../../../lib/api";
+import { createOrder } from "../../../../lib/api";
+import { toCustomerErrorMessage } from "../../../../lib/customer-error-message";
 import { formatMoney } from "../../../../lib/format";
 import { saveOrderConfirmation } from "../../../../lib/order-confirmation";
 import {
@@ -85,11 +86,9 @@ export default function StoreCartPage() {
       clearCart();
       router.push(buildStoreConfirmationPath(merchantSlug));
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(`${err.code}: ${err.message}`);
-      } else {
-        setError(err instanceof Error ? err.message : "Failed to place order");
-      }
+      setError(
+        toCustomerErrorMessage(err, "Could not place your order. Please try again."),
+      );
       setSubmitting(false);
     }
   }
@@ -140,6 +139,7 @@ export default function StoreCartPage() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        className="store-qty__btn"
                         aria-label="Decrease quantity"
                         onClick={() => setQuantity(item.productId, item.quantity - 1)}
                       >
@@ -158,6 +158,7 @@ export default function StoreCartPage() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        className="store-qty__btn"
                         aria-label="Increase quantity"
                         onClick={() => setQuantity(item.productId, item.quantity + 1)}
                       >
@@ -166,6 +167,7 @@ export default function StoreCartPage() {
                       <Button
                         variant="danger"
                         size="sm"
+                        className="store-qty__btn store-qty__btn--remove"
                         onClick={() => removeItem(item.productId)}
                       >
                         Remove

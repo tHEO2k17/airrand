@@ -3,41 +3,46 @@
  * Import in merchant and customer apps; alias to --pos-* / --store-* locally.
  */
 :root {
-  /* Surfaces — charcoal operational + soft neutral canvas */
-  --airrand-bg-page: #e8eaef;
+  /* Light surfaces */
+  --airrand-bg-page: #f8fafc;
   --airrand-surface: #ffffff;
-  --airrand-surface-muted: #f3f4f6;
+  --airrand-surface-muted: #f1f5f9;
   --airrand-surface-elevated: #ffffff;
-  --airrand-border: #dde1e8;
-  --airrand-border-strong: #c5cad3;
+  --airrand-border: #e2e8f0;
+  --airrand-border-strong: #cbd5e1;
 
-  --airrand-charcoal: #14181f;
-  --airrand-charcoal-elevated: #1c222b;
-  --airrand-charcoal-muted: #2a3140;
+  /* Dark brand surfaces — operational merchant identity */
+  --airrand-charcoal: #111827;
+  --airrand-charcoal-elevated: #1f2937;
+  --airrand-charcoal-muted: #374151;
+  --airrand-sidebar: #0f172a;
 
   /* Brand accent — warm premium orange */
-  --airrand-accent: #ea6c1f;
-  --airrand-accent-hover: #c2410c;
+  --airrand-accent: #f97316;
+  --airrand-accent-hover: #ea580c;
   --airrand-accent-soft: #ffedd5;
   --airrand-accent-muted: #fed7aa;
 
   /* Typography */
-  --airrand-text: #0f1419;
-  --airrand-text-secondary: #3d4654;
-  --airrand-text-muted: #5c6573;
-  --airrand-text-on-dark: #f9fafb;
-  --airrand-text-muted-on-dark: #9ca3af;
+  --airrand-text: #0f172a;
+  --airrand-text-secondary: #334155;
+  --airrand-text-muted: #64748b;
+  --airrand-text-on-dark: #f8fafc;
+  --airrand-text-muted-on-dark: #94a3b8;
 
   /* Semantic */
-  --airrand-success: #047857;
-  --airrand-success-soft: #d1fae5;
-  --airrand-danger: #b91c1c;
+  --airrand-success: #16a34a;
+  --airrand-success-soft: #dcfce7;
+  --airrand-danger: #dc2626;
   --airrand-danger-soft: #fee2e2;
-  --airrand-info: #1d4ed8;
-  --airrand-info-soft: #dbeafe;
-  --airrand-warning-soft: #fff7ed;
+  --airrand-info: #334155;
+  --airrand-info-muted: #475569;
+  --airrand-info-soft: #f1f5f9;
+  --airrand-warning: #fb923c;
+  --airrand-warning-soft: #ffedd5;
+  --airrand-warning-muted: #fdba74;
 
-  /* Spacing */
+  /* Spacing scale */
   --airrand-space-1: 0.25rem;
   --airrand-space-2: 0.5rem;
   --airrand-space-3: 0.75rem;
@@ -46,6 +51,7 @@
   --airrand-space-6: 1.5rem;
   --airrand-space-8: 2rem;
   --airrand-space-10: 2.5rem;
+  --airrand-space-12: 3rem;
 
   /* Radius */
   --airrand-radius-sm: 10px;
@@ -55,10 +61,13 @@
   --airrand-radius-2xl: 28px;
   --airrand-radius-full: 999px;
 
-  /* Shadows — subtle only */
-  --airrand-shadow-sm: 0 1px 2px rgba(15, 20, 25, 0.06);
-  --airrand-shadow-md: 0 6px 20px rgba(15, 20, 25, 0.08);
-  --airrand-shadow-lg: 0 12px 32px rgba(15, 20, 25, 0.1);
+  /* Elevation / shadows — subtle only */
+  --airrand-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --airrand-shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+  --airrand-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --airrand-elevation-1: var(--airrand-shadow-sm);
+  --airrand-elevation-2: var(--airrand-shadow-md);
+  --airrand-elevation-3: var(--airrand-shadow-lg);
 
   /* Typography scale */
   --airrand-font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -70,6 +79,9 @@
   --airrand-font-size-2xl: 1.75rem;
   --airrand-font-size-3xl: 2rem;
 
-  /* Touch */
+  /* Touch & layout */
   --airrand-touch-min: 44px;
+  --airrand-bp-sm: 640px;
+  --airrand-bp-md: 900px;
+  --airrand-bp-lg: 1200px;
 }

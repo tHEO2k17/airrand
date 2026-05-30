@@ -90,6 +90,7 @@ The current codebase focuses on **standard merchants** only:
 - **Product-first customer home** — browse catalog across shops; secondary Shops tab (no maps/ratings)
 - **Unified brand tokens** and shared product icon mapping
 - **Operational attention** on merchant POS (new-order sound, optional browser notifications, visual badges, focus mode) for pilot counter use — see [architecture.md](./architecture.md#merchant-operational-attention-phase-11b)
+- **Pilot UX hardening (Phase 11C.1)** — customer-friendly copy (no “slug”/API codes), tracking recovery on home, QR gated to `ready`, larger touch targets, cancel confirmation on POS
 
 **Pilot operating tip:** Run the Order Line on a dedicated device during service hours with sound or browser notifications enabled so new `placed` orders are not missed. This is operational alerting only — not payments, marketing push, or customer messaging.
 

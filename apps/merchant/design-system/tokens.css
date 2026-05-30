@@ -8,7 +8,7 @@
   --pos-border: var(--airrand-border);
   --pos-border-strong: var(--airrand-border-strong);
 
-  --pos-sidebar-bg: var(--airrand-charcoal);
+  --pos-sidebar-bg: var(--airrand-sidebar);
   --pos-sidebar-text: var(--airrand-text-muted-on-dark);
   --pos-sidebar-text-active: var(--airrand-text-on-dark);
   --pos-sidebar-hover: var(--airrand-charcoal-elevated);
@@ -49,6 +49,9 @@
   --pos-shadow-sm: var(--airrand-shadow-sm);
   --pos-shadow-md: var(--airrand-shadow-md);
   --pos-shadow-lg: var(--airrand-shadow-lg);
+  --pos-elevation-1: var(--airrand-elevation-1);
+  --pos-elevation-2: var(--airrand-elevation-2);
+  --pos-elevation-3: var(--airrand-elevation-3);
 
   --pos-font: var(--airrand-font);
   --pos-font-size-xs: var(--airrand-font-size-xs);

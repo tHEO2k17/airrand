@@ -257,7 +257,15 @@ function PosConsoleContent() {
       {loading ? (
         <LoadingState label="Loading merchant console…" />
       ) : (
-        <div className="pos-dashboard">
+        <>
+          <div
+            className="pos-sr-only"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {hasUnreadOrders ? "New order activity in the queue." : ""}
+          </div>
+          <div className="pos-dashboard">
           <div className="pos-dashboard__main">
             <PosHeader
               lastUpdated={lastUpdated}
@@ -318,6 +326,7 @@ function PosConsoleContent() {
             />
           </aside>
         </div>
+        </>
       )}
 
       <PickupVerificationModal

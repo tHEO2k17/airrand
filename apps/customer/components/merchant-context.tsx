@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { ApiError, fetchMerchantBySlug } from "../lib/api";
+import { toCustomerErrorMessage } from "../lib/customer-error-message";
 import { normalizeStoreSlug } from "../lib/store-slug";
 
 interface MerchantContextValue {
@@ -42,9 +43,9 @@ export function StoreMerchantProvider({
     } catch (err) {
       setMerchant(null);
       if (err instanceof ApiError && err.code === "MERCHANT_NOT_FOUND") {
-        setError("This store could not be found. Check the link and try again.");
+        setError("This shop could not be found. Check the link and try again.");
       } else {
-        setError(err instanceof Error ? err.message : "Failed to load store");
+        setError(toCustomerErrorMessage(err, "Could not load this shop. Please try again."));
       }
     } finally {
       setLoading(false);

@@ -3,6 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveTrackOrderLookup } from "../lib/track-order-lookup";
+import {
+  SHOP_LINK_NAME_HELPER,
+  SHOP_LINK_NAME_LABEL,
+  TRACK_ORDER_INTRO,
+} from "../lib/track-order-copy";
 import { AlertMessage } from "./ui/alert-message";
 import { Button } from "./ui/button";
 import { Surface } from "./ui/surface";
@@ -27,18 +32,17 @@ export function TrackOrderLookupForm() {
   }
 
   return (
-    <Surface padding="lg">
+    <Surface padding="lg" className="store-home-track">
       <h2 className="store-section-title">Track existing order</h2>
       <p className="store-total-hint" style={{ marginBottom: "1rem" }}>
-        Use the store slug from your link and the order reference from your
-        receipt. No sign-in required.
+        {TRACK_ORDER_INTRO}
       </p>
 
       {error ? <AlertMessage variant="error" message={error} /> : null}
 
       <form className="store-form" onSubmit={handleSubmit}>
         <label>
-          Store slug
+          {SHOP_LINK_NAME_LABEL}
           <input
             value={merchantSlug}
             onChange={(event) => setMerchantSlug(event.target.value)}
@@ -46,6 +50,7 @@ export function TrackOrderLookupForm() {
             autoComplete="off"
             required
           />
+          <span className="store-field-hint">{SHOP_LINK_NAME_HELPER}</span>
         </label>
 
         <label>

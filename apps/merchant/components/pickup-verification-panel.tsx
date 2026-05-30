@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AlertMessage } from "./ui/alert-message";
 import { PickupScanner } from "./pickup-scanner";
 import { StatusBadge } from "./ui/badge";
@@ -17,12 +17,14 @@ export function PickupVerificationPanel({
   disabled = false,
   orderReference,
   onVerified,
+  onAutoClose,
   variant = "page",
 }: {
   disabled?: boolean;
   /** Shown in copy when opened for a specific ready order. */
   orderReference?: string | null;
   onVerified?: (result: VerifyPickupSuccess) => void;
+  onAutoClose?: () => void;
   variant?: "page" | "modal";
 }) {
   const { merchantId } = useMerchant();
@@ -82,6 +84,18 @@ export function PickupVerificationPanel({
     setSuccess(null);
     setVerifiedOrder(null);
   }
+
+  useEffect(() => {
+    if (variant !== "modal" || !verifiedOrder || !onAutoClose) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      onAutoClose();
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [variant, verifiedOrder, onAutoClose]);
 
   const intro =
     variant === "modal"

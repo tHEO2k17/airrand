@@ -115,12 +115,13 @@ The merchant home route **`/`** is the consolidated **Order Line** console: dark
 
 Guest storefront at **`http://localhost:3002`** (orange accent, mobile-first):
 
-- **`/`** — menu with icon product cards, sticky cart summary
-- **`/cart`** — quantities, pickup details, **phone number required** before **Place Order for Pickup**; name optional
-- **`/order-confirmation`** — pickup QR, copy token, link to **Track order status**
-- **`/order-status`** — read-only order progress (status badge, timeline, items, pickup instructions). Tracks by **merchant + order reference** (and session-held order UUID for API/SSE). Polls every ~12 seconds until `picked_up` or `cancelled`.
+- **`/`** — product-first browse with safe mobile padding, track-order recovery near the top, category chips, and shop discovery
+- **`/store/[slug]`** — shop menu with skeleton loading and sticky cart
+- **`/store/[slug]/cart`** — quantities, pickup details, **phone number required** before **Place Order for Pickup**; name optional
+- **`/store/[slug]/order-confirmation`** — save tracking link (primary), pickup QR unlocks when the shop marks the order ready
+- **`/store/[slug]/track/[reference]`** — read-only order progress, locked pickup placeholder until ready, then QR
 
-**Identity model:** phone number (`customer_contact`) is lightweight operational identity — not a login. Payment is arranged directly with the merchant; catalog shows estimated value only.
+**Identity model:** phone number (`customer_contact`) is lightweight operational identity — not a login. Payment is arranged directly with the shop; catalog shows estimated value only.
 
 ### Order references (operational IDs)
 

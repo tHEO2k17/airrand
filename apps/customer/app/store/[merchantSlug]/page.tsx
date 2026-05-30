@@ -5,12 +5,13 @@ import type { ProductResponse } from "@airrand/contracts";
 import { EmptyState } from "../../../components/ui/empty-state";
 import { AlertMessage } from "../../../components/ui/alert-message";
 import { Button } from "../../../components/ui/button";
-import { LoadingState } from "../../../components/ui/loading-state";
+import { CatalogLoadingSkeleton } from "../../../components/ui/catalog-loading-skeleton";
 import { Surface } from "../../../components/ui/surface";
 import { Badge } from "../../../components/ui/badge";
 import { useCart } from "../../../components/cart-context";
 import { useMerchant } from "../../../components/merchant-context";
 import { fetchAvailableProductsBySlug } from "../../../lib/api";
+import { toCustomerErrorMessage } from "../../../lib/customer-error-message";
 import {
   filterProductsByCategory,
   type CategoryFilter,
@@ -40,7 +41,7 @@ export default function StoreCatalogPage() {
     try {
       setProducts(await fetchAvailableProductsBySlug(merchantSlug));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load menu");
+      setError(toCustomerErrorMessage(err, "Could not load the menu. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function StoreCatalogPage() {
   }
 
   if (merchantLoading) {
-    return <LoadingState label="Loading store…" />;
+    return <CatalogLoadingSkeleton count={4} />;
   }
 
   if (merchantError) {
@@ -103,7 +104,7 @@ export default function StoreCatalogPage() {
       </header>
 
       {error ? <AlertMessage variant="error" message={error} /> : null}
-      {loading ? <LoadingState label="Loading menu…" /> : null}
+      {loading ? <CatalogLoadingSkeleton count={6} /> : null}
 
       {!loading && !error && products.length > 0 && categoryChips.length > 0 ? (
         <div className="store-category-chips" role="tablist" aria-label="Categories">

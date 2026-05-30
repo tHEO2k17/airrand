@@ -13,6 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@airrand/auth": "workspace:*",
     "@airrand/contracts": "workspace:*",
     "@airrand/database": "workspace:*",
     "@airrand/domain": "workspace:*",

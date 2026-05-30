@@ -8,7 +8,7 @@ export function MerchantGate({ children }: { children: React.ReactNode }) {
   const { loading, error, merchantId } = useMerchant();
 
   if (loading) {
-    return <LoadingState label="Loading demo merchant…" />;
+    return <LoadingState label="Loading merchant…" />;
   }
 
   if (error || !merchantId) {

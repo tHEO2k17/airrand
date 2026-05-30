@@ -34,7 +34,9 @@ import {
 } from "../lib/mappers.js";
 import { assertPickupAllowed } from "../lib/pickup-verify.js";
 import { getQrSigningSecret } from "../lib/qr.js";
+import { getMerchantActor } from "../lib/merchant-auth.js";
 import { jsonError, jsonOk } from "../lib/response.js";
+import { requireMerchantAuth } from "../middleware/merchant-auth.js";
 
 export const merchantsRoutes = new Hono();
 
@@ -79,6 +81,7 @@ merchantsRoutes.get("/:merchantId/products", async (c) => {
 
 merchantsRoutes.post(
   "/:merchantId/products",
+  requireMerchantAuth(),
   zValidator("json", createProductSchema),
   async (c) => {
     try {
@@ -113,6 +116,7 @@ merchantsRoutes.post(
 
 merchantsRoutes.patch(
   "/:merchantId/products/:productId",
+  requireMerchantAuth(),
   zValidator("json", updateProductSchema),
   async (c) => {
     try {
@@ -270,7 +274,7 @@ merchantsRoutes.post(
   },
 );
 
-merchantsRoutes.get("/:merchantId/orders", async (c) => {
+merchantsRoutes.get("/:merchantId/orders", requireMerchantAuth(), async (c) => {
   try {
     const merchantId = c.req.param("merchantId");
     const merchant = await findMerchant(merchantId);
@@ -312,6 +316,7 @@ merchantsRoutes.get("/:merchantId/orders", async (c) => {
 
 merchantsRoutes.post(
   "/:merchantId/orders/:orderId/pickup/verify",
+  requireMerchantAuth(),
   zValidator("json", pickupVerifyRequestSchema),
   async (c) => {
     try {
@@ -355,7 +360,7 @@ merchantsRoutes.post(
         await insertAuditLog(tx, {
           merchantId,
           orderId: order.id,
-          actorType: "unknown",
+          ...getMerchantActor(c),
           action: AUDIT_ACTIONS.ORDER_PICKUP_VERIFIED,
           metadata: {
             fromStatus: existing!.status,
@@ -390,6 +395,7 @@ merchantsRoutes.post(
 
 merchantsRoutes.patch(
   "/:merchantId/orders/:orderId/status",
+  requireMerchantAuth(),
   zValidator("json", updateOrderStatusSchema),
   async (c) => {
     try {
@@ -431,7 +437,7 @@ merchantsRoutes.patch(
           await insertAuditLog(tx, {
             merchantId,
             orderId: order.id,
-            actorType: "unknown",
+            ...getMerchantActor(c),
             action: AUDIT_ACTIONS.ORDER_STATUS_CHANGED,
             metadata: {
               fromStatus: existing.status,
@@ -459,7 +465,7 @@ merchantsRoutes.patch(
   },
 );
 
-merchantsRoutes.get("/:merchantId/audit-logs", async (c) => {
+merchantsRoutes.get("/:merchantId/audit-logs", requireMerchantAuth(), async (c) => {
   try {
     const merchantId = c.req.param("merchantId");
     const merchant = await findMerchant(merchantId);

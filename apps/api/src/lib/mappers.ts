@@ -1,15 +1,31 @@
 import type {
   MerchantResponse,
+  MerchantUserResponse,
   OrderLineResponse,
   OrderResponse,
   ProductResponse,
 } from "@airrand/contracts";
 import type {
   Merchant,
+  MerchantUser,
   Order,
   OrderLine,
   Product,
 } from "@airrand/database";
+
+export function toMerchantUserResponse(
+  user: MerchantUser,
+): MerchantUserResponse {
+  return {
+    id: user.id,
+    merchantId: user.merchantId,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    isActive: user.isActive,
+    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+  };
+}
 
 export function toMerchantResponse(merchant: Merchant): MerchantResponse {
   return {

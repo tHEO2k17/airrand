@@ -111,7 +111,34 @@ Order lifecycle events are recorded in `audit_logs`:
 
 Merchant UI: **Audit log** screen (`/audit-logs`) or `GET /merchants/:merchantId/audit-logs`.
 
-No authentication yet — actor is `customer` or `unknown` as appropriate.
+Merchant staff actions record `merchant_staff` with the staff email as `actor_label`.
+
+## Merchant authentication (Phase 6A)
+
+Staff sign in at the merchant app **/login**. Sessions use HMAC-signed tokens (Argon2 password hashes).
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `AUTH_SESSION_SECRET` | (required, ≥32 chars) | Signs session tokens |
+| `AUTH_SESSION_TTL_MS` | `604800000` (7 days) | Session lifetime |
+
+**Local demo credentials only** (from `pnpm db:seed`):
+
+| Field | Value |
+|-------|-------|
+| Email | `owner@demo-cafe.test` |
+| Password | `ChangeMe123!` |
+
+The merchant app stores the session token in `localStorage` and sends `Authorization: Bearer …` on protected API calls. The API also sets an HttpOnly `airrand_session` cookie on login for same-site deployments.
+
+### API routes
+
+| Access | Routes |
+|--------|--------|
+| Public | `GET /health`, `GET /merchants`, `GET /merchants/:id/products`, `POST /merchants/:id/orders`, `POST /auth/merchant/login` |
+| Protected (merchant staff) | `POST /auth/merchant/logout`, `GET /auth/merchant/me`, product mutations, `GET /orders`, order status/pickup, `GET /audit-logs` |
+
+Customer guest ordering stays public on catalog and order create.
 
 ## Rate limiting (Phase 5B)
 
@@ -188,4 +215,5 @@ Out of scope: payments, wallets, balances, ledgers, settlements, payment intents
 - **Phase 3**: Merchant UI
 - **Phase 4**: Customer UI
 - **Phase 5A**: CI + audit log
-- **Phase 5B** (current): Rate limiting + camera QR scan
+- **Phase 5B**: Rate limiting + camera QR scan
+- **Phase 6A** (current): Merchant staff authentication

@@ -3,14 +3,10 @@
 import type { MerchantResponse } from "@airrand/contracts";
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react";
-import { fetchMerchants } from "../lib/api";
-import { DEMO_MERCHANT_SLUG } from "../lib/config";
+import { useAuth } from "./auth-context";
 
 interface MerchantContextValue {
   merchant: MerchantResponse | null;
@@ -23,43 +19,31 @@ interface MerchantContextValue {
 const MerchantContext = createContext<MerchantContextValue | null>(null);
 
 export function MerchantProvider({ children }: { children: React.ReactNode }) {
-  const [merchant, setMerchant] = useState<MerchantResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { merchant, merchantId, loading, error, refreshSession } = useAuth();
 
-  const refreshMerchant = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const merchants = await fetchMerchants();
-      const demo = merchants.find((m) => m.slug === DEMO_MERCHANT_SLUG);
-      if (!demo) {
-        throw new Error(
-          `Demo merchant "${DEMO_MERCHANT_SLUG}" not found. Run pnpm db:seed.`,
-        );
-      }
-      setMerchant(demo);
-    } catch (err) {
-      setMerchant(null);
-      setError(err instanceof Error ? err.message : "Failed to load merchant");
-    } finally {
-      setLoading(false);
+  const merchantResponse = useMemo<MerchantResponse | null>(() => {
+    if (!merchant) {
+      return null;
     }
-  }, []);
 
-  useEffect(() => {
-    void refreshMerchant();
-  }, [refreshMerchant]);
+    return {
+      id: merchant.id,
+      name: merchant.name,
+      slug: merchant.slug,
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    };
+  }, [merchant]);
 
   const value = useMemo(
     () => ({
-      merchant,
-      merchantId: merchant?.id ?? null,
+      merchant: merchantResponse,
+      merchantId,
       loading,
       error,
-      refreshMerchant,
+      refreshMerchant: refreshSession,
     }),
-    [merchant, loading, error, refreshMerchant],
+    [merchantResponse, merchantId, loading, error, refreshSession],
   );
 
   return (

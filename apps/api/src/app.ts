@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { rateLimitMiddleware } from "./middleware/rate-limit.js";
+import { authRoutes } from "./routes/auth.js";
 import { merchantsRoutes } from "./routes/merchants.js";
 import { jsonOk } from "./lib/response.js";
 
@@ -18,7 +19,8 @@ app.use(
       process.env.CUSTOMER_APP_URL ?? "",
     ].filter(Boolean),
     allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    exposeHeaders: ["Set-Cookie"],
   }),
 );
 
@@ -29,6 +31,7 @@ app.get("/health", (c) =>
   }),
 );
 
+app.route("/auth", authRoutes);
 app.route("/merchants", merchantsRoutes);
 
 app.notFound((c) =>

@@ -10,6 +10,12 @@ import type {
 import type { OrderStatus } from "@airrand/domain";
 import { getApiBaseUrl } from "./config";
 
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly code: string,
@@ -28,6 +34,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...init?.headers,
     },
   });

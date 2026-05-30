@@ -1,5 +1,6 @@
 export * from "./enums.js";
 export * from "./merchants.js";
+export * from "./merchant-user-role.js";
 export * from "./merchant-users.js";
 export * from "./products.js";
 export * from "./orders.js";

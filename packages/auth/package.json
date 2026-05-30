@@ -1,5 +1,5 @@
 {
-  "name": "@airrand/database",
+  "name": "@airrand/auth",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,23 +14,17 @@
     "dev": "tsc --watch",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/migrate.ts",
-    "db:seed": "tsx src/seed.ts"
+    "test": "vitest run",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@airrand/auth": "workspace:*",
-    "drizzle-orm": "^0.44.2",
-    "postgres": "^3.4.7"
+    "@node-rs/argon2": "^2.0.2"
   },
   "devDependencies": {
     "@airrand/config": "workspace:*",
     "@types/node": "^22.15.29",
-    "dotenv": "^16.5.0",
-    "drizzle-kit": "^0.31.1",
     "eslint": "^9.28.0",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
   }
 }

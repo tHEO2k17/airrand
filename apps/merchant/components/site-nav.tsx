@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "./auth-context";
 import { useMerchant } from "./merchant-context";
 
 const links = [
@@ -15,6 +16,7 @@ const links = [
 export function SiteNav() {
   const pathname = usePathname();
   const { merchant, loading } = useMerchant();
+  const { user, logout } = useAuth();
 
   return (
     <header className="site-header">
@@ -24,18 +26,32 @@ export function SiteNav() {
           <p className="merchant-name">
             {loading ? "Loading merchant…" : (merchant?.name ?? "—")}
           </p>
+          {user ? (
+            <p className="muted small-text">
+              Signed in as {user.email} ({user.role})
+            </p>
+          ) : null}
         </div>
-        <nav className="site-nav" aria-label="Main">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={pathname === link.href ? "nav-link active" : "nav-link"}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="site-header-actions">
+          <nav className="site-nav" aria-label="Main">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={pathname === link.href ? "nav-link active" : "nav-link"}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void logout()}
+          >
+            Log out
+          </button>
+        </div>
       </div>
     </header>
   );
